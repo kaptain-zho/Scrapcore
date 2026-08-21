@@ -1,0 +1,38 @@
+# Roblox Studio local and generated place files
+*.rbxl
+*.rbxlx
+*.rbxl.lock
+*.rbxlx.lock
+*.rbxl.autosave
+*.rbxlx.autosave
+*.rbxm
+*.rbxmx
+
+# Script Sync / local synchronization state
+.script-sync/
+.scriptsync/
+*.scriptsync.json.user
+sourcemap.json
+
+# Tool caches, generated artifacts, and logs
+.lune/
+.pesde/
+.aftman/
+*.log
+logs/
+tmp/
+temp/
+
+# Editor settings
+.vscode/
+.idea/
+*.code-workspace
+
+# Windows metadata
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
