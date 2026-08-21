@@ -1,1 +1,0 @@
-print("Scrapcore pipeline test passed!")
