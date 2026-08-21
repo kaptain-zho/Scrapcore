@@ -10,7 +10,7 @@ local Workspace = game:GetService("Workspace")
 local player = Players.LocalPlayer
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local MovementConfig = require(shared:WaitForChild("MovementConfig"))
-local movementRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("RobotMovementInput") :: RemoteEvent
+local telemetryRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("RobotMovementTelemetry") :: RemoteEvent
 local camera = assert(Workspace.CurrentCamera, "CurrentCamera is required for robot controls") :: Camera
 
 local function sinkDefaultMovement(): Enum.ContextActionResult
@@ -30,14 +30,21 @@ ContextActionService:BindActionAtPriority(
 )
 camera.CameraType = Enum.CameraType.Scriptable
 
+local currentHumanoid: Humanoid? = nil
 local currentRoot: BasePart? = nil
+local smoothedVelocity = Vector3.zero
 local cameraInitialized = false
-local sendAccumulator = 0
+local telemetryAccumulator = 0
+local telemetrySequence = 0
 
 local function setCharacter(character: Model)
+	local humanoid = character:WaitForChild("Humanoid", 10)
 	local root = character:WaitForChild("HumanoidRootPart", 10)
-	if root ~= nil and root:IsA("BasePart") then
+	if humanoid ~= nil and humanoid:IsA("Humanoid") and root ~= nil and root:IsA("BasePart") then
+		humanoid.AutoRotate = false
+		currentHumanoid = humanoid
 		currentRoot = root
+		smoothedVelocity = Vector3.zero
 		cameraInitialized = false
 	end
 end
@@ -48,7 +55,9 @@ end)
 
 player.CharacterRemoving:Connect(function(character: Model)
 	if currentRoot ~= nil and currentRoot:IsDescendantOf(character) then
+		currentHumanoid = nil
 		currentRoot = nil
+		smoothedVelocity = Vector3.zero
 	end
 end)
 
@@ -105,7 +114,64 @@ local function getMouseAimDirection(root: BasePart): Vector3
 	return if aimDirection.Magnitude > 0.001 then aimDirection.Unit else root.CFrame.LookVector
 end
 
-RunService:BindToRenderStep("RobotTopDownController", Enum.RenderPriority.Camera.Value + 1, function(deltaTime: number)
+local function getMovementSharpness(currentVelocity: Vector3, targetVelocity: Vector3): number
+	if targetVelocity.Magnitude < currentVelocity.Magnitude then
+		return MovementConfig.DecelerationSharpness
+	end
+
+	if currentVelocity.Magnitude > 0.01 and targetVelocity.Magnitude > 0.01 then
+		local alignment = currentVelocity.Unit:Dot(targetVelocity.Unit)
+		if alignment < 0.99 then
+			return MovementConfig.DirectionChangeSharpness
+		end
+	end
+
+	return MovementConfig.AccelerationSharpness
+end
+
+local function rotateTowardAim(root: BasePart, aimDirection: Vector3, deltaTime: number)
+	local currentLook = root.CFrame.LookVector
+	local currentYaw = math.atan2(-currentLook.X, -currentLook.Z)
+	local desiredYaw = math.atan2(-aimDirection.X, -aimDirection.Z)
+	local yawDelta = math.atan2(math.sin(desiredYaw - currentYaw), math.cos(desiredYaw - currentYaw))
+	local turnAlpha = 1 - math.exp(-MovementConfig.AimTurnSharpness * deltaTime)
+	root.CFrame = CFrame.new(root.Position) * CFrame.Angles(0, currentYaw + yawDelta * turnAlpha, 0)
+end
+
+local function updateMovement(deltaTime: number)
+	local humanoid = currentHumanoid
+	local root = currentRoot
+	if humanoid == nil or root == nil or root.Parent == nil or humanoid.Health <= 0 then
+		return
+	end
+
+	local moveDirection = getCameraRelativeMovement()
+	local targetVelocity = moveDirection * MovementConfig.MaxSpeed
+	local movementSharpness = getMovementSharpness(smoothedVelocity, targetVelocity)
+	local movementAlpha = 1 - math.exp(-movementSharpness * deltaTime)
+	smoothedVelocity = smoothedVelocity:Lerp(targetVelocity, movementAlpha)
+	if smoothedVelocity.Magnitude < 0.01 then
+		smoothedVelocity = Vector3.zero
+	end
+
+	local speed = math.min(smoothedVelocity.Magnitude, MovementConfig.MaxSpeed)
+	humanoid.AutoRotate = false
+	humanoid.WalkSpeed = speed
+	humanoid:Move(if speed > 0 then smoothedVelocity.Unit else Vector3.zero, false)
+
+	local aimDirection = getMouseAimDirection(root)
+	rotateTowardAim(root, aimDirection, deltaTime)
+
+	telemetryAccumulator += deltaTime
+	local telemetryInterval = 1 / MovementConfig.ClientTelemetryRate
+	if telemetryAccumulator >= telemetryInterval then
+		telemetryAccumulator %= telemetryInterval
+		telemetrySequence += 1
+		telemetryRemote:FireServer(telemetrySequence)
+	end
+end
+
+local function updateCamera(deltaTime: number)
 	local activeCamera = Workspace.CurrentCamera
 	if activeCamera == nil then
 		return
@@ -127,14 +193,17 @@ RunService:BindToRenderStep("RobotTopDownController", Enum.RenderPriority.Camera
 		local followAlpha = 1 - math.exp(-MovementConfig.CameraFollowSharpness * deltaTime)
 		camera.CFrame = camera.CFrame:Lerp(desiredCamera, followAlpha)
 	end
+end
 
-	sendAccumulator += deltaTime
-	if sendAccumulator < 1 / MovementConfig.InputSendRate then
-		return
+local hasRenderedFrame = false
+
+RunService.PreSimulation:Connect(updateMovement)
+RunService.PreRender:Connect(function(deltaTime: number)
+	hasRenderedFrame = true
+	updateCamera(deltaTime)
+end)
+RunService.Heartbeat:Connect(function(deltaTime: number)
+	if not hasRenderedFrame then
+		updateCamera(deltaTime)
 	end
-	sendAccumulator %= 1 / MovementConfig.InputSendRate
-
-	local moveDirection = getCameraRelativeMovement()
-	local aimDirection = getMouseAimDirection(root)
-	movementRemote:FireServer(moveDirection, aimDirection)
 end)

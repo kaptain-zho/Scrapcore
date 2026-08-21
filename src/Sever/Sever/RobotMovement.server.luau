@@ -11,11 +11,14 @@ type PlayerState = {
 	character: Model?,
 	humanoid: Humanoid?,
 	root: BasePart?,
-	moveDirection: Vector3,
-	aimDirection: Vector3,
-	currentSpeed: number,
-	lastInputAt: number,
-	lastRemoteAt: number,
+	lastPosition: Vector3,
+	lastVelocity: Vector3,
+	lastSafeCFrame: CFrame,
+	lastSampleAt: number,
+	consecutiveViolations: number,
+	lastTelemetryAt: number,
+	lastSequence: number,
+	malformedRequests: number,
 }
 
 local remotes = ReplicatedStorage:FindFirstChild("Remotes")
@@ -25,34 +28,22 @@ if remotes == nil then
 	remotes.Parent = ReplicatedStorage
 end
 
-local existingRemote = remotes:FindFirstChild("RobotMovementInput")
+local existingRemote = remotes:FindFirstChild("RobotMovementTelemetry")
 if existingRemote ~= nil and not existingRemote:IsA("RemoteEvent") then
-	error("ReplicatedStorage.Remotes.RobotMovementInput must be a RemoteEvent")
+	error("ReplicatedStorage.Remotes.RobotMovementTelemetry must be a RemoteEvent")
 end
 
-local movementRemote = existingRemote :: RemoteEvent?
-if movementRemote == nil then
-	movementRemote = Instance.new("RemoteEvent")
-	movementRemote.Name = "RobotMovementInput"
-	movementRemote.Parent = remotes
+local telemetryRemote = existingRemote :: RemoteEvent?
+if telemetryRemote == nil then
+	telemetryRemote = Instance.new("RemoteEvent")
+	telemetryRemote.Name = "RobotMovementTelemetry"
+	telemetryRemote.Parent = remotes
 end
 
 local playerStates: {[Player]: PlayerState} = {}
 
 local function isFinite(value: number): boolean
 	return value == value and value > -math.huge and value < math.huge
-end
-
-local function isFiniteVector(vector: Vector3): boolean
-	return isFinite(vector.X) and isFinite(vector.Y) and isFinite(vector.Z)
-end
-
-local function moveTowards(current: number, target: number, maximumDelta: number): number
-	if current < target then
-		return math.min(current + maximumDelta, target)
-	end
-
-	return math.max(current - maximumDelta, target)
 end
 
 local function hideDefaultCharacter(character: Model)
@@ -123,21 +114,19 @@ local function configureCharacter(player: Player, character: Model)
 	humanoid.JumpPower = 0
 	humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
 
-	for _, descendant in character:GetDescendants() do
-		if descendant:IsA("BasePart") then
-			descendant:SetNetworkOwner(nil)
-		end
-	end
-
+	local now = os.clock()
 	playerStates[player] = {
 		character = character,
 		humanoid = humanoid,
 		root = root,
-		moveDirection = Vector3.zero,
-		aimDirection = Vector3.new(0, 0, -1),
-		currentSpeed = 0,
-		lastInputAt = 0,
-		lastRemoteAt = 0,
+		lastPosition = root.Position,
+		lastVelocity = Vector3.zero,
+		lastSafeCFrame = root.CFrame,
+		lastSampleAt = now,
+		consecutiveViolations = 0,
+		lastTelemetryAt = 0,
+		lastSequence = 0,
+		malformedRequests = 0,
 	}
 end
 
@@ -151,37 +140,33 @@ local function connectPlayer(player: Player)
 	end
 end
 
-movementRemote.OnServerEvent:Connect(function(player: Player, moveDirectionValue: unknown, aimDirectionValue: unknown)
+-- Telemetry is intentionally sparse and grants no gameplay authority. Future weapon hits,
+-- damage, cooldowns, and rewards must be validated and resolved by the server.
+telemetryRemote.OnServerEvent:Connect(function(player: Player, sequenceValue: unknown, extraValue: unknown)
 	local state = playerStates[player]
 	if state == nil then
 		return
 	end
 
 	local receivedAt = os.clock()
-	if receivedAt - state.lastRemoteAt < 1 / MovementConfig.MaxRemoteRate then
+	if receivedAt - state.lastTelemetryAt < 1 / MovementConfig.MaxTelemetryRate then
+		state.malformedRequests += 1
 		return
 	end
-	state.lastRemoteAt = receivedAt
+	state.lastTelemetryAt = receivedAt
 
-	if typeof(moveDirectionValue) ~= "Vector3" or typeof(aimDirectionValue) ~= "Vector3" then
-		return
-	end
-
-	local moveDirection = moveDirectionValue :: Vector3
-	local aimDirection = aimDirectionValue :: Vector3
-	if not isFiniteVector(moveDirection) or not isFiniteVector(aimDirection) then
+	if typeof(sequenceValue) ~= "number" or extraValue ~= nil then
+		state.malformedRequests += 1
 		return
 	end
 
-	moveDirection = Vector3.new(moveDirection.X, 0, moveDirection.Z)
-	aimDirection = Vector3.new(aimDirection.X, 0, aimDirection.Z)
-	if moveDirection.Magnitude > 1.05 or aimDirection.Magnitude < 0.95 or aimDirection.Magnitude > 1.05 then
+	local sequence = sequenceValue :: number
+	if not isFinite(sequence) or sequence % 1 ~= 0 or sequence <= state.lastSequence then
+		state.malformedRequests += 1
 		return
 	end
 
-	state.moveDirection = if moveDirection.Magnitude > 0 then moveDirection.Unit * math.min(moveDirection.Magnitude, 1) else Vector3.zero
-	state.aimDirection = aimDirection.Unit
-	state.lastInputAt = receivedAt
+	state.lastSequence = sequence
 end)
 
 Players.PlayerAdded:Connect(connectPlayer)
@@ -193,10 +178,17 @@ for _, player in Players:GetPlayers() do
 	connectPlayer(player)
 end
 
-RunService.Heartbeat:Connect(function(deltaTime: number)
-	local now = os.clock()
+local monitorAccumulator = 0
 
-	for player, state in playerStates do
+RunService.Heartbeat:Connect(function(deltaTime: number)
+	monitorAccumulator += deltaTime
+	if monitorAccumulator < MovementConfig.ServerMonitorInterval then
+		return
+	end
+	monitorAccumulator %= MovementConfig.ServerMonitorInterval
+
+	local now = os.clock()
+	for _, state in playerStates do
 		local character = state.character
 		local humanoid = state.humanoid
 		local root = state.root
@@ -204,22 +196,40 @@ RunService.Heartbeat:Connect(function(deltaTime: number)
 			continue
 		end
 
-		local moveDirection = state.moveDirection
-		if now - state.lastInputAt > MovementConfig.InputTimeout then
-			moveDirection = Vector3.zero
+		local elapsed = math.max(now - state.lastSampleAt, MovementConfig.ServerMonitorInterval)
+		local position = root.Position
+		local planarPosition = Vector3.new(position.X, 0, position.Z)
+		local previousPlanarPosition = Vector3.new(state.lastPosition.X, 0, state.lastPosition.Z)
+		local planarVelocity = Vector3.new(root.AssemblyLinearVelocity.X, 0, root.AssemblyLinearVelocity.Z)
+		local distance = (planarPosition - previousPlanarPosition).Magnitude
+		local measuredSpeed = distance / elapsed
+		local physicalSpeed = planarVelocity.Magnitude
+		local measuredAcceleration = (planarVelocity - state.lastVelocity).Magnitude / elapsed
+
+		local teleported = distance > MovementConfig.ServerMaxTeleportDistance
+		local exceededSpeed = math.max(measuredSpeed, physicalSpeed) > MovementConfig.MaxSpeed + MovementConfig.ServerSpeedTolerance
+		local exceededAcceleration = measuredAcceleration > MovementConfig.ServerMaxAcceleration
+		local violatedMovementLimit = teleported or exceededSpeed or exceededAcceleration
+
+		if violatedMovementLimit then
+			state.consecutiveViolations += 1
+		else
+			state.consecutiveViolations = 0
+			state.lastSafeCFrame = root.CFrame
 		end
 
-		local targetSpeed = MovementConfig.MaxSpeed * math.min(moveDirection.Magnitude, 1)
-		local acceleration = if targetSpeed > state.currentSpeed then MovementConfig.Acceleration else MovementConfig.Deceleration
-		state.currentSpeed = moveTowards(state.currentSpeed, targetSpeed, acceleration * deltaTime)
-		humanoid.WalkSpeed = math.min(state.currentSpeed, MovementConfig.MaxSpeed)
-		humanoid:Move(if moveDirection.Magnitude > 0 then moveDirection.Unit else Vector3.zero, false)
-
-		local currentLook = root.CFrame.LookVector
-		local currentYaw = math.atan2(-currentLook.X, -currentLook.Z)
-		local desiredYaw = math.atan2(-state.aimDirection.X, -state.aimDirection.Z)
-		local yawDelta = math.atan2(math.sin(desiredYaw - currentYaw), math.cos(desiredYaw - currentYaw))
-		local clampedDelta = math.clamp(yawDelta, -MovementConfig.TurnSpeedRadians * deltaTime, MovementConfig.TurnSpeedRadians * deltaTime)
-		root.CFrame = CFrame.new(root.Position) * CFrame.Angles(0, currentYaw + clampedDelta, 0)
+		local shouldCorrect = teleported or state.consecutiveViolations >= MovementConfig.ServerViolationSamples
+		if shouldCorrect then
+			character:PivotTo(state.lastSafeCFrame)
+			root.AssemblyLinearVelocity = Vector3.zero
+			root.AssemblyAngularVelocity = Vector3.zero
+			state.lastPosition = state.lastSafeCFrame.Position
+			state.lastVelocity = Vector3.zero
+			state.consecutiveViolations = 0
+		else
+			state.lastPosition = position
+			state.lastVelocity = planarVelocity
+		end
+		state.lastSampleAt = now
 	end
 end)
