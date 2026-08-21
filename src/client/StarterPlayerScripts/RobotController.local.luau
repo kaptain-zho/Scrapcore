@@ -32,6 +32,8 @@ camera.CameraType = Enum.CameraType.Scriptable
 
 local currentHumanoid: Humanoid? = nil
 local currentRoot: BasePart? = nil
+local currentAimOrientation: AlignOrientation? = nil
+local currentMovementVelocity: LinearVelocity? = nil
 local smoothedVelocity = Vector3.zero
 local cameraInitialized = false
 local telemetryAccumulator = 0
@@ -42,8 +44,53 @@ local function setCharacter(character: Model)
 	local root = character:WaitForChild("HumanoidRootPart", 10)
 	if humanoid ~= nil and humanoid:IsA("Humanoid") and root ~= nil and root:IsA("BasePart") then
 		humanoid.AutoRotate = false
+
+		local oldAimAttachment = root:FindFirstChild("RobotAimAttachment")
+		if oldAimAttachment ~= nil then
+			oldAimAttachment:Destroy()
+		end
+		local oldAimOrientation = root:FindFirstChild("RobotAimOrientation")
+		if oldAimOrientation ~= nil then
+			oldAimOrientation:Destroy()
+		end
+
+		local aimAttachment = Instance.new("Attachment")
+		aimAttachment.Name = "RobotAimAttachment"
+		aimAttachment.Parent = root
+
+		local aimOrientation = Instance.new("AlignOrientation")
+		aimOrientation.Name = "RobotAimOrientation"
+		aimOrientation.Mode = Enum.OrientationAlignmentMode.OneAttachment
+		aimOrientation.Attachment0 = aimAttachment
+		aimOrientation.MaxTorque = MovementConfig.AimMaxTorque
+		aimOrientation.MaxAngularVelocity = MovementConfig.AimMaxAngularSpeed
+		aimOrientation.Responsiveness = MovementConfig.AimTurnSharpness
+		aimOrientation.RigidityEnabled = false
+		aimOrientation.ReactionTorqueEnabled = false
+		aimOrientation.CFrame = CFrame.lookAt(Vector3.zero, root.CFrame.LookVector)
+		aimOrientation.Parent = root
+
+		local movementVelocity = Instance.new("LinearVelocity")
+		movementVelocity.Name = "RobotMovementVelocity"
+		movementVelocity.Attachment0 = aimAttachment
+		movementVelocity.RelativeTo = Enum.ActuatorRelativeTo.World
+		movementVelocity.VelocityConstraintMode = Enum.VelocityConstraintMode.Plane
+		movementVelocity.PrimaryTangentAxis = Vector3.xAxis
+		movementVelocity.SecondaryTangentAxis = Vector3.zAxis
+		movementVelocity.PlaneVelocity = Vector2.zero
+		movementVelocity.ForceLimitsEnabled = true
+		movementVelocity.ForceLimitMode = Enum.ForceLimitMode.PerAxis
+		movementVelocity.MaxPlanarAxesForce = Vector2.new(
+			MovementConfig.MovementMaxPlanarForce,
+			MovementConfig.MovementMaxPlanarForce
+		)
+		movementVelocity.ReactionForceEnabled = false
+		movementVelocity.Parent = root
+
 		currentHumanoid = humanoid
 		currentRoot = root
+		currentAimOrientation = aimOrientation
+		currentMovementVelocity = movementVelocity
 		smoothedVelocity = Vector3.zero
 		cameraInitialized = false
 	end
@@ -57,6 +104,8 @@ player.CharacterRemoving:Connect(function(character: Model)
 	if currentRoot ~= nil and currentRoot:IsDescendantOf(character) then
 		currentHumanoid = nil
 		currentRoot = nil
+		currentAimOrientation = nil
+		currentMovementVelocity = nil
 		smoothedVelocity = Vector3.zero
 	end
 end)
@@ -129,13 +178,12 @@ local function getMovementSharpness(currentVelocity: Vector3, targetVelocity: Ve
 	return MovementConfig.AccelerationSharpness
 end
 
-local function rotateTowardAim(root: BasePart, aimDirection: Vector3, deltaTime: number)
-	local currentLook = root.CFrame.LookVector
-	local currentYaw = math.atan2(-currentLook.X, -currentLook.Z)
-	local desiredYaw = math.atan2(-aimDirection.X, -aimDirection.Z)
-	local yawDelta = math.atan2(math.sin(desiredYaw - currentYaw), math.cos(desiredYaw - currentYaw))
-	local turnAlpha = 1 - math.exp(-MovementConfig.AimTurnSharpness * deltaTime)
-	root.CFrame = CFrame.new(root.Position) * CFrame.Angles(0, currentYaw + yawDelta * turnAlpha, 0)
+local function rotateTowardAim(aimDirection: Vector3)
+	local aimOrientation = currentAimOrientation
+	if aimOrientation == nil then
+		return
+	end
+	aimOrientation.CFrame = CFrame.lookAt(Vector3.zero, aimDirection)
 end
 
 local function updateMovement(deltaTime: number)
@@ -158,9 +206,13 @@ local function updateMovement(deltaTime: number)
 	humanoid.AutoRotate = false
 	humanoid.WalkSpeed = speed
 	humanoid:Move(if speed > 0 then smoothedVelocity.Unit else Vector3.zero, false)
+	local movementVelocity = currentMovementVelocity
+	if movementVelocity ~= nil then
+		movementVelocity.PlaneVelocity = Vector2.new(smoothedVelocity.X, smoothedVelocity.Z)
+	end
 
 	local aimDirection = getMouseAimDirection(root)
-	rotateTowardAim(root, aimDirection, deltaTime)
+	rotateTowardAim(aimDirection)
 
 	telemetryAccumulator += deltaTime
 	local telemetryInterval = 1 / MovementConfig.ClientTelemetryRate

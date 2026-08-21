@@ -1,11 +1,39 @@
 --!strict
 
 local Players = game:GetService("Players")
+local PhysicsService = game:GetService("PhysicsService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local ServerStorage = game:GetService("ServerStorage")
 
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local MovementConfig = require(shared:WaitForChild("MovementConfig"))
+
+local ROBOT_CHASSIS_NAME = "RobotChassis"
+local LEGACY_FRONT_INDICATOR_NAME = "FrontIndicator"
+local ROBOT_VISUAL_ATTRIBUTE = "ScrapcorePlayableRobot"
+local HIDDEN_RIG_COLLISION_GROUP = "ScrapcoreHiddenRig"
+local ROBOT_TEMPLATE_NAME = "Robot_ChunkyIndustrial_B"
+local TEMPORARY_TEAM_COLOR = Color3.fromRGB(0, 170, 255)
+local TEAM_PANEL_NAMES = table.freeze({
+	"TeamPanelTop",
+	"TeamPanelLeft",
+	"TeamPanelRight",
+})
+
+local assetLibrary = ServerStorage:WaitForChild("AssetLibrary")
+local robotTemplates = assetLibrary:WaitForChild("Robots")
+local robotTemplateInstance = robotTemplates:WaitForChild(ROBOT_TEMPLATE_NAME)
+if not robotTemplateInstance:IsA("Model") then
+	error(string.format("ServerStorage.AssetLibrary.Robots.%s must be a Model", ROBOT_TEMPLATE_NAME))
+end
+local robotTemplate = robotTemplateInstance
+
+pcall(function()
+	PhysicsService:RegisterCollisionGroup(HIDDEN_RIG_COLLISION_GROUP)
+end)
+PhysicsService:CollisionGroupSetCollidable(HIDDEN_RIG_COLLISION_GROUP, "Default", false)
+PhysicsService:CollisionGroupSetCollidable(HIDDEN_RIG_COLLISION_GROUP, HIDDEN_RIG_COLLISION_GROUP, false)
 
 type PlayerState = {
 	character: Model?,
@@ -51,50 +79,140 @@ local function hideDefaultCharacter(character: Model)
 		if descendant:IsA("BasePart") then
 			descendant.Transparency = 1
 			descendant.CanCollide = false
+			descendant.CanTouch = false
+			descendant.CanQuery = false
 			descendant.CastShadow = false
+			descendant.Massless = true
+			descendant.CollisionGroup = HIDDEN_RIG_COLLISION_GROUP
 		elseif descendant:IsA("Decal") then
 			descendant.Transparency = 1
 		end
 	end
 end
 
-local function createChassis(character: Model, root: BasePart)
-	local oldChassis = character:FindFirstChild("RobotChassis")
-	if oldChassis ~= nil then
-		oldChassis:Destroy()
+local function getRequiredTemplatePart(template: Model, partName: string): BasePart
+	local instance = template:FindFirstChild(partName, true)
+	if instance == nil or not instance:IsA("BasePart") then
+		error(string.format("%s must contain BasePart %s", template:GetFullName(), partName))
+	end
+	return instance
+end
+
+local function validateRobotTemplate(template: Model)
+	local robotRoot = getRequiredTemplatePart(template, "RobotRoot")
+	local bodyCollision = getRequiredTemplatePart(template, "BodyCollision")
+	local weaponMount = template:FindFirstChild("FrontWeaponMount", true)
+	if weaponMount == nil or not weaponMount:IsA("Attachment") then
+		error(string.format("%s must contain Attachment FrontWeaponMount", template:GetFullName()))
+	end
+	if template.PrimaryPart ~= robotRoot then
+		error(string.format("%s.PrimaryPart must be RobotRoot", template:GetFullName()))
+	end
+	if (bodyCollision.Size - MovementConfig.ChassisSize).Magnitude > 0.01 then
+		error(string.format("%s.BodyCollision must match MovementConfig.ChassisSize", template:GetFullName()))
+	end
+	if template:FindFirstChild("Hammer_Prototype", true) ~= nil then
+		error(string.format("%s must not contain an active hammer", template:GetFullName()))
 	end
 
-	local chassis = Instance.new("Part")
-	chassis.Name = "RobotChassis"
-	chassis.Size = MovementConfig.ChassisSize
-	chassis.Color = Color3.fromRGB(92, 101, 112)
-	chassis.Material = Enum.Material.Metal
-	chassis.TopSurface = Enum.SurfaceType.Smooth
-	chassis.BottomSurface = Enum.SurfaceType.Smooth
-	chassis.CanCollide = false
-	chassis.Massless = true
-	chassis.CFrame = root.CFrame
+	for _, panelName in TEAM_PANEL_NAMES do
+		getRequiredTemplatePart(template, panelName)
+	end
+
+	local collidableParts = 0
+	for _, descendant in template:GetDescendants() do
+		if descendant:IsA("BasePart") then
+			if descendant.CanCollide then
+				collidableParts += 1
+			end
+			if descendant ~= bodyCollision and (descendant.Anchored or not descendant.Massless or descendant.CanCollide) then
+				error(string.format("%s contains unsafe decorative part %s", template:GetFullName(), descendant:GetFullName()))
+			end
+		end
+	end
+	if bodyCollision.Anchored or not bodyCollision.CanCollide or collidableParts ~= 1 then
+		error(string.format("%s must contain exactly one unanchored gameplay collision body", template:GetFullName()))
+	end
+end
+
+validateRobotTemplate(robotTemplate)
+
+local function removeExistingChassis(character: Model)
+	for _, child in character:GetChildren() do
+		if
+			child.Name == ROBOT_CHASSIS_NAME
+			or child.Name == LEGACY_FRONT_INDICATOR_NAME
+			or child:GetAttribute(ROBOT_VISUAL_ATTRIBUTE) == true
+		then
+			child:Destroy()
+		end
+	end
+end
+
+local function createChassis(character: Model, humanoid: Humanoid, root: BasePart)
+	removeExistingChassis(character)
+
+	local chassis = robotTemplate:Clone()
+	chassis.Name = ROBOT_CHASSIS_NAME
+	chassis:SetAttribute(ROBOT_VISUAL_ATTRIBUTE, true)
+
+	local hammer = chassis:FindFirstChild("Hammer_Prototype", true)
+	if hammer ~= nil then
+		hammer:Destroy()
+	end
+
+	local robotRoot = getRequiredTemplatePart(chassis, "RobotRoot")
+	local bodyCollision = getRequiredTemplatePart(chassis, "BodyCollision")
+	local sourceRootCFrame = robotRoot.CFrame
+	local verticalOffset = MovementConfig.ChassisGroundHeight - humanoid.HipHeight
+	local chassisRootCFrame = root.CFrame * CFrame.new(0, verticalOffset, 0)
+	chassis.PrimaryPart = robotRoot
+
+	for _, panelName in TEAM_PANEL_NAMES do
+		local panel = getRequiredTemplatePart(chassis, panelName)
+		panel.Color = TEMPORARY_TEAM_COLOR
+	end
+
+	local chassisParts: {BasePart} = {}
+	for _, descendant in chassis:GetDescendants() do
+		if descendant:IsA("BasePart") then
+			local rootOffset = sourceRootCFrame:ToObjectSpace(descendant.CFrame)
+			descendant.CFrame = chassisRootCFrame * rootOffset
+			descendant.Anchored = false
+			if descendant == bodyCollision then
+				descendant.Size = MovementConfig.ChassisSize
+				descendant.Transparency = 1
+				descendant.CanCollide = true
+				descendant.CanTouch = false
+				descendant.CanQuery = true
+				descendant.Massless = true
+				descendant.CollisionGroup = "Default"
+				descendant.CustomPhysicalProperties = PhysicalProperties.new(
+					MovementConfig.CollisionDensity,
+					MovementConfig.CollisionFriction,
+					MovementConfig.CollisionElasticity,
+					100,
+					100
+				)
+			else
+				descendant.CanCollide = false
+				descendant.CanTouch = false
+				descendant.CanQuery = false
+				descendant.Massless = true
+				descendant.CollisionGroup = HIDDEN_RIG_COLLISION_GROUP
+			end
+			table.insert(chassisParts, descendant)
+		end
+	end
+
 	chassis.Parent = character
-
-	local chassisWeld = Instance.new("WeldConstraint")
-	chassisWeld.Part0 = root
-	chassisWeld.Part1 = chassis
-	chassisWeld.Parent = chassis
-
-	local frontIndicator = Instance.new("Part")
-	frontIndicator.Name = "FrontIndicator"
-	frontIndicator.Size = Vector3.new(MovementConfig.ChassisSize.X * 0.6, 0.25, 0.5)
-	frontIndicator.Color = Color3.fromRGB(238, 168, 64)
-	frontIndicator.Material = Enum.Material.Neon
-	frontIndicator.CanCollide = false
-	frontIndicator.Massless = true
-	frontIndicator.CFrame = root.CFrame * CFrame.new(0, MovementConfig.ChassisSize.Y * 0.5 + 0.2, -MovementConfig.ChassisSize.Z * 0.5 + 0.35)
-	frontIndicator.Parent = character
-
-	local indicatorWeld = Instance.new("WeldConstraint")
-	indicatorWeld.Part0 = chassis
-	indicatorWeld.Part1 = frontIndicator
-	indicatorWeld.Parent = frontIndicator
+	for _, part in chassisParts do
+		local rootWeld = Instance.new("WeldConstraint")
+		rootWeld.Name = "GameplayRootWeld"
+		rootWeld.Part0 = root
+		rootWeld.Part1 = part
+		rootWeld.Parent = part
+	end
 end
 
 local function configureCharacter(player: Player, character: Model)
@@ -106,13 +224,16 @@ local function configureCharacter(player: Player, character: Model)
 	end
 
 	hideDefaultCharacter(character)
-	createChassis(character, root)
+	root.Massless = false
+	createChassis(character, humanoid, root)
 
 	humanoid.AutoRotate = false
 	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	humanoid.UseJumpPower = true
 	humanoid.JumpPower = 0
 	humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
+	humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+	humanoid:ChangeState(Enum.HumanoidStateType.Running)
 
 	local now = os.clock()
 	playerStates[player] = {
