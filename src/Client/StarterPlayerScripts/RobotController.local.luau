@@ -1,0 +1,140 @@
+--!strict
+
+local Players = game:GetService("Players")
+local ContextActionService = game:GetService("ContextActionService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local shared = ReplicatedStorage:WaitForChild("Shared")
+local MovementConfig = require(shared:WaitForChild("MovementConfig"))
+local movementRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("RobotMovementInput") :: RemoteEvent
+local camera = assert(Workspace.CurrentCamera, "CurrentCamera is required for robot controls") :: Camera
+
+local function sinkDefaultMovement(): Enum.ContextActionResult
+	return Enum.ContextActionResult.Sink
+end
+
+ContextActionService:BindActionAtPriority(
+	"SinkDefaultRobotMovement",
+	sinkDefaultMovement,
+	false,
+	Enum.ContextActionPriority.High.Value,
+	Enum.KeyCode.W,
+	Enum.KeyCode.A,
+	Enum.KeyCode.S,
+	Enum.KeyCode.D,
+	Enum.KeyCode.Space
+)
+camera.CameraType = Enum.CameraType.Scriptable
+
+local currentRoot: BasePart? = nil
+local cameraInitialized = false
+local sendAccumulator = 0
+
+local function setCharacter(character: Model)
+	local root = character:WaitForChild("HumanoidRootPart", 10)
+	if root ~= nil and root:IsA("BasePart") then
+		currentRoot = root
+		cameraInitialized = false
+	end
+end
+
+player.CharacterAdded:Connect(function(character: Model)
+	task.spawn(setCharacter, character)
+end)
+
+player.CharacterRemoving:Connect(function(character: Model)
+	if currentRoot ~= nil and currentRoot:IsDescendantOf(character) then
+		currentRoot = nil
+	end
+end)
+
+if player.Character ~= nil then
+	task.spawn(setCharacter, player.Character)
+end
+
+local function getKeyboardAxes(): (number, number)
+	local horizontal = 0
+	local vertical = 0
+
+	if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+		horizontal -= 1
+	end
+	if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+		horizontal += 1
+	end
+	if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+		vertical += 1
+	end
+	if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+		vertical -= 1
+	end
+
+	return horizontal, vertical
+end
+
+local function getCameraRelativeMovement(): Vector3
+	local horizontal, vertical = getKeyboardAxes()
+	local forward = Vector3.new(camera.CFrame.LookVector.X, 0, camera.CFrame.LookVector.Z)
+	local right = Vector3.new(camera.CFrame.RightVector.X, 0, camera.CFrame.RightVector.Z)
+	if forward.Magnitude <= 0 or right.Magnitude <= 0 then
+		return Vector3.zero
+	end
+
+	local movement = right.Unit * horizontal + forward.Unit * vertical
+	return if movement.Magnitude > 1 then movement.Unit else movement
+end
+
+local function getMouseAimDirection(root: BasePart): Vector3
+	local mousePosition = UserInputService:GetMouseLocation()
+	local ray = camera:ViewportPointToRay(mousePosition.X, mousePosition.Y)
+	if math.abs(ray.Direction.Y) < 0.001 then
+		return root.CFrame.LookVector
+	end
+
+	local distance = (root.Position.Y - ray.Origin.Y) / ray.Direction.Y
+	if distance <= 0 then
+		return root.CFrame.LookVector
+	end
+
+	local hitPosition = ray.Origin + ray.Direction * distance
+	local aimDirection = Vector3.new(hitPosition.X - root.Position.X, 0, hitPosition.Z - root.Position.Z)
+	return if aimDirection.Magnitude > 0.001 then aimDirection.Unit else root.CFrame.LookVector
+end
+
+RunService:BindToRenderStep("RobotTopDownController", Enum.RenderPriority.Camera.Value + 1, function(deltaTime: number)
+	local activeCamera = Workspace.CurrentCamera
+	if activeCamera == nil then
+		return
+	end
+	camera = activeCamera
+	camera.CameraType = Enum.CameraType.Scriptable
+
+	local root = currentRoot
+	if root == nil or root.Parent == nil then
+		return
+	end
+
+	local lookAtPosition = root.Position + Vector3.new(0, MovementConfig.CameraLookAtHeight, 0)
+	local desiredCamera = CFrame.lookAt(root.Position + MovementConfig.CameraOffset, lookAtPosition)
+	if not cameraInitialized then
+		camera.CFrame = desiredCamera
+		cameraInitialized = true
+	else
+		local followAlpha = 1 - math.exp(-MovementConfig.CameraFollowSharpness * deltaTime)
+		camera.CFrame = camera.CFrame:Lerp(desiredCamera, followAlpha)
+	end
+
+	sendAccumulator += deltaTime
+	if sendAccumulator < 1 / MovementConfig.InputSendRate then
+		return
+	end
+	sendAccumulator %= 1 / MovementConfig.InputSendRate
+
+	local moveDirection = getCameraRelativeMovement()
+	local aimDirection = getMouseAimDirection(root)
+	movementRemote:FireServer(moveDirection, aimDirection)
+end)
