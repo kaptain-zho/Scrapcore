@@ -8,6 +8,9 @@
 *.rbxm
 *.rbxmx
 
+# Versioned source models (keep generated/exported models ignored elsewhere)
+!assets/models/**/*.rbxmx
+
 # Script Sync / local synchronization state
 .script-sync/
 .scriptsync/
