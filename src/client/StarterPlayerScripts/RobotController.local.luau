@@ -10,8 +10,13 @@ local Workspace = game:GetService("Workspace")
 local player = Players.LocalPlayer
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local MovementConfig = require(shared:WaitForChild("MovementConfig"))
+local CombatConfig = require(shared:WaitForChild("CombatConfig"))
 local telemetryRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("RobotMovementTelemetry") :: RemoteEvent
 local camera = assert(Workspace.CurrentCamera, "CurrentCamera is required for robot controls") :: Camera
+
+local KNOCKBACK_VELOCITY_ATTRIBUTE = "CombatKnockbackVelocity"
+local KNOCKBACK_STARTED_AT_ATTRIBUTE = "CombatKnockbackStartedAt"
+local KNOCKBACK_UNTIL_ATTRIBUTE = "CombatKnockbackUntil"
 
 local function sinkDefaultMovement(): Enum.ContextActionResult
 	return Enum.ContextActionResult.Sink
@@ -186,6 +191,42 @@ local function rotateTowardAim(aimDirection: Vector3)
 	aimOrientation.CFrame = CFrame.lookAt(Vector3.zero, aimDirection)
 end
 
+local function isFinite(value: number): boolean
+	return value == value and value > -math.huge and value < math.huge
+end
+
+local function getAuthorizedKnockback(root: BasePart): Vector3
+	local character = root.Parent
+	if character == nil then
+		return Vector3.zero
+	end
+	local velocityValue = character:GetAttribute(KNOCKBACK_VELOCITY_ATTRIBUTE)
+	local startedAtValue = character:GetAttribute(KNOCKBACK_STARTED_AT_ATTRIBUTE)
+	local untilValue = character:GetAttribute(KNOCKBACK_UNTIL_ATTRIBUTE)
+	if typeof(velocityValue) ~= "Vector3" or typeof(startedAtValue) ~= "number" or typeof(untilValue) ~= "number" then
+		return Vector3.zero
+	end
+
+	local velocity = velocityValue :: Vector3
+	local startedAt = startedAtValue :: number
+	local untilTime = untilValue :: number
+	if
+		not isFinite(velocity.X)
+		or not isFinite(velocity.Y)
+		or not isFinite(velocity.Z)
+		or not isFinite(startedAt)
+		or not isFinite(untilTime)
+		or velocity.Magnitude > CombatConfig.HorizontalKnockbackSpeed + 0.01
+		or untilTime - startedAt > CombatConfig.KnockbackDuration + 0.01
+	then
+		return Vector3.zero
+	end
+
+	local now = Workspace:GetServerTimeNow()
+	local alpha = math.clamp((now - startedAt) / math.max(untilTime - startedAt, 0.001), 0, 1)
+	return if now <= untilTime then velocity * (1 - alpha) else Vector3.zero
+end
+
 local function updateMovement(deltaTime: number)
 	local humanoid = currentHumanoid
 	local root = currentRoot
@@ -207,8 +248,12 @@ local function updateMovement(deltaTime: number)
 	humanoid.WalkSpeed = speed
 	humanoid:Move(if speed > 0 then smoothedVelocity.Unit else Vector3.zero, false)
 	local movementVelocity = currentMovementVelocity
+	local knockbackVelocity = getAuthorizedKnockback(root)
 	if movementVelocity ~= nil then
-		movementVelocity.PlaneVelocity = Vector2.new(smoothedVelocity.X, smoothedVelocity.Z)
+		movementVelocity.PlaneVelocity = Vector2.new(
+			smoothedVelocity.X + knockbackVelocity.X,
+			smoothedVelocity.Z + knockbackVelocity.Z
+		)
 	end
 
 	local aimDirection = getMouseAimDirection(root)

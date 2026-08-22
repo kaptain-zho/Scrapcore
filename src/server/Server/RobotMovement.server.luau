@@ -5,15 +5,18 @@ local PhysicsService = game:GetService("PhysicsService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
+local Workspace = game:GetService("Workspace")
 
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local MovementConfig = require(shared:WaitForChild("MovementConfig"))
+local CombatConfig = require(shared:WaitForChild("CombatConfig"))
 
 local ROBOT_CHASSIS_NAME = "RobotChassis"
 local LEGACY_FRONT_INDICATOR_NAME = "FrontIndicator"
 local ROBOT_VISUAL_ATTRIBUTE = "ScrapcorePlayableRobot"
 local HIDDEN_RIG_COLLISION_GROUP = "ScrapcoreHiddenRig"
 local ROBOT_TEMPLATE_NAME = "Robot_ChunkyIndustrial_B"
+local KNOCKBACK_UNTIL_ATTRIBUTE = "CombatKnockbackUntil"
 local TEMPORARY_TEAM_COLOR = Color3.fromRGB(0, 170, 255)
 local TEAM_PANEL_NAMES = table.freeze({
 	"TeamPanelTop",
@@ -327,9 +330,15 @@ RunService.Heartbeat:Connect(function(deltaTime: number)
 		local physicalSpeed = planarVelocity.Magnitude
 		local measuredAcceleration = (planarVelocity - state.lastVelocity).Magnitude / elapsed
 
+		local knockbackUntil = character:GetAttribute(KNOCKBACK_UNTIL_ATTRIBUTE)
+		local underAuthorizedKnockback = typeof(knockbackUntil) == "number"
+			and isFinite(knockbackUntil)
+			and Workspace:GetServerTimeNow() <= knockbackUntil
+		local speedAllowance = if underAuthorizedKnockback then CombatConfig.HorizontalKnockbackSpeed else 0
+		local accelerationAllowance = if underAuthorizedKnockback then CombatConfig.KnockbackAccelerationAllowance else 0
 		local teleported = distance > MovementConfig.ServerMaxTeleportDistance
-		local exceededSpeed = math.max(measuredSpeed, physicalSpeed) > MovementConfig.MaxSpeed + MovementConfig.ServerSpeedTolerance
-		local exceededAcceleration = measuredAcceleration > MovementConfig.ServerMaxAcceleration
+		local exceededSpeed = math.max(measuredSpeed, physicalSpeed) > MovementConfig.MaxSpeed + MovementConfig.ServerSpeedTolerance + speedAllowance
+		local exceededAcceleration = measuredAcceleration > MovementConfig.ServerMaxAcceleration + accelerationAllowance
 		local violatedMovementLimit = teleported or exceededSpeed or exceededAcceleration
 
 		if violatedMovementLimit then
