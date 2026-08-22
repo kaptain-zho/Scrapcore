@@ -10,6 +10,7 @@ local Workspace = game:GetService("Workspace")
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local MovementConfig = require(shared:WaitForChild("MovementConfig"))
 local CombatConfig = require(shared:WaitForChild("CombatConfig"))
+local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 
 local ROBOT_CHASSIS_NAME = "RobotChassis"
 local LEGACY_FRONT_INDICATOR_NAME = "FrontIndicator"
@@ -75,6 +76,14 @@ local playerStates: {[Player]: PlayerState} = {}
 
 local function isFinite(value: number): boolean
 	return value == value and value > -math.huge and value < math.huge
+end
+
+local function getMobilityMultiplier(player: Player): number
+	local rankValue = player:GetAttribute("MobilityUpgradeLevel")
+	local rank = if typeof(rankValue) == "number" and isFinite(rankValue)
+		then math.clamp(math.floor(rankValue), 0, ProgressionConfig.MaxUpgradeRank)
+		else 0
+	return ProgressionConfig.GetMobilityMultiplier(rank)
 end
 
 local function hideDefaultCharacter(character: Model)
@@ -312,7 +321,7 @@ RunService.Heartbeat:Connect(function(deltaTime: number)
 	monitorAccumulator %= MovementConfig.ServerMonitorInterval
 
 	local now = os.clock()
-	for _, state in playerStates do
+	for player, state in playerStates do
 		local character = state.character
 		local humanoid = state.humanoid
 		local root = state.root
@@ -334,11 +343,13 @@ RunService.Heartbeat:Connect(function(deltaTime: number)
 		local underAuthorizedKnockback = typeof(knockbackUntil) == "number"
 			and isFinite(knockbackUntil)
 			and Workspace:GetServerTimeNow() <= knockbackUntil
-		local speedAllowance = if underAuthorizedKnockback then CombatConfig.HorizontalKnockbackSpeed else 0
+		local mobilityMultiplier = getMobilityMultiplier(player)
+		local legalMaxSpeed = MovementConfig.MaxSpeed * mobilityMultiplier
+		local speedAllowance = if underAuthorizedKnockback then CombatConfig.MaxHorizontalKnockbackSpeed else 0
 		local accelerationAllowance = if underAuthorizedKnockback then CombatConfig.KnockbackAccelerationAllowance else 0
 		local teleported = distance > MovementConfig.ServerMaxTeleportDistance
-		local exceededSpeed = math.max(measuredSpeed, physicalSpeed) > MovementConfig.MaxSpeed + MovementConfig.ServerSpeedTolerance + speedAllowance
-		local exceededAcceleration = measuredAcceleration > MovementConfig.ServerMaxAcceleration + accelerationAllowance
+		local exceededSpeed = math.max(measuredSpeed, physicalSpeed) > legalMaxSpeed + MovementConfig.ServerSpeedTolerance + speedAllowance
+		local exceededAcceleration = measuredAcceleration > MovementConfig.ServerMaxAcceleration * mobilityMultiplier + accelerationAllowance
 		local violatedMovementLimit = teleported or exceededSpeed or exceededAcceleration
 
 		if violatedMovementLimit then

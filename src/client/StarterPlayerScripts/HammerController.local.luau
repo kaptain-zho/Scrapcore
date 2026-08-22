@@ -9,6 +9,7 @@ local Workspace = game:GetService("Workspace")
 local player = Players.LocalPlayer
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local CombatConfig = require(shared:WaitForChild("CombatConfig"))
+local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local attackRequestRemote = remotes:WaitForChild("HammerAttackRequest") :: RemoteEvent
 local attackBroadcastRemote = remotes:WaitForChild("HammerAttackBroadcast") :: RemoteEvent
@@ -27,6 +28,18 @@ local nextLocalAttackAt = 0
 
 local function isFinite(value: number): boolean
 	return value == value and value > -math.huge and value < math.huge
+end
+
+local function getCurrentCooldown(): number
+	local rankValue = player:GetAttribute("RecoveryUpgradeLevel")
+	local rank = if typeof(rankValue) == "number" and isFinite(rankValue)
+		then math.clamp(math.floor(rankValue), 0, ProgressionConfig.MaxUpgradeRank)
+		else 0
+	return math.clamp(
+		CombatConfig.Cooldown * ProgressionConfig.GetRecoveryMultiplier(rank),
+		CombatConfig.MinCooldown,
+		CombatConfig.Cooldown
+	)
 end
 
 local function getWeaponMotor(character: Model): Motor6D?
@@ -94,7 +107,7 @@ local function requestAttack()
 	if now < nextLocalAttackAt then
 		return
 	end
-	nextLocalAttackAt = now + CombatConfig.Cooldown
+	nextLocalAttackAt = now + getCurrentCooldown()
 	requestSequence += 1
 	beginSwing(character, now, -requestSequence, true)
 	attackRequestRemote:FireServer(requestSequence)

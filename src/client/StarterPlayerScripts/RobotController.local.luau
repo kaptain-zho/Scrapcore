@@ -11,6 +11,7 @@ local player = Players.LocalPlayer
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local MovementConfig = require(shared:WaitForChild("MovementConfig"))
 local CombatConfig = require(shared:WaitForChild("CombatConfig"))
+local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local telemetryRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("RobotMovementTelemetry") :: RemoteEvent
 local camera = assert(Workspace.CurrentCamera, "CurrentCamera is required for robot controls") :: Camera
 
@@ -195,6 +196,14 @@ local function isFinite(value: number): boolean
 	return value == value and value > -math.huge and value < math.huge
 end
 
+local function getCurrentMaxSpeed(): number
+	local rankValue = player:GetAttribute("MobilityUpgradeLevel")
+	local rank = if typeof(rankValue) == "number" and isFinite(rankValue)
+		then math.clamp(math.floor(rankValue), 0, ProgressionConfig.MaxUpgradeRank)
+		else 0
+	return MovementConfig.MaxSpeed * ProgressionConfig.GetMobilityMultiplier(rank)
+end
+
 local function getAuthorizedKnockback(root: BasePart): Vector3
 	local character = root.Parent
 	if character == nil then
@@ -216,7 +225,7 @@ local function getAuthorizedKnockback(root: BasePart): Vector3
 		or not isFinite(velocity.Z)
 		or not isFinite(startedAt)
 		or not isFinite(untilTime)
-		or velocity.Magnitude > CombatConfig.HorizontalKnockbackSpeed + 0.01
+		or velocity.Magnitude > CombatConfig.MaxHorizontalKnockbackSpeed + 0.01
 		or untilTime - startedAt > CombatConfig.KnockbackDuration + 0.01
 	then
 		return Vector3.zero
@@ -235,7 +244,8 @@ local function updateMovement(deltaTime: number)
 	end
 
 	local moveDirection = getCameraRelativeMovement()
-	local targetVelocity = moveDirection * MovementConfig.MaxSpeed
+	local currentMaxSpeed = getCurrentMaxSpeed()
+	local targetVelocity = moveDirection * currentMaxSpeed
 	local movementSharpness = getMovementSharpness(smoothedVelocity, targetVelocity)
 	local movementAlpha = 1 - math.exp(-movementSharpness * deltaTime)
 	smoothedVelocity = smoothedVelocity:Lerp(targetVelocity, movementAlpha)
@@ -243,7 +253,7 @@ local function updateMovement(deltaTime: number)
 		smoothedVelocity = Vector3.zero
 	end
 
-	local speed = math.min(smoothedVelocity.Magnitude, MovementConfig.MaxSpeed)
+	local speed = math.min(smoothedVelocity.Magnitude, currentMaxSpeed)
 	humanoid.AutoRotate = false
 	humanoid.WalkSpeed = speed
 	humanoid:Move(if speed > 0 then smoothedVelocity.Unit else Vector3.zero, false)

@@ -7,6 +7,11 @@ local Workspace = game:GetService("Workspace")
 
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local CombatConfig = require(shared:WaitForChild("CombatConfig"))
+local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
+local BreakableObjectService = require(script.Parent:WaitForChild("BreakableObjectService"))
+
+ProgressionService.Init()
+BreakableObjectService.Init()
 
 local ROBOT_CHASSIS_NAME = "RobotChassis"
 local EQUIPPED_HAMMER_NAME = "EquippedHammer"
@@ -205,8 +210,8 @@ local function getTargetFromPart(part: BasePart): (Model?, Humanoid?, BasePart?)
 	return nil, nil, nil
 end
 
-local function hasLineOfSight(origin: Vector3, target: Model, targetRoot: BasePart, attacker: Model): boolean
-	local direction = targetRoot.Position - origin
+local function hasLineOfSight(origin: Vector3, target: Instance, targetPart: BasePart, attacker: Model): boolean
+	local direction = targetPart.Position - origin
 	if direction.Magnitude <= 0.01 then
 		return true
 	end
@@ -219,7 +224,12 @@ local function hasLineOfSight(origin: Vector3, target: Model, targetRoot: BasePa
 	return result == nil or result.Instance:IsDescendantOf(target)
 end
 
-local function applyHorizontalKnockback(attackerRoot: BasePart, target: Model, targetRoot: BasePart)
+local function applyHorizontalKnockback(
+	attackerRoot: BasePart,
+	target: Model,
+	targetRoot: BasePart,
+	knockbackSpeed: number
+)
 	local displacement = targetRoot.Position - attackerRoot.Position
 	local horizontal = Vector3.new(displacement.X, 0, displacement.Z)
 	if horizontal.Magnitude <= 0.01 then
@@ -230,16 +240,39 @@ local function applyHorizontalKnockback(attackerRoot: BasePart, target: Model, t
 		return
 	end
 
+	local safeKnockbackSpeed = math.clamp(
+		knockbackSpeed,
+		0,
+		CombatConfig.MaxHorizontalKnockbackSpeed
+	)
 	local direction = horizontal.Unit
-	local knockbackVelocity = direction * CombatConfig.HorizontalKnockbackSpeed
+	local knockbackVelocity = direction * safeKnockbackSpeed
 	local startedAt = Workspace:GetServerTimeNow()
 	target:SetAttribute(KNOCKBACK_VELOCITY_ATTRIBUTE, knockbackVelocity)
 	target:SetAttribute(KNOCKBACK_STARTED_AT_ATTRIBUTE, startedAt)
 	target:SetAttribute(KNOCKBACK_UNTIL_ATTRIBUTE, startedAt + CombatConfig.KnockbackDuration)
 
-	local impulse = knockbackVelocity * targetRoot.AssemblyMass 	targetRoot:ApplyImpulse(impulse)  	task.delay(CombatConfig.KnockbackDuration, function() 		if 			target.Parent == nil 			or targetRoot.Parent == nil 			or target:GetAttribute("ScrapcoreCombatTarget") ~= true 		then 			return 		end 		local currentVelocity = targetRoot.AssemblyLinearVelocity 		targetRoot.AssemblyLinearVelocity = Vector3.new(0, currentVelocity.Y, 0) 	end) end
+	local impulse = knockbackVelocity * targetRoot.AssemblyMass
+	targetRoot:ApplyImpulse(impulse)
+	task.delay(CombatConfig.KnockbackDuration, function()
+		if
+			target.Parent == nil
+			or targetRoot.Parent == nil
+			or target:GetAttribute("ScrapcoreCombatTarget") ~= true
+		then
+			return
+		end
+		local currentVelocity = targetRoot.AssemblyLinearVelocity
+		targetRoot.AssemblyLinearVelocity = Vector3.new(0, currentVelocity.Y, 0)
+	end)
+end
 
-local function resolveAttack(player: Player, expectedCharacter: Model)
+local function resolveAttack(
+	player: Player,
+	expectedCharacter: Model,
+	attackDamage: number,
+	knockbackSpeed: number
+)
 	local character, humanoid, attackerRoot = getAliveCharacter(player)
 	if character == nil or humanoid == nil or attackerRoot == nil or character ~= expectedCharacter then
 		return
@@ -281,7 +314,32 @@ local function resolveAttack(player: Player, expectedCharacter: Model)
 	local nearbyParts = Workspace:GetPartBoundsInRadius(hitOrigin, CombatConfig.HitQueryRadius, overlapParams)
 
 	local hitHumanoids: {[Humanoid]: boolean} = {}
+	local hitBreakables: {[Model]: boolean} = {}
 	for _, part in nearbyParts do
+		local breakable = BreakableObjectService.GetBreakableFromPart(part)
+		if breakable ~= nil then
+			if hitBreakables[breakable] == true then
+				continue
+			end
+			hitBreakables[breakable] = true
+
+			local targetPart = breakable.PrimaryPart
+			if targetPart == nil then
+				continue
+			end
+			local targetOffset = targetPart.Position - attackerRoot.Position
+			if
+				targetOffset.Magnitude > CombatConfig.Range
+				or math.abs(targetOffset.Y) > CombatConfig.MaxVerticalDifference
+				or not hasLineOfSight(mount.WorldPosition, breakable, targetPart, character)
+			then
+				continue
+			end
+
+			BreakableObjectService.Damage(breakable, player, attackDamage)
+			continue
+		end
+
 		local target, targetHumanoid, targetRoot = getTargetFromPart(part)
 		if
 			target == nil
@@ -303,8 +361,13 @@ local function resolveAttack(player: Player, expectedCharacter: Model)
 		end
 
 		hitHumanoids[targetHumanoid] = true
-		targetHumanoid:TakeDamage(CombatConfig.Damage)
-		applyHorizontalKnockback(attackerRoot, target, targetRoot)
+		local healthBefore = targetHumanoid.Health
+		targetHumanoid:TakeDamage(attackDamage)
+		applyHorizontalKnockback(attackerRoot, target, targetRoot, knockbackSpeed)
+		if healthBefore > 0 and targetHumanoid.Health <= 0 then
+			local targetPlayer = Players:GetPlayerFromCharacter(target)
+			ProgressionService.AwardElimination(player, targetPlayer, targetHumanoid)
+		end
 	end
 end
 
@@ -356,14 +419,30 @@ local function handleAttackRequest(player: Player, sequenceValue: unknown, ...: 
 		return
 	end
 
-	state.nextAttackAt = now + CombatConfig.Cooldown
+	local cooldown = math.clamp(
+		ProgressionService.GetHammerCooldown(player, CombatConfig.Cooldown),
+		CombatConfig.MinCooldown,
+		CombatConfig.Cooldown
+	)
+	local attackDamage = math.clamp(
+		ProgressionService.GetHammerDamage(player, CombatConfig.Damage),
+		0,
+		CombatConfig.MaxDamage
+	)
+	local knockbackSpeed = math.clamp(
+		ProgressionService.GetHammerKnockback(player, CombatConfig.HorizontalKnockbackSpeed),
+		0,
+		CombatConfig.MaxHorizontalKnockbackSpeed
+	)
+
+	state.nextAttackAt = now + cooldown
 	state.attackSerial += 1
 	state.acceptedAttacks += 1
 	player:SetAttribute("HammerAcceptedAttackCount", state.acceptedAttacks)
 	attackBroadcastRemote:FireAllClients(player, state.attackSerial, now)
 
 	task.delay(impactDelay, function()
-		resolveAttack(player, character)
+		resolveAttack(player, character, attackDamage, knockbackSpeed)
 	end)
 end
 
