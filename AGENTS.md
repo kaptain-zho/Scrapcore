@@ -4,11 +4,11 @@
 
 Scrapcore PvP is a Roblox robot-combat experience currently in its foundation phase. Treat the roadmap as a living plan and prove ideas through playtests before expanding scope. Do not begin a later phase merely because earlier code exists; satisfy the phase's advancement gate first.
 
-The core loop is:
+The core loop currently being proven is:
 
-> Lobby -> choose robot -> deploy -> fight and upgrade -> extract or get destroyed -> improve loadout -> deploy again
+> Deploy basic bot -> destroy objects or fight players -> earn XP -> level up -> upgrade stats -> evolve later -> die and reset -> redeploy
 
-The immediate product question is whether controlling a robot and fighting another player is fun enough that both players want to deploy again. Prototype with simple geometry and narrow experiments before investing in content, progression, economy, or polished assets.
+The immediate product question is whether responsive robot combat plus temporary per-life growth makes players want to redeploy. Prototype with simple geometry and narrow experiments before investing in permanent progression, economy, classes, or polished assets.
 
 ## Design pillars
 

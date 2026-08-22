@@ -7,13 +7,15 @@
 
 ## 1. Current project direction
 
-Players join a social robot workshop lobby, build or select a combat robot, and choose when to deploy into a continuous open PvP arena. In the arena they fight, collect scrap, gain temporary upgrades, pursue bounties, and eventually return to the lobby through extraction or destruction.
+Players deploy as a basic robot into a continuous arena, destroy graybox objectives or fight other players, earn temporary XP, level up, and spend upgrade points to become stronger during that life. Destruction resets the run and returns the player quickly to a basic bot for another deployment.
 
 **Core loop:**
 
-> Lobby → choose robot → deploy → fight and upgrade → extract or get destroyed → improve loadout → deploy again
+> Deploy basic bot → destroy objects or fight players → earn XP → level up → upgrade stats → evolve later → die and reset → redeploy
 
-This direction is our starting hypothesis. It is not a permanent promise. Classes, extraction, map size, player count, progression, and game modes should change whenever testing shows a better answer.
+This per-life arena-evolution loop is the current hypothesis to prove before spinner movement, classes, extraction, or permanent progression resume. Temporary levels, XP, upgrade points, and combat-stat upgrades reset on death; they are not account progression.
+
+Class choices are planned as later evolution decisions at **Level 8** and **Level 20**. Those gates are product targets only: no classes, class UI, or class-specific abilities belong in the current progression prototype. The first test must establish that earning and spending temporary power is understandable and makes players want another run.
 
 ## 2. Design pillars
 
@@ -99,7 +101,13 @@ Do not begin full production until the project can be opened, tested, published 
 - One melee weapon and one ranged or utility weapon.
 - Health, damage, knockback, elimination, and instant reset.
 - Clear hit, miss, damage, cooldown, and destruction feedback.
+- A graybox per-life XP loop with breakable arena objects and five capped stat upgrades.
+- A rapid death reset that removes all temporary levels and combat upgrades before redeployment.
 - Simple two-player and four-player tests.
+
+Spinner movement and class implementation are paused until this progression loop is proven. Level 8 and Level 20 class choices remain planned evolution gates, not Phase 1 implementation scope.
+
+Player-elimination XP is provisional. Assist rewards, repeated-victim farming penalties, and level-difference reward scaling require later multiplayer tuning and are not part of this prototype.
 
 ### Questions to answer
 
@@ -110,6 +118,9 @@ Do not begin full production until the project can be opened, tested, published 
 - Does knockback improve fights or make them random?
 - What is the ideal time-to-eliminate?
 - Does mobile aim assistance help without taking over combat?
+- Is earning XP from objects and PvP readable, paced well, and worth taking arena risks for?
+- Do temporary stat choices create a satisfying run without making fresh bots irrelevant?
+- Does losing all temporary run power on death encourage immediate redeployment rather than quitting?
 
 ### Gate
 
@@ -127,20 +138,18 @@ No shop, season pass, giant map, detailed garage, ranked mode, complicated craft
 
 ### Player flow
 
-1. Spawn in a simple workshop lobby.
-2. See the arena, current leaders, and a clear **Deploy** button.
-3. Select one of three prototype loadouts.
-4. Choose or receive a safe deployment zone.
-5. Enter the continuous arena.
-6. Fight players and obtain scrap/XP.
-7. Select temporary combat upgrades during that life.
-8. Get destroyed or use a prototype extraction point.
-9. Return to the lobby and redeploy quickly.
+1. Deploy a basic bot into the continuous arena.
+2. Destroy objects or fight players to earn temporary XP.
+3. Level up and spend points on temporary combat-stat upgrades.
+4. Reach a planned class-choice gate at Level 8 and, later, Level 20 once classes exist.
+5. Continue taking greater arena risks as the bot becomes stronger.
+6. Get destroyed and reset all temporary levels, XP, points, and upgrades.
+7. Redeploy quickly as a basic bot and begin another run.
 
 ### Systems
 
 - Continuous arena server with 8–12 players for initial tests.
-- Three distinct prototype builds, each with obvious strengths and weaknesses.
+- A basic bot whose per-life upgrades create the first build decisions.
 - Four to six temporary upgrades.
 - Basic bounty and live leaderboard.
 - Spawn protection and anti-camping measures.
@@ -150,7 +159,7 @@ No shop, season pass, giant map, detailed garage, ranked mode, complicated craft
 
 ### Key experiments
 
-- Extraction versus automatic banking.
+- Whether extraction or banking belongs in the loop after per-life arena evolution is proven.
 - Manual deployment zone selection versus automatic safe spawn.
 - Losing all, some, or none of carried scrap on destruction.
 - Level advantages versus normalized combat power.
@@ -417,7 +426,7 @@ We should test these instead of deciding them permanently now:
 - Top-down, angled, or close third-person camera.
 - Freeform modular construction versus curated chassis/loadouts.
 - Player count and arena size.
-- How much temporary power survives destruction.
+- Whether any temporary power should ever survive destruction; the current prototype resets all of it.
 - Whether servers run forever or have periodic arena resets.
 - Solo-only launch versus teams.
 - Ranked mode timing.
@@ -426,20 +435,16 @@ We should test these instead of deciding them permanently now:
 
 ## 10. Immediate next decision
 
-Before building, choose the first combat camera and movement prototype:
+Prove the per-life arena-evolution loop with the existing top-down robot and hammer before resuming spinner movement or implementing classes. The prototype should answer whether players understand object and PvP XP, enjoy choosing temporary stat upgrades, accept a full reset on death, and want to redeploy.
 
-1. **Top-down twin-stick:** closest to the `diep.io` inspiration and easiest to read.
-2. **Angled third-person:** more physical and dramatic, but harder for mobile combat clarity.
-3. **Hybrid:** top-down exploration with a closer combat camera, offering spectacle at the cost of complexity.
-
-The recommended starting point is **top-down twin-stick** because it lets us test the PvP loop quickly. The camera can change after the combat laboratory produces evidence.
+Level 8 and Level 20 remain the planned class-choice gates. Their class lists, abilities, presentation, and balance are intentionally deferred until progression pacing and combat readability survive playtesting.
 
 ---
 
 ## Roadmap principle
 
-The lobby, progression, art, and store can make the game attractive, but the project lives or dies on one question:
+The lobby, future classes, art, and store can make the game attractive, but the project lives or dies on one question:
 
-> Is controlling a robot and fighting another player fun enough that both players immediately want to deploy again?
+> Is controlling, fighting, and growing a robot for one life fun enough that players immediately want to redeploy after the reset?
 
 Every phase exists to answer that question more reliably, at a larger scale, without losing fairness or trust.
