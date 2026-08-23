@@ -107,6 +107,8 @@ Do not begin full production until the project can be opened, tested, published 
 
 **Provisional Milestone 3.1 arena target:** expand the graybox progression space from 120 x 120 to approximately 380 x 380 studs (about ten times the playable area). Preserve the existing object density with roughly 80 ScrapPiles in the outer region, 40 ReinforcedCrates in the middle region, and 20 PowerCores near the identifiable center. Treat these dimensions and counts as playtest tuning, not a final production-map commitment.
 
+Temporary stat upgrades use 30-rank resolution with one point granted at every run level, including Level 1. A Level 30 run therefore earns 30 total points to distribute freely across the five upgrade categories. Rank 30 preserves the former safe Rank 5 endpoint rather than increasing maximum combat power; this is a presentation and granularity change, not a progression-speed or balance-cap increase.
+
 Spinner movement and class implementation are paused until this progression loop is proven. Level 8 and Level 20 class choices remain planned evolution gates, not Phase 1 implementation scope.
 
 Player-elimination XP is provisional. Assist rewards, repeated-victim farming penalties, and level-difference reward scaling require later multiplayer tuning and are not part of this prototype.

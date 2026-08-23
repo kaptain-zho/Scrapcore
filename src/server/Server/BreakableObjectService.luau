@@ -38,6 +38,7 @@ type BreakableState = {
 	flashSerial: number,
 	parts: {StoredPartState},
 	contributions: {[Player]: Contribution},
+	statusGui: BillboardGui,
 	statusLabel: TextLabel,
 	healthFill: Frame,
 	highlight: Highlight,
@@ -62,7 +63,7 @@ local function isFinite(value: number): boolean
 	return value == value and value > -math.huge and value < math.huge
 end
 
-local function getOrCreateStatus(primaryPart: BasePart): (TextLabel, Frame)
+local function getOrCreateStatus(primaryPart: BasePart): (BillboardGui, TextLabel, Frame)
 	local existing = primaryPart:FindFirstChild("BreakableStatus")
 	if existing ~= nil then
 		existing:Destroy()
@@ -73,15 +74,14 @@ local function getOrCreateStatus(primaryPart: BasePart): (TextLabel, Frame)
 	billboard.Adornee = primaryPart
 	billboard.AlwaysOnTop = true
 	billboard.LightInfluence = 0
-	billboard.MaxDistance = 90
-	billboard.Size = UDim2.fromOffset(170, 48)
-	billboard.StudsOffsetWorldSpace = Vector3.new(0, primaryPart.Size.Y * 0.5 + 2, 0)
+	billboard.MaxDistance = 85
+	billboard.Size = UDim2.fromOffset(120, 30)
+	billboard.StudsOffsetWorldSpace = Vector3.new(0, primaryPart.Size.Y * 0.5 + 1.5, 0)
 	billboard.Parent = primaryPart
 
 	local panel = Instance.new("Frame")
 	panel.Name = "Panel"
-	panel.BackgroundColor3 = Color3.fromRGB(14, 18, 24)
-	panel.BackgroundTransparency = 0.15
+	panel.BackgroundTransparency = 1
 	panel.BorderSizePixel = 0
 	panel.Size = UDim2.fromScale(1, 1)
 	panel.Parent = billboard
@@ -91,18 +91,20 @@ local function getOrCreateStatus(primaryPart: BasePart): (TextLabel, Frame)
 	statusLabel.BackgroundTransparency = 1
 	statusLabel.Font = Enum.Font.GothamBold
 	statusLabel.TextColor3 = Color3.fromRGB(235, 242, 255)
-	statusLabel.TextSize = 13
+	statusLabel.TextSize = 10
+	statusLabel.TextStrokeColor3 = Color3.fromRGB(12, 16, 22)
+	statusLabel.TextStrokeTransparency = 0.35
 	statusLabel.TextXAlignment = Enum.TextXAlignment.Center
-	statusLabel.Size = UDim2.new(1, -8, 0, 27)
-	statusLabel.Position = UDim2.fromOffset(4, 1)
+	statusLabel.Size = UDim2.new(1, 0, 0, 16)
 	statusLabel.Parent = panel
 
 	local barBackground = Instance.new("Frame")
 	barBackground.Name = "HealthBarBackground"
 	barBackground.BackgroundColor3 = Color3.fromRGB(45, 50, 60)
+	barBackground.BackgroundTransparency = 0.35
 	barBackground.BorderSizePixel = 0
-	barBackground.Size = UDim2.new(1, -12, 0, 11)
-	barBackground.Position = UDim2.new(0, 6, 1, -16)
+	barBackground.Size = UDim2.new(1, -16, 0, 6)
+	barBackground.Position = UDim2.new(0, 8, 1, -9)
 	barBackground.Parent = panel
 
 	local healthFill = Instance.new("Frame")
@@ -112,7 +114,7 @@ local function getOrCreateStatus(primaryPart: BasePart): (TextLabel, Frame)
 	healthFill.Size = UDim2.fromScale(1, 1)
 	healthFill.Parent = barBackground
 
-	return statusLabel, healthFill
+	return billboard, statusLabel, healthFill
 end
 
 local function createFeedback(model: Model, primaryPart: BasePart): (Highlight, ParticleEmitter)
@@ -153,14 +155,15 @@ local function createFeedback(model: Model, primaryPart: BasePart): (Highlight, 
 	return highlight, burst
 end
 
-local function updateDisplay(state: BreakableState, respawnSeconds: number?)
+local function updateDisplay(state: BreakableState)
 	state.model:SetAttribute("BreakableHealth", state.health)
 	state.model:SetAttribute("BreakableMaxHealth", state.definition.MaxHealth)
 	state.model:SetAttribute("BreakableActive", state.active)
+	state.statusGui.Enabled = state.active
 
 	if state.active then
 		state.statusLabel.Text = string.format(
-			"%s  %d / %d",
+			"%s  %d/%d",
 			state.definition.DisplayName,
 			math.ceil(state.health),
 			state.definition.MaxHealth
@@ -173,11 +176,7 @@ local function updateDisplay(state: BreakableState, respawnSeconds: number?)
 			1
 		)
 	else
-		state.statusLabel.Text = string.format(
-			"%s  RESPAWNING %.1fs",
-			state.definition.DisplayName,
-			math.max(respawnSeconds or 0, 0)
-		)
+		state.statusLabel.Text = ""
 		state.healthFill.Size = UDim2.fromScale(0, 1)
 	end
 end
@@ -300,7 +299,7 @@ local function destroyBreakable(state: BreakableState)
 	state.highlight.FillColor = Color3.fromRGB(255, 110, 40)
 	state.highlight.Enabled = true
 	state.burst:Emit(18)
-	updateDisplay(state, state.definition.RespawnDelay)
+	updateDisplay(state)
 
 	task.delay(0.12, function()
 		if state.respawnSerial ~= respawnSerial or state.active then
@@ -308,18 +307,6 @@ local function destroyBreakable(state: BreakableState)
 		end
 		state.highlight.Enabled = false
 		setGeometryActive(state, false)
-	end)
-
-	local respawnAt = Workspace:GetServerTimeNow() + state.definition.RespawnDelay
-	task.spawn(function()
-		while state.model.Parent ~= nil and state.respawnSerial == respawnSerial and not state.active do
-			local remaining = respawnAt - Workspace:GetServerTimeNow()
-			updateDisplay(state, remaining)
-			if remaining <= 0 then
-				break
-			end
-			task.wait(0.25)
-		end
 	end)
 
 	task.delay(state.definition.RespawnDelay, function()
@@ -372,7 +359,7 @@ local function bindBreakable(model: Model)
 		error(string.format("%s requires at least one BasePart", model:GetFullName()))
 	end
 
-	local statusLabel, healthFill = getOrCreateStatus(primaryPart)
+	local statusGui, statusLabel, healthFill = getOrCreateStatus(primaryPart)
 	local highlight, burst = createFeedback(model, primaryPart)
 	local state: BreakableState = {
 		model = model,
@@ -383,6 +370,7 @@ local function bindBreakable(model: Model)
 		flashSerial = 0,
 		parts = storedParts,
 		contributions = {},
+		statusGui = statusGui,
 		statusLabel = statusLabel,
 		healthFill = healthFill,
 		highlight = highlight,

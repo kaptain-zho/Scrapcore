@@ -2,6 +2,7 @@
 
 local MovementConfig = table.freeze({
 	MaxSpeed = 26,
+	MaxUpgradedSpeed = 31.2,
 	AccelerationSharpness = 7,
 	DecelerationSharpness = 10,
 	DirectionChangeSharpness = 9,

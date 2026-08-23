@@ -1,5 +1,9 @@
 --!strict
 
+local LEVEL_CAP = 30
+local UPGRADE_POINTS_PER_LEVEL = 1
+local MAX_UPGRADE_RANK = 30
+
 local XP_REQUIREMENTS = table.freeze({
 	40,
 	55,
@@ -44,32 +48,32 @@ local UPGRADES = table.freeze({
 	Power = table.freeze({
 		AttributeName = "PowerUpgradeLevel",
 		DisplayName = "Power",
-		Description = "+8% hammer damage",
-		PerPoint = 0.08,
+		Description = "Hammer damage",
+		PerPoint = 0.4 / MAX_UPGRADE_RANK,
 	}),
 	Armor = table.freeze({
 		AttributeName = "ArmorUpgradeLevel",
 		DisplayName = "Armor",
-		Description = "+10 maximum health",
-		PerPoint = 10,
+		Description = "Maximum health",
+		PerPoint = 50 / MAX_UPGRADE_RANK,
 	}),
 	Mobility = table.freeze({
 		AttributeName = "MobilityUpgradeLevel",
 		DisplayName = "Mobility",
-		Description = "+4% movement speed",
-		PerPoint = 0.04,
+		Description = "Movement speed",
+		PerPoint = 0.2 / MAX_UPGRADE_RANK,
 	}),
 	Recovery = table.freeze({
 		AttributeName = "RecoveryUpgradeLevel",
 		DisplayName = "Recovery",
-		Description = "-6% hammer cooldown",
-		PerPoint = 0.06,
+		Description = "Hammer recovery",
+		PerPoint = 0.3 / MAX_UPGRADE_RANK,
 	}),
 	Force = table.freeze({
 		AttributeName = "ForceUpgradeLevel",
 		DisplayName = "Force",
-		Description = "+8% hammer knockback",
-		PerPoint = 0.08,
+		Description = "Hammer knockback",
+		PerPoint = 0.4 / MAX_UPGRADE_RANK,
 	}),
 })
 
@@ -95,15 +99,20 @@ local BREAKABLES = table.freeze({
 })
 
 local function clampUpgradeRank(rank: number): number
-	return math.clamp(math.floor(rank), 0, 5)
+	return math.clamp(math.floor(rank), 0, MAX_UPGRADE_RANK)
 end
 
 local function getXPToNextLevel(level: number): number
-	local safeLevel = math.clamp(math.floor(level), 1, 30)
-	if safeLevel >= 30 then
+	local safeLevel = math.clamp(math.floor(level), 1, LEVEL_CAP)
+	if safeLevel >= LEVEL_CAP then
 		return 0
 	end
 	return XP_REQUIREMENTS[safeLevel]
+end
+
+local function getEarnedUpgradePoints(level: number): number
+	local safeLevel = math.clamp(math.floor(level), 1, LEVEL_CAP)
+	return safeLevel * UPGRADE_POINTS_PER_LEVEL
 end
 
 local function getPowerMultiplier(rank: number): number
@@ -127,13 +136,15 @@ local function getForceMultiplier(rank: number): number
 end
 
 local ProgressionConfig = table.freeze({
-	LevelCap = 30,
-	UpgradePointsPerLevel = 1,
-	MaxUpgradeRank = 5,
-	MaxUnspentUpgradePoints = 29,
+	LevelCap = LEVEL_CAP,
+	UpgradePointsPerLevel = UPGRADE_POINTS_PER_LEVEL,
+	StartingUpgradePoints = UPGRADE_POINTS_PER_LEVEL,
+	MaxUpgradeRank = MAX_UPGRADE_RANK,
+	MaxUnspentUpgradePoints = LEVEL_CAP * UPGRADE_POINTS_PER_LEVEL,
 	MaxServerXPAward = 10000,
 	PlayerEliminationXP = 60,
 	BaseMaxHealth = 100,
+	MaxUpgradedMaxHealth = 150,
 	UpgradeRequestWindow = 1,
 	MaxUpgradeRequestsPerWindow = 8,
 	MinimumUpgradeRequestInterval = 0.08,
@@ -144,6 +155,7 @@ local ProgressionConfig = table.freeze({
 	Breakables = BREAKABLES,
 	ClampUpgradeRank = clampUpgradeRank,
 	GetXPToNextLevel = getXPToNextLevel,
+	GetEarnedUpgradePoints = getEarnedUpgradePoints,
 	GetPowerMultiplier = getPowerMultiplier,
 	GetArmorBonus = getArmorBonus,
 	GetMobilityMultiplier = getMobilityMultiplier,

@@ -34,13 +34,18 @@ screenGui.Parent = playerGui
 
 local panel = Instance.new("Frame")
 panel.Name = "Panel"
-panel.AnchorPoint = Vector2.new(1, 0.5)
-panel.Position = UDim2.new(1, -18, 0.5, 0)
-panel.Size = UDim2.fromOffset(300, 340)
+panel.AnchorPoint = Vector2.new(1, 0)
+panel.Position = UDim2.new(1, -12, 0, 12)
+panel.Size = UDim2.new(0.24, 0, 0, 80)
 panel.BackgroundColor3 = Color3.fromRGB(13, 18, 25)
-panel.BackgroundTransparency = 0.12
+panel.BackgroundTransparency = 0.18
 panel.BorderSizePixel = 0
 panel.Parent = screenGui
+
+local panelSizeConstraint = Instance.new("UISizeConstraint")
+panelSizeConstraint.MinSize = Vector2.new(210, 80)
+panelSizeConstraint.MaxSize = Vector2.new(280, 306)
+panelSizeConstraint.Parent = panel
 
 local panelCorner = Instance.new("UICorner")
 panelCorner.CornerRadius = UDim.new(0, 8)
@@ -56,12 +61,12 @@ local title = Instance.new("TextLabel")
 title.Name = "Title"
 title.BackgroundTransparency = 1
 title.Font = Enum.Font.GothamBold
-title.Text = "RUN EVOLUTION"
+title.Text = "RUN GROWTH"
 title.TextColor3 = Color3.fromRGB(90, 220, 255)
-title.TextSize = 18
+title.TextSize = 14
 title.TextXAlignment = Enum.TextXAlignment.Left
-title.Position = UDim2.fromOffset(16, 10)
-title.Size = UDim2.new(1, -32, 0, 24)
+title.Position = UDim2.fromOffset(10, 5)
+title.Size = UDim2.new(1, -20, 0, 18)
 title.Parent = panel
 
 local levelLabel = Instance.new("TextLabel")
@@ -69,10 +74,10 @@ levelLabel.Name = "Level"
 levelLabel.BackgroundTransparency = 1
 levelLabel.Font = Enum.Font.GothamBold
 levelLabel.TextColor3 = Color3.fromRGB(240, 245, 250)
-levelLabel.TextSize = 16
+levelLabel.TextSize = 13
 levelLabel.TextXAlignment = Enum.TextXAlignment.Left
-levelLabel.Position = UDim2.fromOffset(16, 38)
-levelLabel.Size = UDim2.new(0.5, -16, 0, 22)
+levelLabel.Position = UDim2.fromOffset(10, 25)
+levelLabel.Size = UDim2.new(0.5, -10, 0, 18)
 levelLabel.Parent = panel
 
 local pointsLabel = Instance.new("TextLabel")
@@ -80,18 +85,18 @@ pointsLabel.Name = "Points"
 pointsLabel.BackgroundTransparency = 1
 pointsLabel.Font = Enum.Font.GothamBold
 pointsLabel.TextColor3 = Color3.fromRGB(255, 205, 70)
-pointsLabel.TextSize = 15
+pointsLabel.TextSize = 12
 pointsLabel.TextXAlignment = Enum.TextXAlignment.Right
-pointsLabel.Position = UDim2.new(0.5, 0, 0, 38)
-pointsLabel.Size = UDim2.new(0.5, -16, 0, 22)
+pointsLabel.Position = UDim2.new(0.5, 0, 0, 25)
+pointsLabel.Size = UDim2.new(0.5, -10, 0, 18)
 pointsLabel.Parent = panel
 
 local xpBarBackground = Instance.new("Frame")
 xpBarBackground.Name = "XPBarBackground"
 xpBarBackground.BackgroundColor3 = Color3.fromRGB(40, 48, 60)
 xpBarBackground.BorderSizePixel = 0
-xpBarBackground.Position = UDim2.fromOffset(16, 66)
-xpBarBackground.Size = UDim2.new(1, -32, 0, 22)
+xpBarBackground.Position = UDim2.fromOffset(10, 49)
+xpBarBackground.Size = UDim2.new(1, -20, 0, 18)
 xpBarBackground.Parent = panel
 
 local xpBarCorner = Instance.new("UICorner")
@@ -114,10 +119,79 @@ xpLabel.Name = "XP"
 xpLabel.BackgroundTransparency = 1
 xpLabel.Font = Enum.Font.GothamMedium
 xpLabel.TextColor3 = Color3.fromRGB(245, 248, 252)
-xpLabel.TextSize = 13
+xpLabel.TextSize = 11
 xpLabel.Size = UDim2.fromScale(1, 1)
 xpLabel.ZIndex = 2
 xpLabel.Parent = xpBarBackground
+
+local healthPanel = Instance.new("Frame")
+healthPanel.Name = "PlayerHealth"
+healthPanel.AnchorPoint = Vector2.zero
+healthPanel.Position = UDim2.fromOffset(12, 12)
+healthPanel.Size = UDim2.new(0.22, 0, 0, 48)
+healthPanel.BackgroundColor3 = Color3.fromRGB(13, 18, 25)
+healthPanel.BackgroundTransparency = 0.18
+healthPanel.BorderSizePixel = 0
+healthPanel.Visible = false
+healthPanel.Parent = screenGui
+
+local healthSizeConstraint = Instance.new("UISizeConstraint")
+healthSizeConstraint.MinSize = Vector2.new(200, 48)
+healthSizeConstraint.MaxSize = Vector2.new(280, 48)
+healthSizeConstraint.Parent = healthPanel
+
+local healthCorner = Instance.new("UICorner")
+healthCorner.CornerRadius = UDim.new(0, 7)
+healthCorner.Parent = healthPanel
+
+local healthLabel = Instance.new("TextLabel")
+healthLabel.Name = "HealthText"
+healthLabel.BackgroundTransparency = 1
+healthLabel.Font = Enum.Font.GothamBold
+healthLabel.TextColor3 = Color3.fromRGB(240, 245, 250)
+healthLabel.TextSize = 12
+healthLabel.TextXAlignment = Enum.TextXAlignment.Left
+healthLabel.Position = UDim2.fromOffset(9, 5)
+healthLabel.Size = UDim2.new(1, -18, 0, 17)
+healthLabel.Parent = healthPanel
+
+local healthBarBackground = Instance.new("Frame")
+healthBarBackground.Name = "HealthBarBackground"
+healthBarBackground.BackgroundColor3 = Color3.fromRGB(40, 48, 60)
+healthBarBackground.BorderSizePixel = 0
+healthBarBackground.Position = UDim2.fromOffset(9, 27)
+healthBarBackground.Size = UDim2.new(1, -18, 0, 11)
+healthBarBackground.Parent = healthPanel
+
+local healthBarCorner = Instance.new("UICorner")
+healthBarCorner.CornerRadius = UDim.new(0, 4)
+healthBarCorner.Parent = healthBarBackground
+
+local healthFill = Instance.new("Frame")
+healthFill.Name = "HealthFill"
+healthFill.BackgroundColor3 = Color3.fromRGB(70, 220, 130)
+healthFill.BorderSizePixel = 0
+healthFill.Size = UDim2.fromScale(1, 1)
+healthFill.Parent = healthBarBackground
+
+local healthFillCorner = Instance.new("UICorner")
+healthFillCorner.CornerRadius = UDim.new(0, 4)
+healthFillCorner.Parent = healthFill
+
+local function updateResponsiveHealthPosition()
+	local currentCamera = Workspace.CurrentCamera
+	if currentCamera ~= nil and currentCamera.ViewportSize.X < currentCamera.ViewportSize.Y then
+		healthPanel.Position = UDim2.fromOffset(12, 330)
+	else
+		healthPanel.Position = UDim2.fromOffset(12, 12)
+	end
+end
+
+local currentCamera = Workspace.CurrentCamera
+if currentCamera ~= nil then
+	currentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateResponsiveHealthPosition)
+end
+updateResponsiveHealthPosition()
 
 local upgradeHeader = Instance.new("TextLabel")
 upgradeHeader.Name = "UpgradeHeader"
@@ -127,19 +201,21 @@ upgradeHeader.Text = "SPEND 1 POINT"
 upgradeHeader.TextColor3 = Color3.fromRGB(180, 190, 205)
 upgradeHeader.TextSize = 12
 upgradeHeader.TextXAlignment = Enum.TextXAlignment.Left
-upgradeHeader.Position = UDim2.fromOffset(16, 98)
-upgradeHeader.Size = UDim2.new(1, -32, 0, 18)
+upgradeHeader.Position = UDim2.fromOffset(10, 76)
+upgradeHeader.Size = UDim2.new(1, -20, 0, 18)
+upgradeHeader.Visible = false
 upgradeHeader.Parent = panel
 
 local buttonContainer = Instance.new("Frame")
 buttonContainer.Name = "UpgradeButtons"
 buttonContainer.BackgroundTransparency = 1
-buttonContainer.Position = UDim2.fromOffset(16, 120)
-buttonContainer.Size = UDim2.new(1, -32, 0, 208)
+buttonContainer.Position = UDim2.fromOffset(10, 98)
+buttonContainer.Size = UDim2.new(1, -20, 0, 196)
+buttonContainer.Visible = false
 buttonContainer.Parent = panel
 
 local buttonLayout = Instance.new("UIListLayout")
-buttonLayout.Padding = UDim.new(0, 5)
+buttonLayout.Padding = UDim.new(0, 4)
 buttonLayout.FillDirection = Enum.FillDirection.Vertical
 buttonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 buttonLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -148,9 +224,13 @@ buttonLayout.Parent = buttonContainer
 local buttons: {[string]: TextButton} = {}
 local lastRequestAt = -math.huge
 
+local function isFinite(value: number): boolean
+	return value == value and value > -math.huge and value < math.huge
+end
+
 local function getIntegerAttribute(name: string, minimum: number, maximum: number): number
 	local value = player:GetAttribute(name)
-	if typeof(value) ~= "number" then
+	if typeof(value) ~= "number" or not isFinite(value) then
 		return minimum
 	end
 	return math.clamp(math.floor(value), minimum, maximum)
@@ -166,9 +246,9 @@ for order, category in ProgressionConfig.UpgradeOrder do
 	button.BorderSizePixel = 0
 	button.Font = Enum.Font.GothamMedium
 	button.TextColor3 = Color3.fromRGB(235, 242, 248)
-	button.TextSize = 13
-	button.TextWrapped = true
-	button.Size = UDim2.new(1, 0, 0, 37)
+	button.TextSize = 12
+	button.TextWrapped = false
+	button.Size = UDim2.new(1, 0, 0, 36)
 	button.Parent = buttonContainer
 
 	local corner = Instance.new("UICorner")
@@ -176,12 +256,25 @@ for order, category in ProgressionConfig.UpgradeOrder do
 	corner.Parent = button
 
 	button.Activated:Connect(function()
+		local points = getIntegerAttribute(
+			"UnspentUpgradePoints",
+			0,
+			ProgressionConfig.MaxUnspentUpgradePoints
+		)
+		local rank = getIntegerAttribute(
+			definition.AttributeName,
+			0,
+			ProgressionConfig.MaxUpgradeRank
+		)
+		if points <= 0 or rank >= ProgressionConfig.MaxUpgradeRank then
+			return
+		end
 		local now = Workspace:GetServerTimeNow()
 		if now - lastRequestAt < ProgressionConfig.MinimumUpgradeRequestInterval then
 			return
 		end
 		lastRequestAt = now
-		upgradeRequestRemote:FireServer(category)
+		upgradeRequestRemote:FireServer(category, rank + 1)
 	end)
 	buttons[category] = button
 end
@@ -197,7 +290,7 @@ local function updateHUD()
 	)
 
 	levelLabel.Text = string.format("LEVEL %d", level)
-	pointsLabel.Text = string.format("POINTS %d", points)
+	pointsLabel.Text = string.format("%d %s", points, if points == 1 then "POINT" else "POINTS")
 	if level >= ProgressionConfig.LevelCap or xpToNext <= 0 then
 		xpLabel.Text = "LEVEL CAP"
 		xpFill.Size = UDim2.fromScale(1, 1)
@@ -206,18 +299,18 @@ local function updateHUD()
 		xpFill.Size = UDim2.fromScale(math.clamp(xp / xpToNext, 0, 1), 1)
 	end
 
+	local showUpgradeChoices = points > 0
+	upgradeHeader.Visible = showUpgradeChoices
+	buttonContainer.Visible = showUpgradeChoices
+	panel.Size = UDim2.new(0.24, 0, 0, if showUpgradeChoices then 306 else 80)
+
 	for _, category in ProgressionConfig.UpgradeOrder do
 		local definition = upgradeDefinitions[category]
 		local rank = getIntegerAttribute(definition.AttributeName, 0, ProgressionConfig.MaxUpgradeRank)
 		local button = buttons[category]
-		button.Text = string.format(
-			"%s  %d/%d   %s",
-			definition.DisplayName,
-			rank,
-			ProgressionConfig.MaxUpgradeRank,
-			definition.Description
-		)
-		local canUpgrade = points > 0 and rank < ProgressionConfig.MaxUpgradeRank
+		button.Text = string.format("%s %d/%d", definition.DisplayName, rank, ProgressionConfig.MaxUpgradeRank)
+		local canUpgrade = showUpgradeChoices and rank < ProgressionConfig.MaxUpgradeRank
+		button.Visible = canUpgrade
 		button.Active = canUpgrade
 		button.AutoButtonColor = canUpgrade
 		button.BackgroundColor3 = if canUpgrade
@@ -225,6 +318,64 @@ local function updateHUD()
 			else Color3.fromRGB(40, 45, 52)
 		button.TextTransparency = if canUpgrade then 0 else 0.3
 	end
+end
+
+local currentHumanoid: Humanoid? = nil
+local healthConnections: {RBXScriptConnection} = {}
+
+local function disconnectHealthConnections()
+	for _, connection in healthConnections do
+		connection:Disconnect()
+	end
+	table.clear(healthConnections)
+end
+
+local function updateHealthHUD()
+	local humanoid = currentHumanoid
+	if humanoid == nil or humanoid.Parent == nil then
+		healthPanel.Visible = false
+		return
+	end
+
+	local maxHealth = math.max(humanoid.MaxHealth, 1)
+	local currentHealth = math.clamp(humanoid.Health, 0, maxHealth)
+	local healthRatio = math.clamp(currentHealth / maxHealth, 0, 1)
+	healthPanel.Visible = true
+	healthLabel.Text = string.format(
+		"ROBOT HEALTH  %d/%d",
+		math.floor(currentHealth + 0.5),
+		math.floor(maxHealth + 0.5)
+	)
+	healthFill.Size = UDim2.fromScale(healthRatio, 1)
+	healthFill.BackgroundColor3 = if healthRatio <= 0.3
+		then Color3.fromRGB(240, 80, 70)
+		elseif healthRatio <= 0.6
+		then Color3.fromRGB(245, 185, 65)
+		else Color3.fromRGB(70, 220, 130)
+end
+
+local function bindCharacterHealth(character: Model)
+	disconnectHealthConnections()
+	currentHumanoid = nil
+	updateHealthHUD()
+
+	local humanoidInstance = character:WaitForChild("Humanoid", 10)
+	if
+		humanoidInstance == nil
+		or not humanoidInstance:IsA("Humanoid")
+		or player.Character ~= character
+	then
+		return
+	end
+
+	currentHumanoid = humanoidInstance
+	table.insert(healthConnections, humanoidInstance.HealthChanged:Connect(function()
+		updateHealthHUD()
+	end))
+	table.insert(healthConnections, humanoidInstance:GetPropertyChangedSignal("MaxHealth"):Connect(function()
+		updateHealthHUD()
+	end))
+	updateHealthHUD()
 end
 
 local watchedAttributes = {
@@ -238,6 +389,21 @@ for _, category in ProgressionConfig.UpgradeOrder do
 end
 for _, attributeName in watchedAttributes do
 	player:GetAttributeChangedSignal(attributeName):Connect(updateHUD)
+end
+
+player.CharacterAdded:Connect(function(character: Model)
+	task.spawn(bindCharacterHealth, character)
+end)
+player.CharacterRemoving:Connect(function(character: Model)
+	local humanoid = currentHumanoid
+	if humanoid ~= nil and humanoid:IsDescendantOf(character) then
+		disconnectHealthConnections()
+		currentHumanoid = nil
+		updateHealthHUD()
+	end
+end)
+if player.Character ~= nil then
+	task.spawn(bindCharacterHealth, player.Character)
 end
 
 updateHUD()

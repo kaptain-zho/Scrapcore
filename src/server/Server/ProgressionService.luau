@@ -6,6 +6,8 @@ local Workspace = game:GetService("Workspace")
 
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
+local CombatConfig = require(shared:WaitForChild("CombatConfig"))
+local MovementConfig = require(shared:WaitForChild("MovementConfig"))
 
 type UpgradeDefinition = {
 	AttributeName: string,
@@ -44,6 +46,25 @@ local function getIntegerAttribute(instance: Instance, name: string, minimum: nu
 	return math.clamp(math.floor(value), minimum, maximum)
 end
 
+local function getStrictIntegerAttribute(
+	instance: Instance,
+	name: string,
+	minimum: number,
+	maximum: number
+): number?
+	local value = instance:GetAttribute(name)
+	if
+		typeof(value) ~= "number"
+		or not isFinite(value)
+		or value % 1 ~= 0
+		or value < minimum
+		or value > maximum
+	then
+		return nil
+	end
+	return value
+end
+
 local function getAliveHumanoid(player: Player): Humanoid?
 	local character = player.Character
 	if character == nil or character.Parent == nil then
@@ -67,7 +88,7 @@ local function resetRunAttributes(player: Player)
 	player:SetAttribute("RunLevel", 1)
 	player:SetAttribute("RunXP", 0)
 	player:SetAttribute("XPToNextLevel", ProgressionConfig.GetXPToNextLevel(1))
-	player:SetAttribute("UnspentUpgradePoints", 0)
+	player:SetAttribute("UnspentUpgradePoints", ProgressionConfig.StartingUpgradePoints)
 	setUpgradeRanksToZero(player)
 end
 
@@ -292,7 +313,49 @@ function ProgressionService.ResetRun(player: Player)
 	end
 end
 
-local function handleUpgradeRequest(player: Player, categoryValue: unknown, ...: unknown)
+local function isDerivedUpgradeValueSafe(category: string, rank: number): boolean
+	if category == "Power" then
+		local damage = CombatConfig.Damage * ProgressionConfig.GetPowerMultiplier(rank)
+		return isFinite(damage) and damage >= 0 and damage <= CombatConfig.MaxDamage
+	elseif category == "Armor" then
+		local maxHealth = ProgressionConfig.BaseMaxHealth + ProgressionConfig.GetArmorBonus(rank)
+		return isFinite(maxHealth)
+			and maxHealth >= ProgressionConfig.BaseMaxHealth
+			and maxHealth <= ProgressionConfig.MaxUpgradedMaxHealth
+	elseif category == "Mobility" then
+		local maxSpeed = MovementConfig.MaxSpeed * ProgressionConfig.GetMobilityMultiplier(rank)
+		return isFinite(maxSpeed)
+			and maxSpeed >= MovementConfig.MaxSpeed
+			and maxSpeed <= MovementConfig.MaxUpgradedSpeed + 0.001
+	elseif category == "Recovery" then
+		local cooldown = CombatConfig.Cooldown * ProgressionConfig.GetRecoveryMultiplier(rank)
+		return isFinite(cooldown)
+			and cooldown >= CombatConfig.MinCooldown
+			and cooldown <= CombatConfig.Cooldown
+	elseif category == "Force" then
+		local knockback = CombatConfig.HorizontalKnockbackSpeed
+			* ProgressionConfig.GetForceMultiplier(rank)
+		return isFinite(knockback)
+			and knockback >= 0
+			and knockback <= CombatConfig.MaxHorizontalKnockbackSpeed
+	end
+	return false
+end
+
+local function validateUpgradeConfiguration()
+	for _, category in ProgressionConfig.UpgradeOrder do
+		if not isDerivedUpgradeValueSafe(category, ProgressionConfig.MaxUpgradeRank) then
+			error(string.format("ProgressionConfig produces an unsafe Rank %d %s value", ProgressionConfig.MaxUpgradeRank, category))
+		end
+	end
+end
+
+local function handleUpgradeRequest(
+	player: Player,
+	categoryValue: unknown,
+	requestedRankValue: unknown,
+	...: unknown
+)
 	local state = playerStates[player]
 	if state == nil then
 		return
@@ -313,32 +376,75 @@ local function handleUpgradeRequest(player: Player, categoryValue: unknown, ...:
 	end
 	state.lastRequestAt = now
 
-	if select("#", ...) ~= 0 or typeof(categoryValue) ~= "string" then
+	if
+		select("#", ...) ~= 0
+		or typeof(categoryValue) ~= "string"
+		or typeof(requestedRankValue) ~= "number"
+	then
 		rejectUpgradeRequest(player, state)
 		return
 	end
 
 	local category = categoryValue :: string
+	local requestedRank = requestedRankValue :: number
 	local definition = upgradeDefinitions[category]
-	if definition == nil or getAliveHumanoid(player) == nil then
+	if
+		definition == nil
+		or not isFinite(requestedRank)
+		or requestedRank % 1 ~= 0
+		or getAliveHumanoid(player) == nil
+	then
 		rejectUpgradeRequest(player, state)
 		return
 	end
 
-	local points = getIntegerAttribute(
+	local level = getStrictIntegerAttribute(player, "RunLevel", 1, ProgressionConfig.LevelCap)
+	local points = getStrictIntegerAttribute(
 		player,
 		"UnspentUpgradePoints",
 		0,
 		ProgressionConfig.MaxUnspentUpgradePoints
 	)
-	local rank = getIntegerAttribute(player, definition.AttributeName, 0, ProgressionConfig.MaxUpgradeRank)
-	if points <= 0 or rank >= ProgressionConfig.MaxUpgradeRank then
+	if level == nil or points == nil then
+		rejectUpgradeRequest(player, state)
+		return
+	end
+
+	local ranksByCategory: {[string]: number} = {}
+	local totalSpent = 0
+	for _, existingCategory in ProgressionConfig.UpgradeOrder do
+		local existingDefinition = upgradeDefinitions[existingCategory]
+		local existingRank = getStrictIntegerAttribute(
+			player,
+			existingDefinition.AttributeName,
+			0,
+			ProgressionConfig.MaxUpgradeRank
+		)
+		if existingRank == nil then
+			rejectUpgradeRequest(player, state)
+			return
+		end
+		ranksByCategory[existingCategory] = existingRank
+		totalSpent += existingRank
+	end
+
+	local earnedPoints = ProgressionConfig.GetEarnedUpgradePoints(level)
+	local rank = ranksByCategory[category]
+	if
+		points <= 0
+		or rank >= ProgressionConfig.MaxUpgradeRank
+		or requestedRank ~= rank + 1
+		or requestedRank > ProgressionConfig.MaxUpgradeRank
+		or totalSpent >= earnedPoints
+		or points ~= earnedPoints - totalSpent
+		or not isDerivedUpgradeValueSafe(category, requestedRank)
+	then
 		rejectUpgradeRequest(player, state)
 		return
 	end
 
 	player:SetAttribute("UnspentUpgradePoints", points - 1)
-	player:SetAttribute(definition.AttributeName, rank + 1)
+	player:SetAttribute(definition.AttributeName, requestedRank)
 	if category == "Armor" then
 		local humanoid = getAliveHumanoid(player)
 		if humanoid ~= nil then
@@ -354,6 +460,7 @@ function ProgressionService.Init()
 	if initialized then
 		return
 	end
+	validateUpgradeConfiguration()
 	initialized = true
 
 	local remotesInstance = ReplicatedStorage:FindFirstChild("Remotes")
