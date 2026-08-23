@@ -105,6 +105,8 @@ Do not begin full production until the project can be opened, tested, published 
 - A rapid death reset that removes all temporary levels and combat upgrades before redeployment.
 - Simple two-player and four-player tests.
 
+**Provisional Milestone 3.1 arena target:** expand the graybox progression space from 120 x 120 to approximately 380 x 380 studs (about ten times the playable area). Preserve the existing object density with roughly 80 ScrapPiles in the outer region, 40 ReinforcedCrates in the middle region, and 20 PowerCores near the identifiable center. Treat these dimensions and counts as playtest tuning, not a final production-map commitment.
+
 Spinner movement and class implementation are paused until this progression loop is proven. Level 8 and Level 20 class choices remain planned evolution gates, not Phase 1 implementation scope.
 
 Player-elimination XP is provisional. Assist rewards, repeated-victim farming penalties, and level-difference reward scaling require later multiplayer tuning and are not part of this prototype.

@@ -5,6 +5,7 @@ local Workspace = game:GetService("Workspace")
 
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
+local ArenaLayoutService = require(script.Parent:WaitForChild("ArenaLayoutService"))
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
 
 type BreakableDefinition = {
@@ -445,6 +446,7 @@ function BreakableObjectService.Init()
 	end
 	initialized = true
 	ProgressionService.Init()
+	ArenaLayoutService.Init()
 
 	local arena = Workspace:WaitForChild("GrayboxArena")
 	local folderInstance = arena:WaitForChild("Breakables", 10)
