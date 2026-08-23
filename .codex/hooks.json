@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -NonInteractive -File .codex/hooks/Invoke-ScrapcorePostTaskReview.ps1",
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File .codex\\hooks\\Invoke-ScrapcorePostTaskReview.ps1",
+            "timeout": 10,
+            "statusMessage": "Checking whether a Scrapcore post-task review is required"
+          }
+        ]
+      }
+    ]
+  }
+}

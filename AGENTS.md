@@ -65,6 +65,12 @@ All behavior changes must be tested through the Roblox Studio MCP connection:
 
 For combat, networking, persistence, purchases, or cross-platform input, include adversarial and boundary cases appropriate to the risk. Do not publish, enable monetization, touch production data, or alter live places without explicit authorization.
 
+## Task completion and automatic review
+
+- When an implementation, testing, documentation, or asset task is completely finished, the final implementation report must end with `[SCRAPCORE_TASK_COMPLETE]` as its final non-whitespace line.
+- Automatic post-task review responses must never include that marker.
+- Do not emit the marker when work is blocked, awaiting approval, awaiting human testing, or incomplete.
+
 ## Scope discipline
 
 - Follow the roadmap gates and protect the minimum viable public game.
