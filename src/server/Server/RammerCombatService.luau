@@ -11,9 +11,11 @@ local CombatConfig = require(shared:WaitForChild("CombatConfig"))
 local MovementConfig = require(shared:WaitForChild("MovementConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local RammerConfig = require(shared:WaitForChild("RammerConfig"))
+local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local BreakableObjectService = require(script.Parent:WaitForChild("BreakableObjectService"))
 local ClassService = require(script.Parent:WaitForChild("ClassService"))
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
+local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
 
 local ROBOT_CHASSIS_NAME = "RobotChassis"
 local RAMMER_HIT_ORIGIN_NAME = "RammerHitOrigin"
@@ -60,6 +62,7 @@ type RammerState = {
 	characterAddedConnection: RBXScriptConnection?,
 	diedConnection: RBXScriptConnection?,
 	classChangedConnection: RBXScriptConnection?,
+	sessionChangedConnection: RBXScriptConnection?,
 }
 
 type TargetCandidate = {
@@ -346,6 +349,7 @@ local function resolveImpact(player: Player, state: RammerState, now: number): b
 	if
 		character == nil
 		or attackerRoot == nil
+		or not PlayerSessionService.IsArena(player)
 		or character ~= state.character
 		or ClassService.GetClassId(player) ~= ClassConfig.RammerClassId
 		or character:GetAttribute("RammerReady") ~= true
@@ -410,6 +414,10 @@ local function resolveImpact(player: Player, state: RammerState, now: number): b
 			or targetHumanoid.Health <= 0
 			or seen[target] == true
 		then
+			continue
+		end
+		local targetPlayer = Players:GetPlayerFromCharacter(target)
+		if targetPlayer ~= nil and not PlayerSessionService.IsArena(targetPlayer) then
 			continue
 		end
 		local validArea, distance = isInWeaponArea(origin, state.dashDirection, targetRoot)
@@ -544,6 +552,13 @@ local function handleIntent(player: Player, intentValue: unknown, sequenceValue:
 		return
 	end
 	state.lastSequence = sequence
+	if not PlayerSessionService.IsArena(player) then
+		rejectRequest(player, state)
+		if state.phase ~= "Idle" then
+			cancelImmediately(player, state)
+		end
+		return
+	end
 
 	local character, _humanoid, root = getAliveCharacter(player)
 	if
@@ -630,6 +645,10 @@ local function updateActiveRammers(_deltaTime: number)
 	local now = Workspace:GetServerTimeNow()
 	for player, state in states do
 		if state.phase == "Idle" then
+			continue
+		end
+		if not PlayerSessionService.IsArena(player) then
+			cancelImmediately(player, state)
 			continue
 		end
 		if state.phase == "Cooldown" then
@@ -749,6 +768,7 @@ local function connectPlayer(player: Player)
 		characterAddedConnection = nil,
 		diedConnection = nil,
 		classChangedConnection = nil,
+		sessionChangedConnection = nil,
 	}
 	states[player] = state
 	player:SetAttribute("RammerAcceptedRequestCount", 0)
@@ -763,6 +783,11 @@ local function connectPlayer(player: Player)
 
 	state.classChangedConnection = player:GetAttributeChangedSignal(ClassConfig.ClassAttribute):Connect(function()
 		if ClassService.GetClassId(player) ~= ClassConfig.RammerClassId then
+			cancelImmediately(player, state)
+		end
+	end)
+	state.sessionChangedConnection = player:GetAttributeChangedSignal(SessionConfig.SessionAttribute):Connect(function()
+		if not PlayerSessionService.IsArena(player) then
 			cancelImmediately(player, state)
 		end
 	end)
@@ -788,12 +813,20 @@ local function disconnectPlayer(player: Player)
 	if state.classChangedConnection ~= nil then
 		state.classChangedConnection:Disconnect()
 	end
+	if state.sessionChangedConnection ~= nil then
+		state.sessionChangedConnection:Disconnect()
+	end
 	states[player] = nil
 end
 
 function RammerCombatService.GetMovementAuthorization(player: Player, root: BasePart): MovementAuthorization?
 	local state = states[player]
-	if state == nil or state.character ~= player.Character or root.Parent ~= state.character then
+	if
+		state == nil
+		or not PlayerSessionService.IsArena(player)
+		or state.character ~= player.Character
+		or root.Parent ~= state.character
+	then
 		return nil
 	end
 	local speedRank = ProgressionService.GetUpgradeRank(player, "Speed")
@@ -893,6 +926,7 @@ function RammerCombatService.Init()
 	end
 	validateConfiguration()
 	initialized = true
+	PlayerSessionService.Init()
 	ProgressionService.Init()
 	ClassService.Init()
 	BreakableObjectService.Init()

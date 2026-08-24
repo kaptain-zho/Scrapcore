@@ -9,10 +9,12 @@ local shared = ReplicatedStorage:WaitForChild("Shared")
 local ClassConfig = require(shared:WaitForChild("ClassConfig"))
 local CombatConfig = require(shared:WaitForChild("CombatConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
+local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local SpinnerConfig = require(shared:WaitForChild("SpinnerConfig"))
 local BreakableObjectService = require(script.Parent:WaitForChild("BreakableObjectService"))
 local ClassService = require(script.Parent:WaitForChild("ClassService"))
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
+local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
 
 local ROBOT_CHASSIS_NAME = "RobotChassis"
 local SPINNER_HIT_ORIGIN_NAME = "SpinnerHitOrigin"
@@ -44,6 +46,7 @@ type SpinnerState = {
 	characterAddedConnection: RBXScriptConnection?,
 	diedConnection: RBXScriptConnection?,
 	classChangedConnection: RBXScriptConnection?,
+	sessionChangedConnection: RBXScriptConnection?,
 }
 
 type TargetCandidate = {
@@ -206,6 +209,7 @@ local function resolvePulse(player: Player, state: SpinnerState): number
 	if
 		character == nil
 		or attackerRoot == nil
+		or not PlayerSessionService.IsArena(player)
 		or character ~= state.character
 		or ClassService.GetClassId(player) ~= ClassConfig.SpinnerClassId
 		or character:GetAttribute("SpinnerReady") ~= true
@@ -259,6 +263,10 @@ local function resolvePulse(player: Player, state: SpinnerState): number
 			or targetHumanoid.Health <= 0
 			or seenModels[target] == true
 		then
+			continue
+		end
+		local targetPlayer = Players:GetPlayerFromCharacter(target)
+		if targetPlayer ~= nil and not PlayerSessionService.IsArena(targetPlayer) then
 			continue
 		end
 		local inArea, distance = isInWeaponArea(origin, attackerRoot, targetRoot)
@@ -404,6 +412,13 @@ local function handleIntent(player: Player, intentValue: unknown, sequenceValue:
 		return
 	end
 	state.lastSequence = sequence
+	if not PlayerSessionService.IsArena(player) then
+		rejectRequest(player, state)
+		if state.phase ~= "Idle" then
+			cancelSpinner(player, state)
+		end
+		return
+	end
 
 	local character, _humanoid, _root = getAliveCharacter(player)
 	if
@@ -472,6 +487,7 @@ local function updateActiveSpinners(_deltaTime: number)
 
 		local character = player.Character
 		local validCharacter = character ~= nil
+			and PlayerSessionService.IsArena(player)
 			and character == state.character
 			and character.Parent ~= nil
 			and character:GetAttribute("SpinnerReady") == true
@@ -574,6 +590,7 @@ local function connectPlayer(player: Player)
 		characterAddedConnection = nil,
 		diedConnection = nil,
 		classChangedConnection = nil,
+		sessionChangedConnection = nil,
 	}
 	states[player] = state
 	player:SetAttribute("SpinnerAcceptedRequestCount", 0)
@@ -587,6 +604,11 @@ local function connectPlayer(player: Player)
 
 	state.classChangedConnection = player:GetAttributeChangedSignal(ClassConfig.ClassAttribute):Connect(function()
 		if ClassService.GetClassId(player) ~= ClassConfig.SpinnerClassId then
+			cancelSpinner(player, state)
+		end
+	end)
+	state.sessionChangedConnection = player:GetAttributeChangedSignal(SessionConfig.SessionAttribute):Connect(function()
+		if not PlayerSessionService.IsArena(player) then
 			cancelSpinner(player, state)
 		end
 	end)
@@ -611,6 +633,9 @@ local function disconnectPlayer(player: Player)
 	end
 	if state.classChangedConnection ~= nil then
 		state.classChangedConnection:Disconnect()
+	end
+	if state.sessionChangedConnection ~= nil then
+		state.sessionChangedConnection:Disconnect()
 	end
 	states[player] = nil
 end
@@ -642,6 +667,7 @@ function SpinnerCombatService.Init()
 	end
 	validateConfiguration()
 	initialized = true
+	PlayerSessionService.Init()
 	ProgressionService.Init()
 	ClassService.Init()
 	BreakableObjectService.Init()

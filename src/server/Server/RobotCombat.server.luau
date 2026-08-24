@@ -8,11 +8,14 @@ local Workspace = game:GetService("Workspace")
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local CombatConfig = require(shared:WaitForChild("CombatConfig"))
 local ClassConfig = require(shared:WaitForChild("ClassConfig"))
+local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
 local ClassService = require(script.Parent:WaitForChild("ClassService"))
 local BreakableObjectService = require(script.Parent:WaitForChild("BreakableObjectService"))
 local CollisionGroupService = require(script.Parent:WaitForChild("CollisionGroupService"))
+local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
 
+PlayerSessionService.Init()
 ProgressionService.Init()
 ClassService.Init()
 BreakableObjectService.Init()
@@ -79,6 +82,8 @@ type CombatState = {
 	attackSerial: number,
 	acceptedAttacks: number,
 	rejectedRequests: number,
+	characterAddedConnection: RBXScriptConnection?,
+	sessionAttributeConnection: RBXScriptConnection?,
 }
 
 local combatStates: {[Player]: CombatState} = {}
@@ -284,6 +289,9 @@ local function resolveAttack(
 	if character == nil or humanoid == nil or attackerRoot == nil or character ~= expectedCharacter then
 		return
 	end
+	if not PlayerSessionService.IsArena(player) then
+		return
+	end
 
 	local chassis = character:FindFirstChild(ROBOT_CHASSIS_NAME)
 	if chassis == nil or not chassis:IsA("Model") then
@@ -358,6 +366,10 @@ local function resolveAttack(
 		then
 			continue
 		end
+		local targetPlayer = Players:GetPlayerFromCharacter(target)
+		if targetPlayer ~= nil and not PlayerSessionService.IsArena(targetPlayer) then
+			continue
+		end
 
 		local targetOffset = targetRoot.Position - attackerRoot.Position
 		if targetOffset.Magnitude > CombatConfig.Range or math.abs(targetOffset.Y) > CombatConfig.MaxVerticalDifference then
@@ -372,7 +384,6 @@ local function resolveAttack(
 		targetHumanoid:TakeDamage(attackDamage)
 		applyHorizontalKnockback(attackerRoot, target, targetRoot, knockbackSpeed)
 		if healthBefore > 0 and targetHumanoid.Health <= 0 then
-			local targetPlayer = Players:GetPlayerFromCharacter(target)
 			ProgressionService.AwardElimination(player, targetPlayer, targetHumanoid)
 		end
 	end
@@ -415,6 +426,10 @@ local function handleAttackRequest(player: Player, sequenceValue: unknown, ...: 
 		return
 	end
 	state.lastSequence = sequence
+	if not PlayerSessionService.IsArena(player) then
+		rejectRequest(player, state)
+		return
+	end
 
 	local character, humanoid, root = getAliveCharacter(player)
 	if character == nil or humanoid == nil or root == nil or character:GetAttribute("HammerReady") ~= true then
@@ -469,14 +484,27 @@ end
 
 attackRequestRemote.OnServerEvent:Connect(handleAttackRequest)
 
-local function configureCombatCharacter(character: Model)
+local function configureCombatCharacter(player: Player, character: Model)
 	character:SetAttribute("HammerReady", false)
+	local chassis = character:WaitForChild(ROBOT_CHASSIS_NAME, 10)
+	if chassis == nil or not chassis:IsA("Model") or player.Character ~= character then
+		return
+	end
+	if not PlayerSessionService.IsArena(player) then
+		removeExistingHammer(chassis)
+		return
+	end
+	local classId = ClassService.GetClassId(player)
+	if classId == ClassConfig.SpinnerClassId or classId == ClassConfig.RammerClassId then
+		removeExistingHammer(chassis)
+		return
+	end
 	attachHammer(character)
 end
 
 local function connectPlayer(player: Player)
 	local now = Workspace:GetServerTimeNow()
-	combatStates[player] = {
+	local state: CombatState = {
 		nextAttackAt = 0,
 		requestWindowStartedAt = now,
 		requestsInWindow = 0,
@@ -484,20 +512,38 @@ local function connectPlayer(player: Player)
 		attackSerial = 0,
 		acceptedAttacks = 0,
 		rejectedRequests = 0,
+		characterAddedConnection = nil,
+		sessionAttributeConnection = nil,
 	}
+	combatStates[player] = state
 	player:SetAttribute("HammerAcceptedAttackCount", 0)
 	player:SetAttribute("HammerRejectedRequestCount", 0)
 
-	player.CharacterAdded:Connect(function(character: Model)
-		task.spawn(configureCombatCharacter, character)
+	state.characterAddedConnection = player.CharacterAdded:Connect(function(character: Model)
+		task.spawn(configureCombatCharacter, player, character)
+	end)
+	state.sessionAttributeConnection = player:GetAttributeChangedSignal(SessionConfig.SessionAttribute):Connect(function()
+		local character = player.Character
+		if character ~= nil then
+			task.defer(configureCombatCharacter, player, character)
+		end
 	end)
 	if player.Character ~= nil then
-		task.spawn(configureCombatCharacter, player.Character)
+		task.spawn(configureCombatCharacter, player, player.Character)
 	end
 end
 
 Players.PlayerAdded:Connect(connectPlayer)
 Players.PlayerRemoving:Connect(function(player: Player)
+	local state = combatStates[player]
+	if state ~= nil then
+		if state.characterAddedConnection ~= nil then
+			state.characterAddedConnection:Disconnect()
+		end
+		if state.sessionAttributeConnection ~= nil then
+			state.sessionAttributeConnection:Disconnect()
+		end
+	end
 	combatStates[player] = nil
 end)
 for _, player in Players:GetPlayers() do

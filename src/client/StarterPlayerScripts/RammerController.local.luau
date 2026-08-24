@@ -11,6 +11,7 @@ local shared = ReplicatedStorage:WaitForChild("Shared")
 local ClassConfig = require(shared:WaitForChild("ClassConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local RammerConfig = require(shared:WaitForChild("RammerConfig"))
+local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local RammerClientState = require(script.Parent:WaitForChild("RammerClientState"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local intentRemote = remotes:WaitForChild("RammerAttackIntent") :: RemoteEvent
@@ -55,6 +56,10 @@ local function getClassId(targetPlayer: Player): string
 	return if typeof(value) == "string" then value else ClassConfig.BaseClassId
 end
 
+local function isArenaPlayer(targetPlayer: Player): boolean
+	return targetPlayer:GetAttribute(SessionConfig.SessionAttribute) == SessionConfig.ArenaState
+end
+
 local function getUpgradeRank(attributeName: string): number
 	local value = player:GetAttribute(attributeName)
 	if typeof(value) ~= "number" or not isFinite(value) then
@@ -89,7 +94,8 @@ end
 local function beginPredictedCharge()
 	local character = player.Character
 	if
-		getClassId(player) ~= ClassConfig.RammerClassId
+		not isArenaPlayer(player)
+		or getClassId(player) ~= ClassConfig.RammerClassId
 		or character == nil
 		or character.Parent == nil
 		or character:GetAttribute("RammerReady") ~= true
@@ -129,7 +135,12 @@ end
 
 local function releasePredictedCharge(cancelOnly: boolean)
 	local character = player.Character
-	if character == nil or character.Parent == nil or getClassId(player) ~= ClassConfig.RammerClassId then
+	if
+		not isArenaPlayer(player)
+		or character == nil
+		or character.Parent == nil
+		or getClassId(player) ~= ClassConfig.RammerClassId
+	then
 		return
 	end
 	local now = Workspace:GetServerTimeNow()
@@ -196,7 +207,7 @@ local function releasePredictedCharge(cancelOnly: boolean)
 end
 
 local function sendKeepalive()
-	if not primaryHeld or getClassId(player) ~= ClassConfig.RammerClassId then
+	if not isArenaPlayer(player) or not primaryHeld or getClassId(player) ~= ClassConfig.RammerClassId then
 		return
 	end
 	local character = player.Character
@@ -221,6 +232,9 @@ end
 
 UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessedEvent: boolean)
 	if gameProcessedEvent or input.UserInputType ~= Enum.UserInputType.MouseButton1 then
+		return
+	end
+	if not isArenaPlayer(player) then
 		return
 	end
 	if getClassId(player) ~= ClassConfig.RammerClassId or primaryHeld then
@@ -303,6 +317,9 @@ local function validateBroadcast(
 	then
 		return nil, nil
 	end
+	if phase ~= "Idle" and not isArenaPlayer(attacker) then
+		return nil, nil
+	end
 	return attacker, {
 		phase = phase,
 		attackSerial = attackSerial,
@@ -330,6 +347,13 @@ stateBroadcastRemote.OnClientEvent:Connect(function(...: unknown)
 end)
 
 local function syncFromAttributes(attacker: Player)
+	if not isArenaPlayer(attacker) then
+		local character = attacker.Character
+		if character ~= nil then
+			visualStates[character] = nil
+		end
+		return
+	end
 	local character = attacker.Character
 	if character == nil or character.Parent == nil then
 		return
@@ -401,6 +425,11 @@ end
 player.CharacterRemoving:Connect(clearLocalState)
 player:GetAttributeChangedSignal(ClassConfig.ClassAttribute):Connect(function()
 	if getClassId(player) ~= ClassConfig.RammerClassId then
+		clearLocalState()
+	end
+end)
+player:GetAttributeChangedSignal(SessionConfig.SessionAttribute):Connect(function()
+	if not isArenaPlayer(player) then
 		clearLocalState()
 	end
 end)

@@ -9,6 +9,7 @@ local shared = ReplicatedStorage:WaitForChild("Shared")
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local CombatConfig = require(shared:WaitForChild("CombatConfig"))
 local MovementConfig = require(shared:WaitForChild("MovementConfig"))
+local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
 
 type UpgradeDefinition = {
 	AttributeName: string,
@@ -290,7 +291,10 @@ end
 
 function ProgressionService.IsRunActive(player: Player, runSerial: number): boolean
 	local state = playerStates[player]
-	return state ~= nil and state.runSerial == runSerial and getAliveHumanoid(player) ~= nil
+	return state ~= nil
+		and state.runSerial == runSerial
+		and PlayerSessionService.IsArena(player)
+		and getAliveHumanoid(player) ~= nil
 end
 
 function ProgressionService.GetHammerDamage(player: Player, baseDamage: number): number
@@ -305,7 +309,7 @@ end
 
 function ProgressionService.SetUnlimitedUpgradePoints(player: Player, enabled: boolean): boolean
 	local state = playerStates[player]
-	if state == nil then
+	if state == nil or (enabled and not PlayerSessionService.IsArena(player)) then
 		return false
 	end
 	state.unlimitedUpgradePoints = enabled
@@ -316,7 +320,11 @@ function ProgressionService.SetUnlimitedUpgradePoints(player: Player, enabled: b
 end
 
 function ProgressionService.GetXPNeededToReachLevel(player: Player, targetLevel: number): number
-	if not isFinite(targetLevel) or targetLevel % 1 ~= 0 then
+	if
+		not PlayerSessionService.IsArena(player)
+		or not isFinite(targetLevel)
+		or targetLevel % 1 ~= 0
+	then
 		return 0
 	end
 	local level = getStrictIntegerAttribute(player, "RunLevel", 1, ProgressionConfig.LevelCap)
@@ -361,6 +369,7 @@ function ProgressionService.AwardXP(player: Player, amount: number): number
 	local state = playerStates[player]
 	if
 		state == nil
+		or not PlayerSessionService.IsArena(player)
 		or getAliveHumanoid(player) == nil
 		or not isFinite(amount)
 		or amount <= 0
@@ -417,6 +426,8 @@ function ProgressionService.AwardElimination(
 	if
 		targetPlayer == nil
 		or targetPlayer == attacker
+		or not PlayerSessionService.IsArena(attacker)
+		or not PlayerSessionService.IsArena(targetPlayer)
 		or targetHumanoid.Health > 0
 		or targetHumanoid:GetAttribute("ScrapcoreEliminationRewarded") == true
 	then
@@ -537,6 +548,7 @@ local function handleUpgradeRequest(
 		definition == nil
 		or not isFinite(requestedRank)
 		or requestedRank % 1 ~= 0
+		or not PlayerSessionService.IsArena(player)
 		or getAliveHumanoid(player) == nil
 	then
 		rejectUpgradeRequest(player, state)
@@ -630,6 +642,7 @@ local function updateHealthRegeneration(deltaTime: number)
 		local humanoid = state.humanoid
 		if
 			humanoid == nil
+			or not PlayerSessionService.IsArena(player)
 			or humanoid.Parent == nil
 			or humanoid.Health <= 0
 			or humanoid.Health >= humanoid.MaxHealth
@@ -654,6 +667,7 @@ function ProgressionService.Init()
 	if initialized then
 		return
 	end
+	PlayerSessionService.Init()
 	validateUpgradeConfiguration()
 	initialized = true
 

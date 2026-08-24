@@ -11,6 +11,7 @@ local shared = ReplicatedStorage:WaitForChild("Shared")
 local CombatConfig = require(shared:WaitForChild("CombatConfig"))
 local ClassConfig = require(shared:WaitForChild("ClassConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
+local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local SpinnerConfig = require(shared:WaitForChild("SpinnerConfig"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local attackRequestRemote = remotes:WaitForChild("HammerAttackRequest") :: RemoteEvent
@@ -68,6 +69,10 @@ end
 local function getClassId(targetPlayer: Player): string
 	local classValue = targetPlayer:GetAttribute(ClassConfig.ClassAttribute)
 	return if typeof(classValue) == "string" then classValue else ClassConfig.BaseClassId
+end
+
+local function isArenaPlayer(targetPlayer: Player): boolean
+	return targetPlayer:GetAttribute(SessionConfig.SessionAttribute) == SessionConfig.ArenaState
 end
 
 local function getCurrentCooldown(): number
@@ -143,6 +148,9 @@ local function beginSwing(character: Model, startedAt: number, attackId: number,
 end
 
 local function requestAttack()
+	if not isArenaPlayer(player) then
+		return
+	end
 	local classId = getClassId(player)
 	if classId == ClassConfig.SpinnerClassId or classId == ClassConfig.RammerClassId then
 		return
@@ -206,6 +214,9 @@ local function beginPredictedSpin(character: Model)
 end
 
 local function requestSpinnerStart()
+	if not isArenaPlayer(player) then
+		return
+	end
 	local character = player.Character
 	if
 		getClassId(player) ~= ClassConfig.SpinnerClassId
@@ -231,7 +242,7 @@ end
 
 local function requestSpinnerStop()
 	nextSpinnerKeepaliveAt = 0
-	if getClassId(player) ~= ClassConfig.SpinnerClassId then
+	if not isArenaPlayer(player) or getClassId(player) ~= ClassConfig.SpinnerClassId then
 		return
 	end
 	local character = player.Character
@@ -252,7 +263,7 @@ local function requestSpinnerStop()
 end
 
 local function sendSpinnerKeepalive()
-	if not primaryAttackHeld or getClassId(player) ~= ClassConfig.SpinnerClassId then
+	if not isArenaPlayer(player) or not primaryAttackHeld or getClassId(player) ~= ClassConfig.SpinnerClassId then
 		return
 	end
 	local character = player.Character
@@ -284,6 +295,9 @@ end
 
 UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessedEvent: boolean)
 	if gameProcessedEvent or input.UserInputType ~= Enum.UserInputType.MouseButton1 then
+		return
+	end
+	if not isArenaPlayer(player) then
 		return
 	end
 	if primaryAttackHeld then
@@ -337,6 +351,9 @@ attackBroadcastRemote.OnClientEvent:Connect(function(
 		return
 	end
 	if math.abs(Workspace:GetServerTimeNow() - startedAt) > CombatConfig.MaxBroadcastAge then
+		return
+	end
+	if not isArenaPlayer(attacker) then
 		return
 	end
 
@@ -399,6 +416,9 @@ spinnerStateBroadcastRemote.OnClientEvent:Connect(function(
 	then
 		return
 	end
+	if phase ~= "Idle" and not isArenaPlayer(attacker) then
+		return
+	end
 	local character = attacker.Character
 	if character == nil or character.Parent == nil then
 		return
@@ -427,6 +447,13 @@ local spinnerPlayerConnections: {[Player]: {RBXScriptConnection}} = {}
 local trackedSpinnerPlayers: {[Player]: boolean} = { [player] = true }
 
 local function syncSpinnerFromAttributes(attacker: Player)
+	if not isArenaPlayer(attacker) then
+		local character = attacker.Character
+		if character ~= nil then
+			activeSpins[character] = nil
+		end
+		return
+	end
 	local phaseValue = attacker:GetAttribute("SpinnerAttackPhase")
 	local attackIdValue = attacker:GetAttribute("SpinnerAttackSerial")
 	local startedAtValue = attacker:GetAttribute("SpinnerPhaseStartedAt")
@@ -550,6 +577,29 @@ player:GetAttributeChangedSignal(ClassConfig.ClassAttribute):Connect(function()
 		end
 		activeSpins[character] = nil
 	end
+end)
+
+player:GetAttributeChangedSignal(SessionConfig.SessionAttribute):Connect(function()
+	if isArenaPlayer(player) then
+		return
+	end
+	primaryAttackHeld = false
+	nextLocalAttackAt = 0
+	nextSpinnerKeepaliveAt = 0
+	local character = player.Character
+	if character == nil then
+		return
+	end
+	local spinnerMotor = getSpinnerMotor(character)
+	if spinnerMotor ~= nil then
+		spinnerMotor.C0 = getSpinnerRestC0(spinnerMotor)
+	end
+	local hammerMotor = getWeaponMotor(character)
+	if hammerMotor ~= nil then
+		hammerMotor.C0 = getRestC0(hammerMotor)
+	end
+	activeSpins[character] = nil
+	activeSwings[character] = nil
 end)
 
 script.Destroying:Connect(function()

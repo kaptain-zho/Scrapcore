@@ -11,6 +11,7 @@ local player = Players.LocalPlayer
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local ClassConfig = require(shared:WaitForChild("ClassConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
+local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local upgradeRequestRemote = remotes:WaitForChild("ProgressionUpgradeRequest") :: RemoteEvent
 
@@ -35,6 +36,7 @@ screenGui.IgnoreGuiInset = false
 screenGui.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
 screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Enabled = false
 screenGui.Parent = playerGui
 
 local panel = Instance.new("Frame")
@@ -322,6 +324,9 @@ for order, category in ProgressionConfig.UpgradeOrder do
 	corner.Parent = button
 
 	button.Activated:Connect(function()
+		if player:GetAttribute(SessionConfig.SessionAttribute) ~= SessionConfig.ArenaState then
+			return
+		end
 		local unlimitedPoints = player:GetAttribute(DEV_UNLIMITED_ATTRIBUTE) == true
 		local points = getIntegerAttribute(
 			"UnspentUpgradePoints",
@@ -378,6 +383,15 @@ local function updateHUD()
 		ProgressionConfig.MaxUnspentUpgradePoints
 	)
 	local unlimitedPoints = player:GetAttribute(DEV_UNLIMITED_ATTRIBUTE) == true
+	local isArena = player:GetAttribute(SessionConfig.SessionAttribute) == SessionConfig.ArenaState
+	screenGui.Enabled = isArena
+	if not isArena then
+		upgradeMenuOpen = false
+		pendingAutomaticUpgradeOpen = false
+		lastObservedPoints = points
+		lastObservedUnlimited = unlimitedPoints
+		return
+	end
 	local classValue = player:GetAttribute(ClassConfig.ClassAttribute)
 	local classId = if typeof(classValue) == "string"
 		then classValue :: string
@@ -481,6 +495,9 @@ local function updateHUD()
 end
 
 local function toggleUpgradeMenu()
+	if player:GetAttribute(SessionConfig.SessionAttribute) ~= SessionConfig.ArenaState then
+		return
+	end
 	local points = getIntegerAttribute(
 		"UnspentUpgradePoints",
 		0,
@@ -511,6 +528,9 @@ local function handleUpgradeToggleAction(
 		return Enum.ContextActionResult.Pass
 	end
 	if UserInputService:GetFocusedTextBox() ~= nil then
+		return Enum.ContextActionResult.Pass
+	end
+	if player:GetAttribute(SessionConfig.SessionAttribute) ~= SessionConfig.ArenaState then
 		return Enum.ContextActionResult.Pass
 	end
 	toggleUpgradeMenu()
@@ -635,6 +655,7 @@ local watchedAttributes = {
 	"RunClass",
 	"ClassEvolutionEligible",
 	"ClassEvolutionSelected",
+	SessionConfig.SessionAttribute,
 	DEV_UNLIMITED_ATTRIBUTE,
 }
 for _, category in ProgressionConfig.UpgradeOrder do

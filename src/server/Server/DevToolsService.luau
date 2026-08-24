@@ -11,6 +11,7 @@ local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local DevToolsConfig = require(script.Parent:WaitForChild("DevToolsConfig"))
 local ClassService = require(script.Parent:WaitForChild("ClassService"))
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
+local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
 
 type PlayerDevState = {
 	requestWindowStartedAt: number,
@@ -181,6 +182,8 @@ local function performAction(player: Player, action: string): string?
 	elseif action == "ResetRun" then
 		resetRun(player)
 		return action
+	elseif action == "ReturnToLobby" then
+		return if PlayerSessionService.ReturnToLobby(player) then action else nil
 	elseif action == "HealToFull" then
 		return if ProgressionService.HealToFull(player) then action else nil
 	end
@@ -303,6 +306,7 @@ function DevToolsService.Init()
 		return
 	end
 	initialized = true
+	PlayerSessionService.Init()
 	ProgressionService.Init()
 	ClassService.Init()
 	requestRemote = getOrCreateRemote("DevToolsRequest")

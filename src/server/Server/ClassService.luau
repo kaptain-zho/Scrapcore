@@ -7,8 +7,10 @@ local Workspace = game:GetService("Workspace")
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local ClassConfig = require(shared:WaitForChild("ClassConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
+local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
 local CollisionGroupService = require(script.Parent:WaitForChild("CollisionGroupService"))
+local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
 
 type CombatModifiers = {
 	DamageBonus: number,
@@ -43,6 +45,7 @@ type PlayerClassState = {
 	classAttributeConnection: RBXScriptConnection?,
 	eligibilityAttributeConnection: RBXScriptConnection?,
 	selectedAttributeConnection: RBXScriptConnection?,
+	sessionAttributeConnection: RBXScriptConnection?,
 }
 
 local ROBOT_CHASSIS_NAME = "RobotChassis"
@@ -105,7 +108,7 @@ local function setReplicatedState(player: Player, state: PlayerClassState, eligi
 end
 
 local function currentClassId(player: Player, state: PlayerClassState): string
-	if state.classId == ClassConfig.BaseClassId then
+	if not PlayerSessionService.IsArena(player) or state.classId == ClassConfig.BaseClassId then
 		return ClassConfig.BaseClassId
 	end
 	local runSerial = ProgressionService.GetRunSerial(player)
@@ -127,6 +130,7 @@ local function updateEligibility(player: Player)
 	local runLevel = getStrictRunLevel(player)
 	local runSerial = ProgressionService.GetRunSerial(player)
 	local eligible = state.classId == ClassConfig.BaseClassId
+		and PlayerSessionService.IsArena(player)
 		and runLevel ~= nil
 		and runLevel >= ClassConfig.Level8Threshold
 		and ProgressionService.IsRunActive(player, runSerial)
@@ -219,6 +223,16 @@ local function restoreStandardLoadout(chassis: Model)
 		end
 	end
 
+	local oldVisuals = chassis:FindFirstChild(CLASS_VISUAL_MODEL_NAME)
+	if oldVisuals ~= nil then
+		oldVisuals:Destroy()
+	end
+end
+
+local function clearAllLoadout(chassis: Model)
+	removeSpinner(chassis)
+	removeRammer(chassis)
+	removeHammer(chassis)
 	local oldVisuals = chassis:FindFirstChild(CLASS_VISUAL_MODEL_NAME)
 	if oldVisuals ~= nil then
 		oldVisuals:Destroy()
@@ -641,6 +655,10 @@ local function applyCurrentVisuals(player: Player)
 		return
 	end
 	local chassisInstance = character:FindFirstChild(ROBOT_CHASSIS_NAME)
+	if chassisInstance ~= nil and chassisInstance:IsA("Model") and not PlayerSessionService.IsArena(player) then
+		clearAllLoadout(chassisInstance)
+		return
+	end
 	if chassisInstance ~= nil and chassisInstance:IsA("Model") and currentClassId(player, state) == ClassConfig.BaseClassId then
 		restoreStandardLoadout(chassisInstance)
 		return
@@ -726,6 +744,7 @@ local function handleClassRequest(player: Player, classValue: unknown, ...: unkn
 	if
 		runLevel == nil
 		or runLevel < ClassConfig.Level8Threshold
+		or not PlayerSessionService.IsArena(player)
 		or getAliveHumanoid(player) == nil
 		or not ProgressionService.IsRunActive(player, runSerial)
 	then
@@ -794,6 +813,7 @@ local function connectPlayer(player: Player)
 		classAttributeConnection = nil,
 		eligibilityAttributeConnection = nil,
 		selectedAttributeConnection = nil,
+		sessionAttributeConnection = nil,
 	}
 	playerStates[player] = state
 	player:SetAttribute("ClassAcceptedRequestCount", 0)
@@ -811,6 +831,9 @@ local function connectPlayer(player: Player)
 	end)
 	state.selectedAttributeConnection = player:GetAttributeChangedSignal(ClassConfig.SelectedAttribute):Connect(function()
 		enforceReplicatedState(player)
+	end)
+	state.sessionAttributeConnection = player:GetAttributeChangedSignal(SessionConfig.SessionAttribute):Connect(function()
+		resetClass(player)
 	end)
 	state.characterAddedConnection = player.CharacterAdded:Connect(function(character: Model)
 		bindCharacter(player, character)
@@ -838,6 +861,7 @@ local function disconnectPlayer(player: Player)
 	disconnect(state.classAttributeConnection)
 	disconnect(state.eligibilityAttributeConnection)
 	disconnect(state.selectedAttributeConnection)
+	disconnect(state.sessionAttributeConnection)
 	playerStates[player] = nil
 end
 
@@ -851,6 +875,7 @@ function ClassService.Init()
 		return
 	end
 	initialized = true
+	PlayerSessionService.Init()
 	ProgressionService.Init()
 	CollisionGroupService.Init()
 

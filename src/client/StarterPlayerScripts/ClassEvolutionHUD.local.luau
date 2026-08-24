@@ -8,6 +8,7 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui") :: PlayerGui
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local ClassConfig = require(shared:WaitForChild("ClassConfig"))
+local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local classRequestRemote = remotes:WaitForChild("ClassEvolutionRequest") :: RemoteEvent
 
@@ -32,6 +33,7 @@ screenGui.IgnoreGuiInset = false
 screenGui.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
 screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Enabled = false
 screenGui.Parent = playerGui
 
 local panel = Instance.new("Frame")
@@ -314,10 +316,14 @@ local function hasSelectedClass(): boolean
 end
 
 local function isEligible(): boolean
-	return player:GetAttribute(ClassConfig.EligibilityAttribute) == true and not hasSelectedClass()
+	return player:GetAttribute(SessionConfig.SessionAttribute) == SessionConfig.ArenaState
+		and player:GetAttribute(ClassConfig.EligibilityAttribute) == true
+		and not hasSelectedClass()
 end
 
 local function refreshVisibility()
+	local isArena = player:GetAttribute(SessionConfig.SessionAttribute) == SessionConfig.ArenaState
+	screenGui.Enabled = isArena
 	local eligible = isEligible()
 	if eligible and not wasEligible then
 		dismissed = false
@@ -677,6 +683,7 @@ player:GetAttributeChangedSignal(ClassConfig.ClassAttribute):Connect(function()
 	refreshVisibility()
 end)
 player:GetAttributeChangedSignal(ClassConfig.EligibilityAttribute):Connect(refreshVisibility)
+player:GetAttributeChangedSignal(SessionConfig.SessionAttribute):Connect(refreshVisibility)
 
 local viewportConnection: RBXScriptConnection? = nil
 local function connectCurrentCamera()

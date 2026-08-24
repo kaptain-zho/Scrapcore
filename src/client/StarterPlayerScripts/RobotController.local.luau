@@ -14,6 +14,7 @@ local CombatConfig = require(shared:WaitForChild("CombatConfig"))
 local ClassConfig = require(shared:WaitForChild("ClassConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local RammerConfig = require(shared:WaitForChild("RammerConfig"))
+local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local RammerClientState = require(script.Parent:WaitForChild("RammerClientState"))
 local telemetryRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("RobotMovementTelemetry") :: RemoteEvent
 local camera = assert(Workspace.CurrentCamera, "CurrentCamera is required for robot controls") :: Camera
@@ -56,6 +57,7 @@ local isCameraOrbitDragging = false
 local previousMouseBehavior: Enum.MouseBehavior? = nil
 local humanoidDiedConnection: RBXScriptConnection? = nil
 local lastRammerDashSerial = 0
+local lastCameraRootPosition: Vector3? = nil
 
 local function wrapAngle(angle: number): number
 	return math.atan2(math.sin(angle), math.cos(angle))
@@ -157,6 +159,7 @@ local function setCharacter(character: Model)
 		smoothedVelocity = Vector3.zero
 		lastRammerDashSerial = 0
 		cameraInitialized = false
+		lastCameraRootPosition = nil
 		if humanoidDiedConnection ~= nil then
 			humanoidDiedConnection:Disconnect()
 		end
@@ -181,7 +184,15 @@ player.CharacterRemoving:Connect(function(character: Model)
 		currentMovementVelocity = nil
 		smoothedVelocity = Vector3.zero
 		lastRammerDashSerial = 0
+		lastCameraRootPosition = nil
 	end
+end)
+
+player:GetAttributeChangedSignal(SessionConfig.SessionAttribute):Connect(function()
+	cameraInitialized = false
+	lastCameraRootPosition = nil
+	smoothedVelocity = Vector3.zero
+	lastRammerDashSerial = 0
 end)
 
 if player.Character ~= nil then
@@ -473,6 +484,14 @@ local function updateCamera(deltaTime: number)
 	if root == nil or root.Parent == nil then
 		return
 	end
+	if
+		lastCameraRootPosition ~= nil
+		and (root.Position - (lastCameraRootPosition :: Vector3)).Magnitude
+			> MovementConfig.ServerMaxTeleportDistance
+	then
+		cameraInitialized = false
+	end
+	lastCameraRootPosition = root.Position
 
 	if isCameraOrbitDragging then
 		local mouseDelta = UserInputService:GetMouseDelta()

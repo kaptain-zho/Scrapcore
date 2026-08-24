@@ -8,6 +8,7 @@ local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local ArenaLayoutService = require(script.Parent:WaitForChild("ArenaLayoutService"))
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
 local CollisionGroupService = require(script.Parent:WaitForChild("CollisionGroupService"))
+local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
 
 type BreakableDefinition = {
 	DisplayName: string,
@@ -395,6 +396,7 @@ function BreakableObjectService.Damage(model: Model, attacker: Player, amount: n
 	if
 		state == nil
 		or not state.active
+		or not PlayerSessionService.IsArena(attacker)
 		or not isFinite(amount)
 		or amount <= 0
 	then
@@ -439,6 +441,7 @@ function BreakableObjectService.Init()
 		return
 	end
 	initialized = true
+	PlayerSessionService.Init()
 	CollisionGroupService.Init()
 	ProgressionService.Init()
 	ArenaLayoutService.Init()

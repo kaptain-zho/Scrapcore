@@ -17,6 +17,8 @@ This per-life arena-evolution loop is the current hypothesis to prove before ext
 
 The original Level 8 evolution framework now prototypes **Striker**, **Spinner**, and **Rammer** as enabled, mutually exclusive per-life choices. Level 20 specializations remain future design targets. The current test must establish that Striker's burst-and-shove hammer, Spinner's sustained contact pressure, and Rammer's committed hold-and-release frontal charge create readable original counterplay without weakening server authority.
 
+The first same-place workshop-lobby foundation is now the bounded bridge into the arena loop. A new connection starts in a safe, weaponless graybox workshop; the server-owned Main Arena portal begins a canonical Level 1 Scrap Runner run in the existing 380 x 380 arena. Arena deaths still reset and respawn directly in the arena during this prototype. Functional customization, leaderboards, matchmaking, alternate game modes, player-facing returns, and death choices remain deferred.
+
 ## 2. Design pillars
 
 Every major feature must support at least one of these pillars:
@@ -148,13 +150,15 @@ No shop, season pass, giant map, detailed garage, ranked mode, complicated craft
 
 ### Player flow
 
-1. Deploy a basic bot into the continuous arena.
-2. Destroy objects or fight players to earn temporary XP.
-3. Level up and spend points on temporary combat-stat upgrades.
-4. Reach a planned class-choice gate at Level 8 and, later, Level 20 once classes exist.
-5. Continue taking greater arena risks as the bot becomes stronger.
-6. Get destroyed and reset all temporary levels, XP, points, and upgrades.
-7. Redeploy quickly as a basic bot and begin another run.
+1. Join in the safe workshop lobby as a weaponless Scrap Runner.
+2. Use the server-validated Main Arena portal to begin a fresh run.
+3. Deploy a basic bot into the continuous arena.
+4. Destroy objects or fight players to earn temporary XP.
+5. Level up and spend points on temporary combat-stat upgrades.
+6. Reach a planned class-choice gate at Level 8 and, later, Level 20 once classes exist.
+7. Continue taking greater arena risks as the bot becomes stronger.
+8. Get destroyed and reset all temporary levels, XP, points, upgrades, and evolution state.
+9. Respawn quickly in the arena as a basic bot during the current prototype; a later death-flow experiment will decide when returning to the lobby is offered.
 
 ### Systems
 
@@ -445,9 +449,9 @@ We should test these instead of deciding them permanently now:
 
 ## 10. Immediate next decision
 
-Compare the original Level 8 Striker, Spinner, and Rammer evolutions within the existing per-life arena loop. The prototype should answer whether players understand the exclusive choice; recognize Striker's repeated heavy burst, Spinner's sustained close-contact pressure, and Rammer's committed frontal impact; find readable counterplay to all three; accept losing the path on death; and want to earn another evolution.
+Validate the graybox workshop and deployment flow with two real clients before expanding it. The test should establish that new players understand the safe workshop, can read its inactive placeholders, find and use MAIN ARENA without developer direction, deploy independently to safe arena spawns, receive the correct HUD and standard weapon, and remain in the arena through the existing death/reset cycle. Rejoining must return them to the workshop, and both lobby and arena players must coexist without authority, collision, camera, or synchronization regressions.
 
-The provisional Level 20 branches documented in `docs/CLASS_EVOLUTION_DESIGN.md` remain disabled future work. Do not implement another branch until fresh multiplayer testing validates three-way Level 8 readability, server authority, reset behavior, movement safety, and combat counterplay.
+The provisional Level 20 branches documented in `docs/CLASS_EVOLUTION_DESIGN.md` remain disabled future work. Functional skins, live leaderboards, matchmaking, extra modes, death choices, paid revives, ads, and persistent progression also remain outside this validation gate.
 
 ---
 

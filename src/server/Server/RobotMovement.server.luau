@@ -12,6 +12,7 @@ local CombatConfig = require(shared:WaitForChild("CombatConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local CollisionGroupService = require(script.Parent:WaitForChild("CollisionGroupService"))
 local RammerCombatService = require(script.Parent:WaitForChild("RammerCombatService"))
+local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
 
 local ROBOT_CHASSIS_NAME = "RobotChassis"
 local LEGACY_FRONT_INDICATOR_NAME = "FrontIndicator"
@@ -33,6 +34,7 @@ if not robotTemplateInstance:IsA("Model") then
 end
 local robotTemplate = robotTemplateInstance
 
+PlayerSessionService.Init()
 CollisionGroupService.Init()
 RammerCombatService.Init()
 
@@ -48,6 +50,7 @@ type PlayerState = {
 	lastTelemetryAt: number,
 	lastSequence: number,
 	malformedRequests: number,
+	lastSessionTeleportSerial: number,
 	ghostConnections: {RBXScriptConnection},
 }
 
@@ -77,6 +80,9 @@ local function isFinite(value: number): boolean
 end
 
 local function getSpeedMultiplier(player: Player): number
+	if not PlayerSessionService.IsArena(player) then
+		return 1
+	end
 	local rankValue = player:GetAttribute("SpeedUpgradeLevel")
 	local rank = if typeof(rankValue) == "number" and isFinite(rankValue)
 		then math.clamp(math.floor(rankValue), 0, ProgressionConfig.MaxUpgradeRank)
@@ -357,6 +363,7 @@ local function configureCharacter(player: Player, character: Model)
 		lastTelemetryAt = 0,
 		lastSequence = 0,
 		malformedRequests = 0,
+		lastSessionTeleportSerial = PlayerSessionService.GetTeleportSerial(player),
 		ghostConnections = ghostConnections,
 	}
 end
@@ -428,6 +435,16 @@ RunService.Heartbeat:Connect(function(deltaTime: number)
 		local humanoid = state.humanoid
 		local root = state.root
 		if character == nil or humanoid == nil or root == nil or character.Parent == nil or humanoid.Health <= 0 then
+			continue
+		end
+		local sessionTeleportSerial = PlayerSessionService.GetTeleportSerial(player)
+		if sessionTeleportSerial ~= state.lastSessionTeleportSerial then
+			state.lastSessionTeleportSerial = sessionTeleportSerial
+			state.lastPosition = root.Position
+			state.lastVelocity = Vector3.zero
+			state.lastSafeCFrame = root.CFrame
+			state.lastSampleAt = now
+			state.consecutiveViolations = 0
 			continue
 		end
 
