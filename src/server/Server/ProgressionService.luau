@@ -14,7 +14,6 @@ type UpgradeDefinition = {
 	AttributeName: string,
 	DisplayName: string,
 	Description: string,
-	PerPoint: number,
 }
 
 type PlayerRunState = {
@@ -465,9 +464,33 @@ local function isDerivedUpgradeValueSafe(category: string, rank: number): boolea
 end
 
 local function validateUpgradeConfiguration()
-	for _, category in ProgressionConfig.UpgradeOrder do
-		if not isDerivedUpgradeValueSafe(category, ProgressionConfig.MaxUpgradeRank) then
-			error(string.format("ProgressionConfig produces an unsafe Rank %d %s value", ProgressionConfig.MaxUpgradeRank, category))
+	local previousFactor = -1
+	local previousGain = -1
+	for rank = 0, ProgressionConfig.MaxUpgradeRank do
+		local factor = ProgressionConfig.GetUpgradeFactor(rank)
+		if
+			not isFinite(factor)
+			or factor < 0
+			or factor > 1
+			or (rank == 0 and factor ~= 0)
+			or (rank == ProgressionConfig.MaxUpgradeRank and factor ~= 1)
+			or (rank > 0 and factor <= previousFactor)
+		then
+			error(string.format("ProgressionConfig produces an invalid Rank %d exponential factor", rank))
+		end
+		if rank > 0 then
+			local gain = factor - previousFactor
+			if rank > 1 and gain <= previousGain then
+				error(string.format("ProgressionConfig Rank %d gain is not larger than the prior gain", rank))
+			end
+			previousGain = gain
+		end
+		previousFactor = factor
+
+		for _, category in ProgressionConfig.UpgradeOrder do
+			if not isDerivedUpgradeValueSafe(category, rank) then
+				error(string.format("ProgressionConfig produces an unsafe Rank %d %s value", rank, category))
+			end
 		end
 	end
 end

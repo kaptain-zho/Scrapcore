@@ -47,8 +47,8 @@ local definitions: {[string]: ClassDefinition} = {
 		Tier = 8,
 		Enabled = true,
 		Status = "Prototype",
-		Role = "Sustained damage; Multiple nearby targets",
-		Tradeoff = "Low shove; Requires close contact.",
+		Role = "Hold LMB to Spin",
+		Tradeoff = "Sustained multi-target damage; low shove; requires close contact.",
 	}),
 	Rammer = table.freeze({
 		DisplayName = "Rammer",

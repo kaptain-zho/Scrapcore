@@ -55,6 +55,8 @@ Level 1: Scrap Runner
 
 Prototype Spinner tuning is provisional: spin-up interpolates from 0.40 seconds at Attack Rate Rank 0 to 0.28 seconds at Rank 30; pulse interval interpolates from 0.32 to 0.24 seconds; pulse damage interpolates from 7 to 10 across Damage ranks. The flywheel remains active while primary attack is continuously held, then spins down into a 1.1-second cooldown after release. A low-frequency client hold keepalive renews a tolerant server lease so lost input or focus cannot leave an attack running. Each server pulse applies 2.5 knockback and can affect no more than six validated targets.
 
+Spinner's timing and damage interpolation use the same shared normalized exponential upgrade factor as every other temporary stat, with a provisional curve strength of 1.5. Early ranks make smaller but real changes, later ranks make progressively larger changes, and the Rank 0 and Rank 30 endpoints above remain unchanged. Hold LMB to spin; RMB remains camera orbit.
+
 ### Rammer — future work
 
 - **Combat role:** Mobile initiator that creates openings through committed forward impacts.

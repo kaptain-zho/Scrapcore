@@ -1,14 +1,8 @@
 --!strict
 
-local MAX_UPGRADE_RANK = 30
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local function clampRank(rank: number): number
-	return math.clamp(math.floor(rank), 0, MAX_UPGRADE_RANK)
-end
-
-local function interpolate(rank: number, rankZeroValue: number, rankThirtyValue: number): number
-	return rankZeroValue + (rankThirtyValue - rankZeroValue) * (clampRank(rank) / MAX_UPGRADE_RANK)
-end
+local ProgressionConfig = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("ProgressionConfig"))
 
 local SPIN_UP_AT_RANK_ZERO = 0.40
 local SPIN_UP_AT_RANK_THIRTY = 0.28
@@ -18,20 +12,32 @@ local PULSE_DAMAGE_AT_RANK_ZERO = 7
 local PULSE_DAMAGE_AT_RANK_THIRTY = 10
 
 local function getSpinUpDuration(attackRateRank: number): number
-	return interpolate(attackRateRank, SPIN_UP_AT_RANK_ZERO, SPIN_UP_AT_RANK_THIRTY)
+	return ProgressionConfig.GetUpgradeValue(
+		attackRateRank,
+		SPIN_UP_AT_RANK_ZERO,
+		SPIN_UP_AT_RANK_THIRTY
+	)
 end
 
 local function getPulseInterval(attackRateRank: number): number
-	return interpolate(attackRateRank, PULSE_INTERVAL_AT_RANK_ZERO, PULSE_INTERVAL_AT_RANK_THIRTY)
+	return ProgressionConfig.GetUpgradeValue(
+		attackRateRank,
+		PULSE_INTERVAL_AT_RANK_ZERO,
+		PULSE_INTERVAL_AT_RANK_THIRTY
+	)
 end
 
 local function getPulseDamage(damageRank: number): number
-	return interpolate(damageRank, PULSE_DAMAGE_AT_RANK_ZERO, PULSE_DAMAGE_AT_RANK_THIRTY)
+	return ProgressionConfig.GetUpgradeValue(
+		damageRank,
+		PULSE_DAMAGE_AT_RANK_ZERO,
+		PULSE_DAMAGE_AT_RANK_THIRTY
+	)
 end
 
 local SpinnerConfig = table.freeze({
 	-- All Spinner balance values are provisional Phase 1 playtest tuning.
-	MaxUpgradeRank = MAX_UPGRADE_RANK,
+	MaxUpgradeRank = ProgressionConfig.MaxUpgradeRank,
 	SpinUpAtRankZero = SPIN_UP_AT_RANK_ZERO,
 	SpinUpAtRankThirty = SPIN_UP_AT_RANK_THIRTY,
 	PulseIntervalAtRankZero = PULSE_INTERVAL_AT_RANK_ZERO,

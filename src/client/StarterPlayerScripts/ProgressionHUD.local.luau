@@ -9,6 +9,7 @@ local Workspace = game:GetService("Workspace")
 
 local player = Players.LocalPlayer
 local shared = ReplicatedStorage:WaitForChild("Shared")
+local ClassConfig = require(shared:WaitForChild("ClassConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local upgradeRequestRemote = remotes:WaitForChild("ProgressionUpgradeRequest") :: RemoteEvent
@@ -17,7 +18,6 @@ type UpgradeDefinition = {
 	AttributeName: string,
 	DisplayName: string,
 	Description: string,
-	PerPoint: number,
 }
 
 local upgradeDefinitions = ProgressionConfig.Upgrades :: {[string]: UpgradeDefinition}
@@ -41,15 +41,15 @@ local panel = Instance.new("Frame")
 panel.Name = "Panel"
 panel.AnchorPoint = Vector2.new(1, 0)
 panel.Position = UDim2.new(1, -12, 0, 12)
-panel.Size = UDim2.new(0.24, 0, 0, 80)
+panel.Size = UDim2.new(0.24, 0, 0, 96)
 panel.BackgroundColor3 = Color3.fromRGB(13, 18, 25)
 panel.BackgroundTransparency = 0.18
 panel.BorderSizePixel = 0
 panel.Parent = screenGui
 
 local panelSizeConstraint = Instance.new("UISizeConstraint")
-panelSizeConstraint.MinSize = Vector2.new(210, 80)
-panelSizeConstraint.MaxSize = Vector2.new(280, 306)
+panelSizeConstraint.MinSize = Vector2.new(210, 96)
+panelSizeConstraint.MaxSize = Vector2.new(280, 348)
 panelSizeConstraint.Parent = panel
 
 local panelCorner = Instance.new("UICorner")
@@ -128,6 +128,31 @@ xpLabel.TextSize = 11
 xpLabel.Size = UDim2.fromScale(1, 1)
 xpLabel.ZIndex = 2
 xpLabel.Parent = xpBarBackground
+
+local classControlLabel = Instance.new("TextLabel")
+classControlLabel.Name = "ClassControl"
+classControlLabel.BackgroundTransparency = 1
+classControlLabel.Font = Enum.Font.GothamBold
+classControlLabel.Text = "SPINNER — Hold LMB to Spin"
+classControlLabel.TextColor3 = Color3.fromRGB(196, 145, 245)
+classControlLabel.TextSize = 10
+classControlLabel.TextXAlignment = Enum.TextXAlignment.Left
+classControlLabel.Position = UDim2.fromOffset(10, 70)
+classControlLabel.Size = UDim2.new(1, -20, 0, 17)
+classControlLabel.Visible = false
+classControlLabel.Parent = panel
+
+local evolutionStatusLabel = Instance.new("TextLabel")
+evolutionStatusLabel.Name = "EvolutionStatus"
+evolutionStatusLabel.BackgroundTransparency = 1
+evolutionStatusLabel.Font = Enum.Font.GothamMedium
+evolutionStatusLabel.Text = "Evolution at Level 8"
+evolutionStatusLabel.TextColor3 = Color3.fromRGB(170, 185, 198)
+evolutionStatusLabel.TextSize = 10
+evolutionStatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+evolutionStatusLabel.Position = UDim2.fromOffset(10, 70)
+evolutionStatusLabel.Size = UDim2.new(1, -20, 0, 17)
+evolutionStatusLabel.Parent = panel
 
 local upgradeToggleButton = Instance.new("TextButton")
 upgradeToggleButton.Name = "UpgradeToggleButton"
@@ -242,7 +267,7 @@ upgradeHeader.Text = "SPEND 1 POINT"
 upgradeHeader.TextColor3 = Color3.fromRGB(180, 190, 205)
 upgradeHeader.TextSize = 12
 upgradeHeader.TextXAlignment = Enum.TextXAlignment.Left
-upgradeHeader.Position = UDim2.fromOffset(10, 76)
+upgradeHeader.Position = UDim2.fromOffset(10, 100)
 upgradeHeader.Size = UDim2.new(1, -20, 0, 18)
 upgradeHeader.Visible = false
 upgradeHeader.Parent = panel
@@ -250,7 +275,7 @@ upgradeHeader.Parent = panel
 local buttonContainer = Instance.new("Frame")
 buttonContainer.Name = "UpgradeButtons"
 buttonContainer.BackgroundTransparency = 1
-buttonContainer.Position = UDim2.fromOffset(10, 98)
+buttonContainer.Position = UDim2.fromOffset(10, 122)
 buttonContainer.Size = UDim2.new(1, -20, 0, 196)
 buttonContainer.Visible = false
 buttonContainer.Parent = panel
@@ -353,6 +378,13 @@ local function updateHUD()
 		ProgressionConfig.MaxUnspentUpgradePoints
 	)
 	local unlimitedPoints = player:GetAttribute(DEV_UNLIMITED_ATTRIBUTE) == true
+	local classValue = player:GetAttribute(ClassConfig.ClassAttribute)
+	local classId = if typeof(classValue) == "string"
+		then classValue :: string
+		else ClassConfig.BaseClassId
+	local hasSelectedLevel8Class = classId == ClassConfig.StrikerClassId
+		or classId == ClassConfig.SpinnerClassId
+	local showSpinnerControl = classId == ClassConfig.SpinnerClassId
 	local initiallyAvailable = lastObservedPoints == nil and points > 0
 	local gainedPoint = lastObservedPoints ~= nil and points > (lastObservedPoints :: number)
 	local gainedUnlimited = unlimitedPoints and not lastObservedUnlimited
@@ -386,6 +418,23 @@ local function updateHUD()
 		xpFill.Size = UDim2.fromScale(math.clamp(xp / xpToNext, 0, 1), 1)
 	end
 
+	classControlLabel.Visible = showSpinnerControl
+	local statusY = if showSpinnerControl then 88 else 70
+	evolutionStatusLabel.Position = UDim2.fromOffset(10, statusY)
+	if hasSelectedLevel8Class and level >= ClassConfig.Level20Threshold then
+		evolutionStatusLabel.Text = "Level 20 Evolution — Coming Soon"
+		evolutionStatusLabel.TextColor3 = Color3.fromRGB(196, 145, 245)
+	elseif hasSelectedLevel8Class then
+		evolutionStatusLabel.Text = "Next Evolution at Level 20"
+		evolutionStatusLabel.TextColor3 = Color3.fromRGB(170, 185, 198)
+	elseif level >= ClassConfig.Level8Threshold then
+		evolutionStatusLabel.Text = "EVOLUTION READY"
+		evolutionStatusLabel.TextColor3 = Color3.fromRGB(255, 205, 70)
+	else
+		evolutionStatusLabel.Text = "Evolution at Level 8"
+		evolutionStatusLabel.TextColor3 = Color3.fromRGB(170, 185, 198)
+	end
+
 	local showToggle = points > 0 or unlimitedPoints
 	upgradeToggleButton.Visible = showToggle
 	title.Position = UDim2.fromOffset(if showToggle then 58 else 10, 5)
@@ -393,11 +442,17 @@ local function updateHUD()
 	levelLabel.Position = UDim2.fromOffset(if showToggle then 58 else 10, 25)
 	levelLabel.Size = UDim2.new(0.5, if showToggle then -58 else -10, 0, 18)
 
+	local collapsedHeight = if showSpinnerControl then 114 else 96
+	local upgradeHeaderY = collapsedHeight + 4
+	local upgradeButtonsY = upgradeHeaderY + 22
+	local expandedHeight = upgradeButtonsY + 208
+	upgradeHeader.Position = UDim2.fromOffset(10, upgradeHeaderY)
+	buttonContainer.Position = UDim2.fromOffset(10, upgradeButtonsY)
 	local showUpgradeChoices = showToggle and upgradeMenuOpen and not evolutionBlocking
 	upgradeHeader.Text = if unlimitedPoints then "UNLIMITED POINTS" else "SPEND 1 POINT"
 	upgradeHeader.Visible = showUpgradeChoices
 	buttonContainer.Visible = showUpgradeChoices
-	panel.Size = UDim2.new(0.24, 0, 0, if showUpgradeChoices then 306 else 80)
+	panel.Size = UDim2.new(0.24, 0, 0, if showUpgradeChoices then expandedHeight else collapsedHeight)
 
 	for _, category in ProgressionConfig.UpgradeOrder do
 		local definition = upgradeDefinitions[category]

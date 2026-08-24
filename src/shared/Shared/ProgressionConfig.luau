@@ -3,6 +3,7 @@
 local LEVEL_CAP = 30
 local UPGRADE_POINTS_PER_LEVEL = 1
 local MAX_UPGRADE_RANK = 30
+local CURVE_STRENGTH = 1.5
 
 local XP_REQUIREMENTS = table.freeze({
 	40,
@@ -49,31 +50,26 @@ local UPGRADES = table.freeze({
 		AttributeName = "SpeedUpgradeLevel",
 		DisplayName = "Speed",
 		Description = "Maximum movement speed",
-		PerPoint = 0.2 / MAX_UPGRADE_RANK,
 	}),
 	["Attack Rate"] = table.freeze({
 		AttributeName = "AttackRateUpgradeLevel",
 		DisplayName = "Attack Rate",
 		Description = "Weapon attack rate",
-		PerPoint = 0.3 / MAX_UPGRADE_RANK,
 	}),
 	Damage = table.freeze({
 		AttributeName = "DamageUpgradeLevel",
 		DisplayName = "Damage",
 		Description = "Weapon damage",
-		PerPoint = 0.4 / MAX_UPGRADE_RANK,
 	}),
 	Health = table.freeze({
 		AttributeName = "HealthUpgradeLevel",
 		DisplayName = "Health",
 		Description = "Maximum health",
-		PerPoint = 50 / MAX_UPGRADE_RANK,
 	}),
 	["Health Regen"] = table.freeze({
 		AttributeName = "HealthRegenUpgradeLevel",
 		DisplayName = "Health Regen",
 		Description = "Health restored after avoiding damage",
-		PerPoint = 0.1,
 	}),
 })
 
@@ -124,8 +120,37 @@ local BREAKABLES = table.freeze({
 	}),
 })
 
+local function isFinite(value: number): boolean
+	return value == value and value > -math.huge and value < math.huge
+end
+
 local function clampUpgradeRank(rank: number): number
+	if not isFinite(rank) then
+		return 0
+	end
 	return math.clamp(math.floor(rank), 0, MAX_UPGRADE_RANK)
+end
+
+local function getUpgradeFactor(rank: number): number
+	local safeRank = clampUpgradeRank(rank)
+	if safeRank <= 0 then
+		return 0
+	elseif safeRank >= MAX_UPGRADE_RANK then
+		return 1
+	end
+
+	local normalizedRank = safeRank / MAX_UPGRADE_RANK
+	local denominator = math.exp(CURVE_STRENGTH) - 1
+	local factor = (math.exp(CURVE_STRENGTH * normalizedRank) - 1) / denominator
+	if not isFinite(factor) then
+		return 0
+	end
+	return math.clamp(factor, 0, 1)
+end
+
+local function getUpgradeValue(rank: number, rankZeroValue: number, rankThirtyValue: number): number
+	local factor = getUpgradeFactor(rank)
+	return rankZeroValue + (rankThirtyValue - rankZeroValue) * factor
 end
 
 local function getXPToNextLevel(level: number): number
@@ -142,23 +167,23 @@ local function getEarnedUpgradePoints(level: number): number
 end
 
 local function getSpeedMultiplier(rank: number): number
-	return 1 + clampUpgradeRank(rank) * UPGRADES.Speed.PerPoint
+	return getUpgradeValue(rank, 1, 1.2)
 end
 
 local function getAttackRateMultiplier(rank: number): number
-	return math.max(0.7, 1 - clampUpgradeRank(rank) * UPGRADES["Attack Rate"].PerPoint)
+	return getUpgradeValue(rank, 1, 0.7)
 end
 
 local function getDamageMultiplier(rank: number): number
-	return 1 + clampUpgradeRank(rank) * UPGRADES.Damage.PerPoint
+	return getUpgradeValue(rank, 1, 1.4)
 end
 
 local function getHealthBonus(rank: number): number
-	return clampUpgradeRank(rank) * UPGRADES.Health.PerPoint
+	return getUpgradeValue(rank, 0, 50)
 end
 
 local function getHealthRegenPerSecond(rank: number): number
-	return clampUpgradeRank(rank) * UPGRADES["Health Regen"].PerPoint
+	return getUpgradeValue(rank, 0, 3)
 end
 
 local ProgressionConfig = table.freeze({
@@ -166,6 +191,7 @@ local ProgressionConfig = table.freeze({
 	UpgradePointsPerLevel = UPGRADE_POINTS_PER_LEVEL,
 	StartingUpgradePoints = UPGRADE_POINTS_PER_LEVEL,
 	MaxUpgradeRank = MAX_UPGRADE_RANK,
+	CurveStrength = CURVE_STRENGTH,
 	MaxUnspentUpgradePoints = LEVEL_CAP * UPGRADE_POINTS_PER_LEVEL,
 	MaxServerXPAward = 10000,
 	PlayerEliminationXP = 60,
@@ -183,6 +209,8 @@ local ProgressionConfig = table.freeze({
 	Upgrades = UPGRADES,
 	Breakables = BREAKABLES,
 	ClampUpgradeRank = clampUpgradeRank,
+	GetUpgradeFactor = getUpgradeFactor,
+	GetUpgradeValue = getUpgradeValue,
 	GetXPToNextLevel = getXPToNextLevel,
 	GetEarnedUpgradePoints = getEarnedUpgradePoints,
 	GetSpeedMultiplier = getSpeedMultiplier,
