@@ -19,7 +19,7 @@ Arena death retains the existing behavior: the run resets and the player respawn
 
 `PlayerSessionState` is replicated as a player attribute only so client UI and cosmetics can respond. Server systems never use a client-written attribute as authority. Combat, breakable damage, XP, upgrades, class selection, movement exceptions, and deployment query `PlayerSessionService` directly.
 
-The service initializes every connection in `Lobby`, preserves the authoritative state across character respawns, and removes its state when the player disconnects. Rejoining creates a new `Lobby` session. No DataStore is read or written.
+The service initializes every connection in `Lobby`, preserves the authoritative state across character respawns, and removes its state when the player disconnects. Rejoining creates a new `Lobby` session. The lobby service itself does not read or write profile data; the later extraction milestone keeps that responsibility isolated in `ProfileDataService` and blocks deployment when a profile is unavailable.
 
 ## Lobby safety
 
@@ -94,7 +94,7 @@ This foundation does not implement:
 - A player-facing Return to Lobby action.
 - A death-choice screen, Robux revive, or paid power.
 - External announcements or advertising content.
-- DataStores, permanent progression, analytics, or multi-place teleports.
+- Profile-XP spending, permanent combat power, production analytics, or multi-place teleports. The later extraction milestone adds cosmetic-only banked profile XP behind a mock-first persistence boundary.
 - Level 20 evolutions.
 
 If the same-place prototype proves clear and enjoyable with real players, a future architecture decision may move the workshop and arena into separate places. That migration must preserve server authority, canonical run reset semantics, safe spawn selection, failure recovery, and non-pay-to-win rules.

@@ -14,6 +14,7 @@ local ClassService = require(script.Parent:WaitForChild("ClassService"))
 local BreakableObjectService = require(script.Parent:WaitForChild("BreakableObjectService"))
 local CollisionGroupService = require(script.Parent:WaitForChild("CollisionGroupService"))
 local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
+local AuthoritativeDamageService = require(script.Parent:WaitForChild("AuthoritativeDamageService"))
 
 PlayerSessionService.Init()
 ProgressionService.Init()
@@ -381,7 +382,10 @@ local function resolveAttack(
 
 		hitHumanoids[targetHumanoid] = true
 		local healthBefore = targetHumanoid.Health
-		targetHumanoid:TakeDamage(attackDamage)
+		local appliedDamage = AuthoritativeDamageService.ApplyHumanoidDamage(targetHumanoid, attackDamage)
+		if appliedDamage <= 0 then
+			continue
+		end
 		applyHorizontalKnockback(attackerRoot, target, targetRoot, knockbackSpeed)
 		if healthBefore > 0 and targetHumanoid.Health <= 0 then
 			ProgressionService.AwardElimination(player, targetPlayer, targetHumanoid)

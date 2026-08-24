@@ -1,6 +1,7 @@
 --!strict
 
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
+local ProfileDataService = require(script.Parent:WaitForChild("ProfileDataService"))
 local LobbyLayoutService = require(script.Parent:WaitForChild("LobbyLayoutService"))
 local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
 local ClassService = require(script.Parent:WaitForChild("ClassService"))
@@ -10,7 +11,9 @@ local DevToolsService = require(script.Parent:WaitForChild("DevToolsService"))
 local CollisionGroupService = require(script.Parent:WaitForChild("CollisionGroupService"))
 local ArenaLayoutService = require(script.Parent:WaitForChild("ArenaLayoutService"))
 local BreakableObjectService = require(script.Parent:WaitForChild("BreakableObjectService"))
+local ExtractionService = require(script.Parent:WaitForChild("ExtractionService"))
 
+ProfileDataService.Init()
 LobbyLayoutService.Init()
 PlayerSessionService.Init()
 CollisionGroupService.Init()
@@ -21,3 +24,4 @@ RammerCombatService.Init()
 DevToolsService.Init()
 ArenaLayoutService.Init()
 BreakableObjectService.Init()
+ExtractionService.Init()

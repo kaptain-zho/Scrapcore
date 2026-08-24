@@ -2,6 +2,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local shared = ReplicatedStorage:WaitForChild("Shared")
@@ -10,6 +11,7 @@ local ClassConfig = require(shared:WaitForChild("ClassConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local LobbyLayoutService = require(script.Parent:WaitForChild("LobbyLayoutService"))
+local ProfileDataService = require(script.Parent:WaitForChild("ProfileDataService"))
 
 type PlayerSessionState = {
 	state: string,
@@ -344,6 +346,10 @@ local function requestDeployment(player: Player, payloadIsValid: boolean)
 		rejectDeployment(player, state, nil)
 		return
 	end
+	if not ProfileDataService.IsLoaded(player) then
+		rejectDeployment(player, state, "Profile data is unavailable. Deployment is blocked for your safety.")
+		return
+	end
 	local character, _humanoid, root = getAliveCharacter(player)
 	if
 		state.state ~= SessionConfig.LobbyState
@@ -459,6 +465,20 @@ function PlayerSessionService.GetTeleportSerial(player: Player): number
 	return if state ~= nil then state.teleportSerial else -1
 end
 
+function PlayerSessionService.TeleportForStudioTest(player: Player, destination: CFrame): boolean
+	if not RunService:IsStudio() then
+		return false
+	end
+	local state = states[player]
+	local character, _humanoid, _root = getAliveCharacter(player)
+	if state == nil or character == nil then
+		return false
+	end
+	moveCharacter(character, destination)
+	markAuthorizedTeleport(state)
+	return true
+end
+
 function PlayerSessionService.ReturnToLobby(player: Player): boolean
 	local state = states[player]
 	if state == nil then
@@ -482,6 +502,7 @@ function PlayerSessionService.Init()
 	end
 	initialized = true
 	LobbyLayoutService.Init()
+	ProfileDataService.Init()
 	deployRemote = getOrCreateRemote("LobbyDeployRequest")
 	feedbackRemote = getOrCreateRemote("LobbyFeedback")
 

@@ -16,6 +16,7 @@ local BreakableObjectService = require(script.Parent:WaitForChild("BreakableObje
 local ClassService = require(script.Parent:WaitForChild("ClassService"))
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
 local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
+local AuthoritativeDamageService = require(script.Parent:WaitForChild("AuthoritativeDamageService"))
 
 local ROBOT_CHASSIS_NAME = "RobotChassis"
 local RAMMER_HIT_ORIGIN_NAME = "RammerHitOrigin"
@@ -456,9 +457,11 @@ local function resolveImpact(player: Player, state: RammerState, now: number): b
 		end
 	elseif candidate.humanoid ~= nil and candidate.humanoid.Health > 0 then
 		local healthBefore = candidate.humanoid.Health
-		candidate.humanoid:TakeDamage(damage)
-		applyHorizontalKnockback(candidate.model, candidate.targetPart, state.dashDirection, knockback)
-		affected = true
+		local appliedDamage = AuthoritativeDamageService.ApplyHumanoidDamage(candidate.humanoid, damage)
+		if appliedDamage > 0 then
+			applyHorizontalKnockback(candidate.model, candidate.targetPart, state.dashDirection, knockback)
+			affected = true
+		end
 		if healthBefore > 0 and candidate.humanoid.Health <= 0 then
 			local targetPlayer = Players:GetPlayerFromCharacter(candidate.model)
 			ProgressionService.AwardElimination(player, targetPlayer, candidate.humanoid)
@@ -890,6 +893,13 @@ function RammerCombatService.CancelMovementViolation(player: Player)
 	end
 	state.damageResolved = true
 	setPhase(player, state, "Recovery", now, now + RammerConfig.MissRecoveryDuration)
+end
+
+function RammerCombatService.CancelForPlayer(player: Player)
+	local state = states[player]
+	if state ~= nil then
+		cancelImmediately(player, state)
+	end
 end
 
 local function validateConfiguration()

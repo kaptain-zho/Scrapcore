@@ -8,8 +8,10 @@ local Workspace = game:GetService("Workspace")
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local CombatConfig = require(shared:WaitForChild("CombatConfig"))
+local ExtractionConfig = require(shared:WaitForChild("ExtractionConfig"))
 local MovementConfig = require(shared:WaitForChild("MovementConfig"))
 local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
+local ProfileDataService = require(script.Parent:WaitForChild("ProfileDataService"))
 
 type UpgradeDefinition = {
 	AttributeName: string,
@@ -21,6 +23,8 @@ type PlayerRunState = {
 	runSerial: number,
 	unlimitedUpgradePoints: boolean,
 	writingUnlimitedAttribute: boolean,
+	writingUnbankedAttribute: boolean,
+	unbankedRunXP: number,
 	requestWindowStartedAt: number,
 	requestsInWindow: number,
 	lastRequestAt: number,
@@ -31,6 +35,7 @@ type PlayerRunState = {
 	diedConnection: RBXScriptConnection?,
 	healthChangedConnection: RBXScriptConnection?,
 	unlimitedAttributeConnection: RBXScriptConnection?,
+	unbankedAttributeConnection: RBXScriptConnection?,
 	humanoid: Humanoid?,
 	lastObservedHealth: number,
 	lastDamageAt: number,
@@ -94,11 +99,19 @@ local function setUpgradeRanksToZero(player: Player)
 	end
 end
 
-local function resetRunAttributes(player: Player)
+local function writeUnbankedRunXP(player: Player, state: PlayerRunState)
+	state.writingUnbankedAttribute = true
+	player:SetAttribute(ExtractionConfig.RunXPAttribute, state.unbankedRunXP)
+	state.writingUnbankedAttribute = false
+end
+
+local function resetRunAttributes(player: Player, state: PlayerRunState)
 	player:SetAttribute("RunLevel", 1)
 	player:SetAttribute("RunXP", 0)
 	player:SetAttribute("XPToNextLevel", ProgressionConfig.GetXPToNextLevel(1))
 	player:SetAttribute("UnspentUpgradePoints", ProgressionConfig.StartingUpgradePoints)
+	state.unbankedRunXP = 0
+	writeUnbankedRunXP(player, state)
 	setUpgradeRanksToZero(player)
 end
 
@@ -123,10 +136,11 @@ local function resetRun(player: Player)
 	if state == nil then
 		return
 	end
+	ProfileDataService.AbandonPendingReceipt(player, state.runSerial)
 	state.runSerial += 1
 	state.lastDamageAt = Workspace:GetServerTimeNow()
 	state.lastObservedHealth = if state.humanoid ~= nil then state.humanoid.Health else 0
-	resetRunAttributes(player)
+	resetRunAttributes(player, state)
 end
 
 local function disableDefaultHealthRegeneration(instance: Instance)
@@ -216,6 +230,8 @@ local function connectPlayer(player: Player)
 		runSerial = 0,
 		unlimitedUpgradePoints = false,
 		writingUnlimitedAttribute = false,
+		writingUnbankedAttribute = false,
+		unbankedRunXP = 0,
 		requestWindowStartedAt = now,
 		requestsInWindow = 0,
 		lastRequestAt = -math.huge,
@@ -226,6 +242,7 @@ local function connectPlayer(player: Player)
 		diedConnection = nil,
 		healthChangedConnection = nil,
 		unlimitedAttributeConnection = nil,
+		unbankedAttributeConnection = nil,
 		humanoid = nil,
 		lastObservedHealth = 0,
 		lastDamageAt = now,
@@ -243,6 +260,11 @@ local function connectPlayer(player: Player)
 		state.writingUnlimitedAttribute = true
 		player:SetAttribute(DEV_UNLIMITED_ATTRIBUTE, state.unlimitedUpgradePoints)
 		state.writingUnlimitedAttribute = false
+	end)
+	state.unbankedAttributeConnection = player:GetAttributeChangedSignal(ExtractionConfig.RunXPAttribute):Connect(function()
+		if not state.writingUnbankedAttribute then
+			writeUnbankedRunXP(player, state)
+		end
 	end)
 
 	state.characterAddedConnection = player.CharacterAdded:Connect(function(character: Model)
@@ -273,6 +295,9 @@ local function disconnectPlayer(player: Player)
 	if state.unlimitedAttributeConnection ~= nil then
 		state.unlimitedAttributeConnection:Disconnect()
 	end
+	if state.unbankedAttributeConnection ~= nil then
+		state.unbankedAttributeConnection:Disconnect()
+	end
 	playerStates[player] = nil
 end
 
@@ -300,6 +325,11 @@ end
 function ProgressionService.GetHammerDamage(player: Player, baseDamage: number): number
 	local multiplier = ProgressionConfig.GetDamageMultiplier(ProgressionService.GetUpgradeRank(player, "Damage"))
 	return baseDamage * multiplier
+end
+
+function ProgressionService.GetUnbankedRunXP(player: Player): number
+	local state = playerStates[player]
+	return if state ~= nil then state.unbankedRunXP else 0
 end
 
 function ProgressionService.IsUnlimitedUpgradePoints(player: Player): boolean
@@ -376,6 +406,9 @@ function ProgressionService.AwardXP(player: Player, amount: number): number
 	then
 		return 0
 	end
+	if ProfileDataService.HasPendingReceipt(player, state.runSerial) then
+		return 0
+	end
 
 	local remaining = math.clamp(math.floor(amount), 0, ProgressionConfig.MaxServerXPAward)
 	local requestedAward = remaining
@@ -415,7 +448,16 @@ function ProgressionService.AwardXP(player: Player, amount: number): number
 	player:SetAttribute("RunXP", xp)
 	player:SetAttribute("XPToNextLevel", ProgressionConfig.GetXPToNextLevel(level))
 	player:SetAttribute("UnspentUpgradePoints", points)
-	return requestedAward - remaining
+	local appliedAward = requestedAward - remaining
+	if appliedAward > 0 then
+		state.unbankedRunXP = math.clamp(
+			state.unbankedRunXP + appliedAward,
+			0,
+			ExtractionConfig.MaximumUnbankedRunXP
+		)
+		writeUnbankedRunXP(player, state)
+	end
+	return appliedAward
 end
 
 function ProgressionService.AwardElimination(

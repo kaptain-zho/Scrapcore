@@ -6,6 +6,7 @@ local Workspace = game:GetService("Workspace")
 
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local ArenaConfig = require(shared:WaitForChild("ArenaConfig"))
+local ExtractionConfig = require(shared:WaitForChild("ExtractionConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local CollisionGroupService = require(script.Parent:WaitForChild("CollisionGroupService"))
 
@@ -127,6 +128,10 @@ local function createExclusions(): {Exclusion}
 		{
 			position = Vector2.new(ArenaConfig.DummyPosition.X, ArenaConfig.DummyPosition.Z),
 			radius = ArenaConfig.DummyClearance,
+		},
+		{
+			position = Vector2.new(ExtractionConfig.ZoneCenter.X, ExtractionConfig.ZoneCenter.Z),
+			radius = ExtractionConfig.BreakableClearance,
 		},
 	}
 	for _, spawnPosition in ArenaConfig.SpawnPositions do

@@ -15,6 +15,7 @@ local BreakableObjectService = require(script.Parent:WaitForChild("BreakableObje
 local ClassService = require(script.Parent:WaitForChild("ClassService"))
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
 local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
+local AuthoritativeDamageService = require(script.Parent:WaitForChild("AuthoritativeDamageService"))
 
 local ROBOT_CHASSIS_NAME = "RobotChassis"
 local SPINNER_HIT_ORIGIN_NAME = "SpinnerHitOrigin"
@@ -300,7 +301,13 @@ local function resolvePulse(player: Player, state: SpinnerState): number
 			end
 		elseif candidate.humanoid ~= nil and candidate.humanoid.Health > 0 then
 			local healthBefore = candidate.humanoid.Health
-			candidate.humanoid:TakeDamage(state.pulseDamage)
+			local appliedDamage = AuthoritativeDamageService.ApplyHumanoidDamage(
+				candidate.humanoid,
+				state.pulseDamage
+			)
+			if appliedDamage <= 0 then
+				continue
+			end
 			applyHorizontalKnockback(
 				attackerRoot,
 				candidate.model,
@@ -680,6 +687,13 @@ function SpinnerCombatService.Init()
 	Players.PlayerRemoving:Connect(disconnectPlayer)
 	for _, player in Players:GetPlayers() do
 		connectPlayer(player)
+	end
+end
+
+function SpinnerCombatService.CancelForPlayer(player: Player)
+	local state = states[player]
+	if state ~= nil then
+		cancelSpinner(player, state)
 	end
 end
 

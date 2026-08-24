@@ -11,13 +11,15 @@ Players deploy as a basic robot into a continuous arena, destroy graybox objecti
 
 **Core loop:**
 
-> Deploy basic bot → destroy objects or fight players → earn XP → level up → upgrade stats → evolve later → die and reset → redeploy
+> Deploy basic bot → destroy objects or fight players → earn XP → level up → upgrade stats → evolve → extract to bank cosmetic-only profile XP or die and lose the run → redeploy
 
-This per-life arena-evolution loop is the current hypothesis to prove before extraction or permanent progression resumes. Temporary levels, XP, upgrade points, combat-stat upgrades, and the selected evolution path reset on death; they are not account progression.
+Temporary levels, XP, upgrade points, combat-stat upgrades, and the selected evolution path still reset on death. The current bounded extraction experiment adds a separate permanent `BankedProfileXP` total that can be increased only by a successful ten-second no-damage arena extraction. Banked profile XP is reserved for future cosmetics and unlock presentation; it must never provide combat power.
 
 The original Level 8 evolution framework now prototypes **Striker**, **Spinner**, and **Rammer** as enabled, mutually exclusive per-life choices. Level 20 specializations remain future design targets. The current test must establish that Striker's burst-and-shove hammer, Spinner's sustained contact pressure, and Rammer's committed hold-and-release frontal charge create readable original counterplay without weakening server authority.
 
 The first same-place workshop-lobby foundation is now the bounded bridge into the arena loop. A new connection starts in a safe, weaponless graybox workshop; the server-owned Main Arena portal begins a canonical Level 1 Scrap Runner run in the existing 380 x 380 arena. Arena deaths still reset and respawn directly in the arena during this prototype. Functional customization, leaderboards, matchmaking, alternate game modes, player-facing returns, and death choices remain deferred.
+
+The extraction prototype adds a deterministic arena-edge banking zone. A living arena player with positive unbanked run XP must remain inside it for ten continuous seconds without authoritative damage. Damage resets the timer. Leaving cancels extraction but preserves unbanked XP for a later retry; dying, disconnecting, or leaving the server before success destroys all unbanked XP. Confirmed banking returns only that player to the protected workshop; failed persistence preserves the active run.
 
 ## 2. Design pillars
 
@@ -157,8 +159,9 @@ No shop, season pass, giant map, detailed garage, ranked mode, complicated craft
 5. Level up and spend points on temporary combat-stat upgrades.
 6. Reach a planned class-choice gate at Level 8 and, later, Level 20 once classes exist.
 7. Continue taking greater arena risks as the bot becomes stronger.
-8. Get destroyed and reset all temporary levels, XP, points, upgrades, and evolution state.
-9. Respawn quickly in the arena as a basic bot during the current prototype; a later death-flow experiment will decide when returning to the lobby is offered.
+8. Optionally hold the arena-edge extraction zone undamaged for ten seconds to permanently bank the current run's XP and return to the workshop.
+9. If destroyed or disconnected first, lose all unbanked run XP and reset all temporary levels, points, upgrades, and evolution state.
+10. Respawn quickly in the arena after destruction; a confirmed extraction is the current server-authorized path back to the lobby.
 
 ### Systems
 
@@ -168,12 +171,13 @@ No shop, season pass, giant map, detailed garage, ranked mode, complicated craft
 - Basic bounty and live leaderboard.
 - Spawn protection and anti-camping measures.
 - First-pass account data for settings and a small number of permanent unlocks.
+- Schema-versioned, receipt-idempotent banked profile XP for future cosmetic-only unlocks, using a mock adapter by default until a private published DataStore test is approved.
 - Basic onboarding, settings, reporting, and accessibility controls.
 - Event logging for joins, deployments, fights, eliminations, deaths, upgrades, extractions, and exits.
 
 ### Key experiments
 
-- Whether extraction or banking belongs in the loop after per-life arena evolution is proven.
+- Whether the ten-second no-damage extraction improves run tension and redeployment intent without encouraging avoidance or spawn-edge camping.
 - Manual deployment zone selection versus automatic safe spawn.
 - Losing all, some, or none of carried scrap on destruction.
 - Level advantages versus normalized combat power.
@@ -436,7 +440,7 @@ A feature is done only when it:
 
 We should test these instead of deciding them permanently now:
 
-- Extraction, automatic banking, or a hybrid.
+- Exact extraction placement, duration, interruption feedback, and whether later variants should offer additional risk; the current prototype uses one manual ten-second no-damage zone.
 - Top-down, angled, or close third-person camera.
 - Freeform modular construction versus curated chassis/loadouts.
 - Player count and arena size.
@@ -449,9 +453,9 @@ We should test these instead of deciding them permanently now:
 
 ## 10. Immediate next decision
 
-Validate the graybox workshop and deployment flow with two real clients before expanding it. The test should establish that new players understand the safe workshop, can read its inactive placeholders, find and use MAIN ARENA without developer direction, deploy independently to safe arena spawns, receive the correct HUD and standard weapon, and remain in the arena through the existing death/reset cycle. Rejoining must return them to the workshop, and both lobby and arena players must coexist without authority, collision, camera, or synchronization regressions.
+Validate the arena extraction and banked-profile-XP experiment with two real clients before expanding permanent progression. The test must establish that the portal rules and countdown are readable, authoritative damage visibly resets the full ten seconds, leaving cancels cleanly, retrying works, and successful banking credits the exact unbanked total once before returning only that player to the lobby. The other player's run must remain unchanged, redeployment must start a fresh Level 1 run, and all consoles must remain clean.
 
-The provisional Level 20 branches documented in `docs/CLASS_EVOLUTION_DESIGN.md` remain disabled future work. Functional skins, live leaderboards, matchmaking, extra modes, death choices, paid revives, ads, and persistent progression also remain outside this validation gate.
+Live persistence still requires a published private-server DataStore validation; Studio's default mock adapter is not proof of live durability. The provisional Level 20 branches documented in `docs/CLASS_EVOLUTION_DESIGN.md` remain disabled future work. Level 300 progression, functional skins, live leaderboards, matchmaking, extra modes, death choices, paid revives, ads, spending systems, and monetization remain outside this validation gate.
 
 ---
 

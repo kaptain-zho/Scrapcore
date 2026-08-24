@@ -7,11 +7,14 @@ local Workspace = game:GetService("Workspace")
 
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local ClassConfig = require(shared:WaitForChild("ClassConfig"))
+local ExtractionConfig = require(shared:WaitForChild("ExtractionConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local DevToolsConfig = require(script.Parent:WaitForChild("DevToolsConfig"))
 local ClassService = require(script.Parent:WaitForChild("ClassService"))
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
 local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
+local AuthoritativeDamageService = require(script.Parent:WaitForChild("AuthoritativeDamageService"))
+local ProfileDataService = require(script.Parent:WaitForChild("ProfileDataService"))
 
 type PlayerDevState = {
 	requestWindowStartedAt: number,
@@ -184,6 +187,43 @@ local function performAction(player: Player, action: string): string?
 		return action
 	elseif action == "ReturnToLobby" then
 		return if PlayerSessionService.ReturnToLobby(player) then action else nil
+	elseif action == "StudioTestMoveToMainPortal" then
+		if not RunService:IsStudio() then
+			return nil
+		end
+		local portal = Workspace:FindFirstChild("WorkshopLobby")
+		local portalPart = if portal ~= nil then portal:FindFirstChild("PortalField", true) else nil
+		if portalPart == nil or not portalPart:IsA("BasePart") then
+			return nil
+		end
+		local destination = CFrame.new(portalPart.Position + Vector3.new(0, 0, -3))
+		return if PlayerSessionService.TeleportForStudioTest(player, destination) then action else nil
+	elseif action == "StudioTestMoveToExtraction" then
+		if not RunService:IsStudio() or not PlayerSessionService.IsArena(player) then
+			return nil
+		end
+		local destination = CFrame.new(ExtractionConfig.ZoneCenter)
+		return if PlayerSessionService.TeleportForStudioTest(player, destination) then action else nil
+	elseif action == "StudioTestAuthoritativeDamage10" then
+		if not RunService:IsStudio() or not PlayerSessionService.IsArena(player) then
+			return nil
+		end
+		local character = player.Character
+		local humanoid = if character ~= nil then character:FindFirstChildOfClass("Humanoid") else nil
+		if humanoid == nil or AuthoritativeDamageService.ApplyHumanoidDamage(humanoid, 10) <= 0 then
+			return nil
+		end
+		return action
+	elseif action == "StudioTestProfileNormal" then
+		return if ProfileDataService.SetStudioMockWriteMode(player, "Normal") then action else nil
+	elseif action == "StudioTestProfileFailAll" then
+		return if ProfileDataService.SetStudioMockWriteMode(player, "FailAll") then action else nil
+	elseif action == "StudioTestProfileUncertainOnce" then
+		return if ProfileDataService.SetStudioMockWriteMode(player, "UncertainOnce") then action else nil
+	elseif action == "StudioTestReloadMockProfile" then
+		return if ProfileDataService.ReloadStudioMockProfile(player) then action else nil
+	elseif action == "StudioTestProfileUnavailable" then
+		return if ProfileDataService.SetStudioMockProfileUnavailable(player) then action else nil
 	elseif action == "HealToFull" then
 		return if ProgressionService.HealToFull(player) then action else nil
 	end
