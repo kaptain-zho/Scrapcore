@@ -422,7 +422,7 @@ local function handleAttackRequest(player: Player, sequenceValue: unknown, ...: 
 		return
 	end
 	local classId = ClassService.GetClassId(player)
-	if classId == ClassConfig.SpinnerClassId then
+	if classId == ClassConfig.SpinnerClassId or classId == ClassConfig.RammerClassId then
 		rejectRequest(player, state)
 		return
 	end

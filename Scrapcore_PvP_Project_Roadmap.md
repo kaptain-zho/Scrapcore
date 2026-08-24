@@ -15,7 +15,7 @@ Players deploy as a basic robot into a continuous arena, destroy graybox objecti
 
 This per-life arena-evolution loop is the current hypothesis to prove before extraction or permanent progression resumes. Temporary levels, XP, upgrade points, combat-stat upgrades, and the selected evolution path reset on death; they are not account progression.
 
-The original Level 8 evolution framework now prototypes **Striker** and **Spinner** as enabled, mutually exclusive per-life choices, while **Rammer** remains a disabled preview. Level 20 specializations remain future design targets. The current test must establish that the burst-and-shove Striker and sustained-contact Spinner create readable, original counterplay without weakening server authority.
+The original Level 8 evolution framework now prototypes **Striker**, **Spinner**, and **Rammer** as enabled, mutually exclusive per-life choices. Level 20 specializations remain future design targets. The current test must establish that Striker's burst-and-shove hammer, Spinner's sustained contact pressure, and Rammer's committed hold-and-release frontal charge create readable original counterplay without weakening server authority.
 
 ## 2. Design pillars
 
@@ -113,7 +113,7 @@ The desktop prototype keeps the smooth angled top-down camera as its default and
 
 Temporary stat upgrades use 30-rank resolution with one point granted at every run level, including Level 1. A Level 30 run therefore earns 30 total points to distribute freely across Speed, Attack Rate, Damage, Health, and Health Regen. All five upgrades share one normalized exponential curve with a provisional strength of 1.5: early ranks provide smaller but real gains, while later ranks become progressively more powerful. Rank 30 endpoints remain unchanged at 31.2 maximum speed, a 0.630-second hammer cooldown, 35 hammer damage, 150 maximum health, or 3 health per second after five uninterrupted seconds without damage. Spinner damage and Attack Rate timing use the same shared factor. Knockback remains fixed at its safe server-owned base value. XP is never spent, and death resets all ranks with the rest of the run.
 
-The Level 8 framework, Striker, and Spinner are the current narrow class experiment. Spinner sustains its server-authoritative flywheel only while LMB remains held; RMB remains camera orbit, and both the evolution card and top-right run HUD communicate the Spinner control. The run HUD also communicates the Level 8 and provisional Level 20 evolution gates without enabling unavailable branches. A validated hold lease safely ends the Spinner attack if release or focus state is lost. Rammer, all Level 20 specializations, alternate movement systems, and additional class weapons remain paused until both implemented choices survive multiplayer selection, combat-readability, authority, and death-reset playtesting.
+The Level 8 framework, Striker, Spinner, and Rammer are the current narrow class experiment. Spinner sustains its server-authoritative flywheel only while LMB remains held. Rammer holds LMB to build a server-measured charge, remains ready at full charge until release, then receives one bounded forward dash whose damage depends on legal charge and observed closing speed. RMB remains camera orbit, and the evolution cards plus top-right run HUD communicate each specialized control. Validated hold leases safely end Spinner or Rammer preparation if input or focus state is lost. All Level 20 specializations, additional class weapons, and broader alternate-movement systems remain paused until all three choices survive multiplayer selection, combat-readability, authority, and death-reset playtesting.
 
 Studio-only developer tools are approved as testing infrastructure for rapidly exercising the existing per-life progression and class lifecycle. They are not player progression, balance content, or a production feature. Authorization and all mutations remain server-owned; the outside-Studio switch stays disabled and its server-only UserId allowlist stays empty by default. Tool-assisted results must still be followed by normal-path and multiplayer acceptance tests.
 
@@ -445,9 +445,9 @@ We should test these instead of deciding them permanently now:
 
 ## 10. Immediate next decision
 
-Compare the original Level 8 Striker and Spinner evolutions within the existing per-life arena loop. The prototype should answer whether players understand the exclusive choice, recognize Striker's heavier burst and shove versus Spinner's sustained close-contact pressure, find counterplay to both, accept losing the path on death, and want to earn another evolution.
+Compare the original Level 8 Striker, Spinner, and Rammer evolutions within the existing per-life arena loop. The prototype should answer whether players understand the exclusive choice; recognize Striker's repeated heavy burst, Spinner's sustained close-contact pressure, and Rammer's committed frontal impact; find readable counterplay to all three; accept losing the path on death; and want to earn another evolution.
 
-Rammer and the provisional Level 20 branches documented in `docs/CLASS_EVOLUTION_DESIGN.md` remain disabled future work. Do not implement another branch until fresh multiplayer testing validates Spinner-versus-Striker readability, server authority, reset behavior, and sustained-contact combat.
+The provisional Level 20 branches documented in `docs/CLASS_EVOLUTION_DESIGN.md` remain disabled future work. Do not implement another branch until fresh multiplayer testing validates three-way Level 8 readability, server authority, reset behavior, movement safety, and combat counterplay.
 
 ---
 

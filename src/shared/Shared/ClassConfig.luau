@@ -53,10 +53,10 @@ local definitions: {[string]: ClassDefinition} = {
 	Rammer = table.freeze({
 		DisplayName = "Rammer",
 		Tier = 8,
-		Enabled = false,
-		Status = "Coming Soon",
-		Role = "Mobile collision initiator",
-		Tradeoff = "Future forward-impact kit that must choose its approach.",
+		Enabled = true,
+		Status = "Prototype",
+		Role = "Frontal burst; Strong shove",
+		Tradeoff = "Reduced steering; Punished for missing.",
 	}),
 	Pilebreaker = table.freeze({
 		DisplayName = "Pilebreaker",
@@ -112,6 +112,7 @@ local ClassConfig = table.freeze({
 	BaseClassId = "ScrapRunner",
 	StrikerClassId = "Striker",
 	SpinnerClassId = "Spinner",
+	RammerClassId = "Rammer",
 	Level8Threshold = 8,
 	Level20Threshold = 20,
 	ClassAttribute = "RunClass",
@@ -130,6 +131,9 @@ local ClassConfig = table.freeze({
 	EquippedSpinnerName = "EquippedSpinner",
 	SpinnerWeaponMotorName = "SpinnerWeaponMotor",
 	SpinnerAccentColor = Color3.fromRGB(151, 91, 210),
+	EquippedRammerName = "EquippedRammer",
+	RammerWeaponMotorName = "RammerWeaponMotor",
+	RammerAccentColor = Color3.fromRGB(232, 126, 38),
 })
 
 return ClassConfig

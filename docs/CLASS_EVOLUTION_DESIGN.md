@@ -57,14 +57,18 @@ Prototype Spinner tuning is provisional: spin-up interpolates from 0.40 seconds 
 
 Spinner's timing and damage interpolation use the same shared normalized exponential upgrade factor as every other temporary stat, with a provisional curve strength of 1.5. Early ranks make smaller but real changes, later ranks make progressively larger changes, and the Rank 0 and Rank 30 endpoints above remain unchanged. Hold LMB to spin; RMB remains camera orbit.
 
-### Rammer — future work
+### Rammer — prototyped
 
-- **Combat role:** Mobile initiator that creates openings through committed forward impacts.
-- **Main weapon concept:** A shock-mounted industrial prow rather than a hammer.
-- **Strengths:** Rapid engagement, directional displacement, and control of exposed lanes.
-- **Weaknesses:** Predictable approach line, weak sides and rear, and meaningful punishment after a missed charge.
-- **Intended silhouette:** Long, low wedge-front chassis with visible dampers and a narrow forward focal point.
-- **Counterplay:** Sidestep the approach, turn it into walls or hazards, and attack after it overcommits.
+- **Combat role:** Frontal burst initiator that converts deliberate alignment, charge timing, and real closing speed into one decisive impact.
+- **Main weapon concept:** A low reinforced wedge with two asymmetric impact rails, front bracing, and a restrained orange charge indicator rather than a hammer.
+- **Strengths:** Strong single-impact damage and shove, a committed gap-closing dash, and a full charge that remains ready while primary attack is held.
+- **Weaknesses:** Reduced movement and steering while charging, very limited dash steering, one target per charge, and a readable punish window after a miss.
+- **Intended silhouette:** The accepted compact chassis with a broad low nose wedge, mismatched ram rails, braced front armor, and a small orange identification accent; the chassis footprint and team panels remain unchanged.
+- **Counterplay:** Move off its narrow frontal line, use solid walls to deny the approach, force an early release or miss, then attack during recovery and cooldown.
+
+Prototype Rammer tuning is provisional. Minimum valid hold is 0.20 seconds. Full-charge time uses the shared exponential Attack Rate factor from 1.20 seconds at Rank 0 to 0.84 seconds at Rank 30; release cooldown uses the same factor from 1.35 to 0.95 seconds. Charging limits movement speed to 0.75 of its legal upgraded value and steering to 0.55; dash steering is limited to 0.20 for a 0.45-second authorized window. The dash adds 8 speed at minimum charge and 16 at full charge, reaching at most approximately 47.2 studs per second at Speed Rank 30.
+
+A minimum valid impact begins at 15 damage. A legitimate full-charge impact reaches 35 damage at Damage Rank 0 or 45 at Rank 30 and up to 26 knockback. Partial impact strength depends on server-measured hold duration and server-observed forward closing speed, both clamped to legal bounds. Only one player or active breakable can be hit per charge. The client sends start, bounded hold keepalive, release, or cancellation intent only; the server owns charge time, facing, dash authorization, spatial query, line of sight, damage, knockback, reward contribution, cooldown, and cancellation. Hold LMB and release to charge; RMB remains camera orbit.
 
 ### Pilebreaker — future work
 

@@ -51,10 +51,13 @@ local HAMMER_ATTRIBUTE = "ScrapcoreEquippedHammer"
 local HAMMER_MOTOR_NAME = "WeaponMountMotor"
 local CLASS_VISUAL_MODEL_NAME = "ClassEvolutionVisuals"
 local SPINNER_ATTRIBUTE = "ScrapcoreEquippedSpinner"
+local RAMMER_ATTRIBUTE = "ScrapcoreEquippedRammer"
 local FRONT_WEAPON_MOUNT_NAME = "FrontWeaponMount"
 local SPINNER_HIT_ORIGIN_NAME = "SpinnerHitOrigin"
+local RAMMER_HIT_ORIGIN_NAME = "RammerHitOrigin"
 local STRIKER_CLASS_ID = ClassConfig.StrikerClassId
 local SPINNER_CLASS_ID = ClassConfig.SpinnerClassId
+local RAMMER_CLASS_ID = ClassConfig.RammerClassId
 
 local classDefinitions = ClassConfig.Definitions :: {[string]: ClassDefinition}
 local playerStates: {[Player]: PlayerClassState} = {}
@@ -159,6 +162,27 @@ local function removeSpinner(chassis: Model)
 	end
 end
 
+local function removeRammer(chassis: Model)
+	for _, child in chassis:GetChildren() do
+		if child.Name == ClassConfig.EquippedRammerName or child:GetAttribute(RAMMER_ATTRIBUTE) == true then
+			child:Destroy()
+		end
+	end
+
+	local robotRoot = chassis:FindFirstChild("RobotRoot", true)
+	if robotRoot ~= nil then
+		local rammerMotor = robotRoot:FindFirstChild(ClassConfig.RammerWeaponMotorName)
+		if rammerMotor ~= nil then
+			rammerMotor:Destroy()
+		end
+	end
+
+	local character = chassis.Parent
+	if character ~= nil and character:IsA("Model") then
+		character:SetAttribute("RammerReady", false)
+	end
+end
+
 local function removeHammer(chassis: Model)
 	for _, child in chassis:GetChildren() do
 		if child.Name == EQUIPPED_HAMMER_NAME or child:GetAttribute(HAMMER_ATTRIBUTE) == true then
@@ -182,6 +206,7 @@ end
 
 local function restoreStandardLoadout(chassis: Model)
 	removeSpinner(chassis)
+	removeRammer(chassis)
 	local hammer = chassis:FindFirstChild(EQUIPPED_HAMMER_NAME)
 	if hammer ~= nil and hammer:IsA("Model") then
 		local hammerHead = hammer:FindFirstChild("HammerHead", true)
@@ -433,6 +458,182 @@ local function applySpinnerVisuals(character: Model): boolean
 	return true
 end
 
+local function createRammerVisualPart(
+	parent: Model,
+	className: "Part" | "WedgePart",
+	name: string,
+	rammerRoot: BasePart,
+	localCFrame: CFrame,
+	size: Vector3,
+	color: Color3,
+	material: Enum.Material,
+	transparency: number?
+): BasePart
+	local part = if className == "WedgePart" then Instance.new("WedgePart") else Instance.new("Part")
+	part.Name = name
+	part.Size = size
+	part.CFrame = rammerRoot.CFrame * localCFrame
+	part.Color = color
+	part.Material = material
+	part.Transparency = transparency or 0
+	part.TopSurface = Enum.SurfaceType.Smooth
+	part.BottomSurface = Enum.SurfaceType.Smooth
+	part.Anchored = false
+	part.Massless = true
+	part.CanCollide = false
+	part.CanTouch = false
+	part.CanQuery = false
+	part.CastShadow = true
+	part.Parent = parent
+	CollisionGroupService.ApplyCharacterPart(part)
+
+	local weld = Instance.new("WeldConstraint")
+	weld.Name = name .. "Weld"
+	weld.Part0 = rammerRoot
+	weld.Part1 = part
+	weld.Parent = part
+	return part
+end
+
+local function applyRammerVisuals(character: Model): boolean
+	local chassisInstance = character:FindFirstChild(ROBOT_CHASSIS_NAME)
+	if chassisInstance == nil or not chassisInstance:IsA("Model") then
+		return false
+	end
+	local chassis = chassisInstance
+	local robotRoot = chassis:FindFirstChild("RobotRoot", true)
+	if robotRoot == nil or not robotRoot:IsA("BasePart") then
+		return false
+	end
+	local mountInstance = robotRoot:FindFirstChild(FRONT_WEAPON_MOUNT_NAME)
+	if mountInstance == nil or not mountInstance:IsA("Attachment") then
+		return false
+	end
+
+	restoreStandardLoadout(chassis)
+	removeHammer(chassis)
+
+	local classVisuals = Instance.new("Model")
+	classVisuals.Name = CLASS_VISUAL_MODEL_NAME
+	classVisuals:SetAttribute("ClassId", RAMMER_CLASS_ID)
+	classVisuals:SetAttribute("OriginalScrapcoreVisual", true)
+	classVisuals.Parent = chassis
+	createWeldedVisual(
+		classVisuals,
+		"RammerFrontBrace",
+		robotRoot,
+		CFrame.new(0, 0.42, -3.28),
+		Vector3.new(4.4, 0.52, 0.78),
+		Color3.fromRGB(50, 57, 66),
+		Enum.Material.Metal
+	)
+	createWeldedVisual(
+		classVisuals,
+		"RammerIdentificationAccent",
+		robotRoot,
+		CFrame.new(0.85, 0.84, -3.47),
+		Vector3.new(1.25, 0.14, 0.42),
+		ClassConfig.RammerAccentColor,
+		Enum.Material.SmoothPlastic
+	)
+
+	local rammer = Instance.new("Model")
+	rammer.Name = ClassConfig.EquippedRammerName
+	rammer:SetAttribute(RAMMER_ATTRIBUTE, true)
+	rammer:SetAttribute("ClassId", RAMMER_CLASS_ID)
+	rammer:SetAttribute("OriginalScrapcoreVisual", true)
+
+	local rammerRoot = Instance.new("Part")
+	rammerRoot.Name = "RammerRoot"
+	rammerRoot.Size = Vector3.new(0.2, 0.2, 0.2)
+	rammerRoot.CFrame = mountInstance.WorldCFrame
+	rammerRoot.Transparency = 1
+	rammerRoot.Anchored = false
+	rammerRoot.Massless = true
+	rammerRoot.CanCollide = false
+	rammerRoot.CanTouch = false
+	rammerRoot.CanQuery = false
+	rammerRoot.CastShadow = false
+	rammerRoot.Parent = rammer
+	CollisionGroupService.ApplyCharacterPart(rammerRoot)
+
+	local hitOrigin = Instance.new("Attachment")
+	hitOrigin.Name = RAMMER_HIT_ORIGIN_NAME
+	hitOrigin.CFrame = CFrame.new(0, -0.08, -2.4)
+	hitOrigin.Parent = rammerRoot
+
+	createRammerVisualPart(
+		rammer,
+		"WedgePart",
+		"LowImpactWedge",
+		rammerRoot,
+		CFrame.new(0, -0.28, -1.42) * CFrame.Angles(0, math.pi, 0),
+		Vector3.new(4.8, 0.76, 2.8),
+		Color3.fromRGB(58, 65, 74),
+		Enum.Material.Metal,
+		0
+	)
+	createRammerVisualPart(
+		rammer,
+		"Part",
+		"LeftImpactRail",
+		rammerRoot,
+		CFrame.new(-1.55, -0.08, -1.95) * CFrame.Angles(0, math.rad(-5), 0),
+		Vector3.new(0.48, 0.48, 3.55),
+		Color3.fromRGB(92, 99, 106),
+		Enum.Material.Metal,
+		0
+	)
+	createRammerVisualPart(
+		rammer,
+		"Part",
+		"RightImpactRail",
+		rammerRoot,
+		CFrame.new(1.32, -0.02, -1.72) * CFrame.Angles(0, math.rad(7), 0),
+		Vector3.new(0.62, 0.56, 3.15),
+		Color3.fromRGB(78, 86, 96),
+		Enum.Material.Metal,
+		0
+	)
+	createRammerVisualPart(
+		rammer,
+		"Part",
+		"RammerChargeIndicator",
+		rammerRoot,
+		CFrame.new(0, 0.27, -0.82),
+		Vector3.new(0.32, 0.12, 1.4),
+		ClassConfig.RammerAccentColor,
+		Enum.Material.Neon,
+		0.55
+	)
+	createRammerVisualPart(
+		rammer,
+		"Part",
+		"RammerDashGlow",
+		rammerRoot,
+		CFrame.new(0, 0.06, 0.5),
+		Vector3.new(2.2, 0.08, 2.4),
+		ClassConfig.RammerAccentColor,
+		Enum.Material.Neon,
+		1
+	)
+
+	rammer.PrimaryPart = rammerRoot
+	rammer.Parent = chassis
+
+	local rammerMotor = Instance.new("Motor6D")
+	rammerMotor.Name = ClassConfig.RammerWeaponMotorName
+	rammerMotor.Part0 = robotRoot
+	rammerMotor.Part1 = rammerRoot
+	rammerMotor.C0 = mountInstance.CFrame
+	rammerMotor.C1 = CFrame.identity
+	rammerMotor.Transform = CFrame.identity
+	rammerMotor.Parent = robotRoot
+
+	character:SetAttribute("RammerReady", true)
+	return true
+end
+
 local function applyCurrentVisuals(player: Player)
 	local state = playerStates[player]
 	local character = player.Character
@@ -445,7 +646,7 @@ local function applyCurrentVisuals(player: Player)
 		return
 	end
 	local classId = currentClassId(player, state)
-	if classId ~= STRIKER_CLASS_ID and classId ~= SPINNER_CLASS_ID then
+	if classId ~= STRIKER_CLASS_ID and classId ~= SPINNER_CLASS_ID and classId ~= RAMMER_CLASS_ID then
 		return
 	end
 
@@ -455,7 +656,9 @@ local function applyCurrentVisuals(player: Player)
 		end
 		local applied = if classId == STRIKER_CLASS_ID
 			then applyStrikerVisuals(character)
-			else applySpinnerVisuals(character)
+			elseif classId == SPINNER_CLASS_ID
+			then applySpinnerVisuals(character)
+			else applyRammerVisuals(character)
 		if applied then
 			return
 		end
@@ -549,6 +752,7 @@ local function bindCharacter(player: Player, character: Model)
 	end
 	resetClass(player)
 	character:SetAttribute("SpinnerReady", false)
+	character:SetAttribute("RammerReady", false)
 
 	task.spawn(function()
 		local humanoidInstance = character:WaitForChild("Humanoid", 10)

@@ -384,7 +384,10 @@ local function updateHUD()
 		else ClassConfig.BaseClassId
 	local hasSelectedLevel8Class = classId == ClassConfig.StrikerClassId
 		or classId == ClassConfig.SpinnerClassId
+		or classId == ClassConfig.RammerClassId
 	local showSpinnerControl = classId == ClassConfig.SpinnerClassId
+	local showRammerControl = classId == ClassConfig.RammerClassId
+	local showClassControl = showSpinnerControl or showRammerControl
 	local initiallyAvailable = lastObservedPoints == nil and points > 0
 	local gainedPoint = lastObservedPoints ~= nil and points > (lastObservedPoints :: number)
 	local gainedUnlimited = unlimitedPoints and not lastObservedUnlimited
@@ -418,8 +421,15 @@ local function updateHUD()
 		xpFill.Size = UDim2.fromScale(math.clamp(xp / xpToNext, 0, 1), 1)
 	end
 
-	classControlLabel.Visible = showSpinnerControl
-	local statusY = if showSpinnerControl then 88 else 70
+	classControlLabel.Visible = showClassControl
+	if showRammerControl then
+		classControlLabel.Text = "RAMMER — Hold LMB, Release to Charge"
+		classControlLabel.TextColor3 = ClassConfig.RammerAccentColor
+	else
+		classControlLabel.Text = "SPINNER — Hold LMB to Spin"
+		classControlLabel.TextColor3 = ClassConfig.SpinnerAccentColor
+	end
+	local statusY = if showClassControl then 88 else 70
 	evolutionStatusLabel.Position = UDim2.fromOffset(10, statusY)
 	if hasSelectedLevel8Class and level >= ClassConfig.Level20Threshold then
 		evolutionStatusLabel.Text = "Level 20 Evolution — Coming Soon"
@@ -442,7 +452,7 @@ local function updateHUD()
 	levelLabel.Position = UDim2.fromOffset(if showToggle then 58 else 10, 25)
 	levelLabel.Size = UDim2.new(0.5, if showToggle then -58 else -10, 0, 18)
 
-	local collapsedHeight = if showSpinnerControl then 114 else 96
+	local collapsedHeight = if showClassControl then 114 else 96
 	local upgradeHeaderY = collapsedHeight + 4
 	local upgradeButtonsY = upgradeHeaderY + 22
 	local expandedHeight = upgradeButtonsY + 208

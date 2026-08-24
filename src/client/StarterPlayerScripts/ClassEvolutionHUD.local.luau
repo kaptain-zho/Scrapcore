@@ -201,7 +201,7 @@ end
 
 local strikerCard = addCard("Striker", 1)
 local spinnerCard = addCard("Spinner", 2)
-addCard("Rammer", 3)
+local rammerCard = addCard("Rammer", 3)
 
 local evolveButton = Instance.new("TextButton")
 evolveButton.Name = "EvolveButton"
@@ -528,7 +528,7 @@ local function updateResponsiveLayout()
 
 	configureCard(strikerCard, mode)
 	configureCard(spinnerCard, mode)
-	configureCard(cards.RammerCard :: TextButton, mode)
+	configureCard(rammerCard, mode)
 
 	task.defer(function()
 		if panel.Parent == nil or Workspace.CurrentCamera ~= camera then
@@ -627,6 +627,10 @@ end)
 
 spinnerCard.Activated:Connect(function()
 	openConfirmation(ClassConfig.SpinnerClassId)
+end)
+
+rammerCard.Activated:Connect(function()
+	openConfirmation(ClassConfig.RammerClassId)
 end)
 
 cancelButton.Activated:Connect(function()

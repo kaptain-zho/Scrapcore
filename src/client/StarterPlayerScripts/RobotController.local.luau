@@ -11,7 +11,10 @@ local player = Players.LocalPlayer
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local MovementConfig = require(shared:WaitForChild("MovementConfig"))
 local CombatConfig = require(shared:WaitForChild("CombatConfig"))
+local ClassConfig = require(shared:WaitForChild("ClassConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
+local RammerConfig = require(shared:WaitForChild("RammerConfig"))
+local RammerClientState = require(script.Parent:WaitForChild("RammerClientState"))
 local telemetryRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("RobotMovementTelemetry") :: RemoteEvent
 local camera = assert(Workspace.CurrentCamera, "CurrentCamera is required for robot controls") :: Camera
 
@@ -52,6 +55,7 @@ local targetCameraZoomScale = 1
 local isCameraOrbitDragging = false
 local previousMouseBehavior: Enum.MouseBehavior? = nil
 local humanoidDiedConnection: RBXScriptConnection? = nil
+local lastRammerDashSerial = 0
 
 local function wrapAngle(angle: number): number
 	return math.atan2(math.sin(angle), math.cos(angle))
@@ -151,6 +155,7 @@ local function setCharacter(character: Model)
 		currentAimOrientation = aimOrientation
 		currentMovementVelocity = movementVelocity
 		smoothedVelocity = Vector3.zero
+		lastRammerDashSerial = 0
 		cameraInitialized = false
 		if humanoidDiedConnection ~= nil then
 			humanoidDiedConnection:Disconnect()
@@ -175,6 +180,7 @@ player.CharacterRemoving:Connect(function(character: Model)
 		currentAimOrientation = nil
 		currentMovementVelocity = nil
 		smoothedVelocity = Vector3.zero
+		lastRammerDashSerial = 0
 	end
 end)
 
@@ -296,6 +302,41 @@ local function getCurrentMaxSpeed(): number
 	return MovementConfig.MaxSpeed * ProgressionConfig.GetSpeedMultiplier(rank)
 end
 
+local function getCurrentClassId(): string
+	local classValue = player:GetAttribute(ClassConfig.ClassAttribute)
+	return if typeof(classValue) == "string" then classValue else ClassConfig.BaseClassId
+end
+
+local function isDashPathBlocked(root: BasePart, direction: Vector3): boolean
+	local character = root.Parent
+	if character == nil then
+		return false
+	end
+	local raycastParams = RaycastParams.new()
+	raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+	raycastParams.FilterDescendantsInstances = { character }
+	raycastParams.IgnoreWater = true
+	local result = Workspace:Raycast(
+		root.Position + Vector3.new(0, 0.2, 0),
+		direction * RammerConfig.DashObstacleProbeDistance,
+		raycastParams
+	)
+	if result == nil or not result.Instance:IsA("BasePart") or not result.Instance.CanCollide then
+		return false
+	end
+	local current: Instance? = result.Instance
+	while current ~= nil and current ~= Workspace do
+		if current:IsA("Model") and current:GetAttribute("BreakableActive") == true then
+			return false
+		end
+		if current:IsA("Model") and current:FindFirstChildOfClass("Humanoid") ~= nil then
+			return false
+		end
+		current = current.Parent
+	end
+	return true
+end
+
 local function getAuthorizedKnockback(root: BasePart): Vector3
 	local character = root.Parent
 	if character == nil then
@@ -337,8 +378,47 @@ local function updateMovement(deltaTime: number)
 
 	local moveDirection = getCameraRelativeMovement()
 	local currentMaxSpeed = getCurrentMaxSpeed()
-	local targetVelocity = moveDirection * currentMaxSpeed
+	local rammerState = RammerClientState.Get()
+	local isRammer = getCurrentClassId() == ClassConfig.RammerClassId
+	local isCharging = isRammer and (rammerState.phase == "Charging" or rammerState.phase == "Ready")
+	local isDashing = isRammer
+		and rammerState.phase == "Dash"
+		and Workspace:GetServerTimeNow() <= rammerState.endsAt
+		and rammerState.dashDirection.Magnitude > 0.01
+		and rammerState.dashSpeed > 0
+	local targetVelocity: Vector3
+	if isDashing then
+		local dashDirection = Vector3.new(
+			rammerState.dashDirection.X,
+			0,
+			rammerState.dashDirection.Z
+		).Unit
+		local lateralInput = moveDirection - dashDirection * moveDirection:Dot(dashDirection)
+		local steeredDirection = dashDirection
+		if lateralInput.Magnitude > 0.01 then
+			steeredDirection = (dashDirection + lateralInput.Unit * RammerConfig.DashSteeringMultiplier).Unit
+		end
+		currentMaxSpeed = math.min(rammerState.dashSpeed, RammerConfig.MaximumAuthorizedDashSpeed)
+		local blocked = isDashPathBlocked(root, dashDirection)
+		targetVelocity = if blocked then Vector3.zero else steeredDirection * currentMaxSpeed
+		if blocked then
+			smoothedVelocity = Vector3.zero
+		end
+		if lastRammerDashSerial ~= rammerState.attackSerial then
+			smoothedVelocity = targetVelocity
+			lastRammerDashSerial = rammerState.attackSerial
+		end
+	else
+		if isCharging then
+			currentMaxSpeed *= RammerConfig.ChargeMovementSpeedMultiplier
+		end
+		targetVelocity = moveDirection * currentMaxSpeed
+		lastRammerDashSerial = 0
+	end
 	local movementSharpness = getMovementSharpness(smoothedVelocity, targetVelocity)
+	if isCharging then
+		movementSharpness *= RammerConfig.ChargeSteeringMultiplier
+	end
 	local movementAlpha = 1 - math.exp(-movementSharpness * deltaTime)
 	smoothedVelocity = smoothedVelocity:Lerp(targetVelocity, movementAlpha)
 	if smoothedVelocity.Magnitude < 0.01 then
@@ -352,6 +432,9 @@ local function updateMovement(deltaTime: number)
 	local movementVelocity = currentMovementVelocity
 	local knockbackVelocity = getAuthorizedKnockback(root)
 	if movementVelocity ~= nil then
+		local planarForce = MovementConfig.MovementMaxPlanarForce
+			* (if isDashing then RammerConfig.DashPlanarForceMultiplier else 1)
+		movementVelocity.MaxPlanarAxesForce = Vector2.new(planarForce, planarForce)
 		movementVelocity.PlaneVelocity = Vector2.new(
 			smoothedVelocity.X + knockbackVelocity.X,
 			smoothedVelocity.Z + knockbackVelocity.Z
@@ -359,6 +442,14 @@ local function updateMovement(deltaTime: number)
 	end
 
 	local aimDirection = getMouseAimDirection(root)
+	local aimOrientation = currentAimOrientation
+	if aimOrientation ~= nil then
+		aimOrientation.Responsiveness = MovementConfig.AimTurnSharpness
+			* (if isDashing
+				then RammerConfig.DashSteeringMultiplier
+				elseif isCharging then RammerConfig.ChargeSteeringMultiplier
+				else 1)
+	end
 	rotateTowardAim(aimDirection)
 
 	telemetryAccumulator += deltaTime

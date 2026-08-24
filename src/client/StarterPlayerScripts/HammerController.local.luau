@@ -143,7 +143,8 @@ local function beginSwing(character: Model, startedAt: number, attackId: number,
 end
 
 local function requestAttack()
-	if getClassId(player) == ClassConfig.SpinnerClassId then
+	local classId = getClassId(player)
+	if classId == ClassConfig.SpinnerClassId or classId == ClassConfig.RammerClassId then
 		return
 	end
 	local character = player.Character
@@ -291,7 +292,7 @@ UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessedEv
 	primaryAttackHeld = true
 	if getClassId(player) == ClassConfig.SpinnerClassId then
 		requestSpinnerStart()
-	else
+	elseif getClassId(player) ~= ClassConfig.RammerClassId then
 		requestAttack()
 	end
 end)

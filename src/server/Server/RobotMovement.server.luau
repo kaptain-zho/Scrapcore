@@ -11,6 +11,7 @@ local MovementConfig = require(shared:WaitForChild("MovementConfig"))
 local CombatConfig = require(shared:WaitForChild("CombatConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local CollisionGroupService = require(script.Parent:WaitForChild("CollisionGroupService"))
+local RammerCombatService = require(script.Parent:WaitForChild("RammerCombatService"))
 
 local ROBOT_CHASSIS_NAME = "RobotChassis"
 local LEGACY_FRONT_INDICATOR_NAME = "FrontIndicator"
@@ -33,6 +34,7 @@ end
 local robotTemplate = robotTemplateInstance
 
 CollisionGroupService.Init()
+RammerCombatService.Init()
 
 type PlayerState = {
 	character: Model?,
@@ -445,12 +447,23 @@ RunService.Heartbeat:Connect(function(deltaTime: number)
 			and Workspace:GetServerTimeNow() <= knockbackUntil
 		local speedMultiplier = getSpeedMultiplier(player)
 		local legalMaxSpeed = MovementConfig.MaxSpeed * speedMultiplier
+		local maximumAcceleration = MovementConfig.ServerMaxAcceleration * speedMultiplier
+		local maximumSampleDistance = MovementConfig.ServerMaxTeleportDistance
+		local speedTolerance = MovementConfig.ServerSpeedTolerance
+		local rammerAuthorization = RammerCombatService.GetMovementAuthorization(player, root)
+		if rammerAuthorization ~= nil then
+			legalMaxSpeed = rammerAuthorization.legalMaxSpeed
+			maximumAcceleration = rammerAuthorization.maximumAcceleration
+			maximumSampleDistance = rammerAuthorization.maximumSampleDistance
+			speedTolerance = rammerAuthorization.speedTolerance
+		end
 		local speedAllowance = if underAuthorizedKnockback then CombatConfig.MaxHorizontalKnockbackSpeed else 0
 		local accelerationAllowance = if underAuthorizedKnockback then CombatConfig.KnockbackAccelerationAllowance else 0
-		local teleported = distance > MovementConfig.ServerMaxTeleportDistance
-		local exceededSpeed = math.max(measuredSpeed, physicalSpeed) > legalMaxSpeed + MovementConfig.ServerSpeedTolerance + speedAllowance
-		local exceededAcceleration = measuredAcceleration > MovementConfig.ServerMaxAcceleration * speedMultiplier + accelerationAllowance
-		local violatedMovementLimit = teleported or exceededSpeed or exceededAcceleration
+		local teleported = distance > maximumSampleDistance
+		local exceededSpeed = math.max(measuredSpeed, physicalSpeed) > legalMaxSpeed + speedTolerance + speedAllowance
+		local exceededAcceleration = measuredAcceleration > maximumAcceleration + accelerationAllowance
+		local clearRammerViolation = rammerAuthorization ~= nil and rammerAuthorization.clearViolation
+		local violatedMovementLimit = teleported or exceededSpeed or exceededAcceleration or clearRammerViolation
 
 		if violatedMovementLimit then
 			state.consecutiveViolations += 1
@@ -459,8 +472,13 @@ RunService.Heartbeat:Connect(function(deltaTime: number)
 			state.lastSafeCFrame = root.CFrame
 		end
 
-		local shouldCorrect = teleported or state.consecutiveViolations >= MovementConfig.ServerViolationSamples
+		local shouldCorrect = teleported
+			or clearRammerViolation
+			or state.consecutiveViolations >= MovementConfig.ServerViolationSamples
 		if shouldCorrect then
+			if clearRammerViolation then
+				RammerCombatService.CancelMovementViolation(player)
+			end
 			character:PivotTo(state.lastSafeCFrame)
 			root.AssemblyLinearVelocity = Vector3.zero
 			root.AssemblyAngularVelocity = Vector3.zero
