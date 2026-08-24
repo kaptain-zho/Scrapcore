@@ -5,6 +5,7 @@ local PhysicsService = game:GetService("PhysicsService")
 
 local PLAYER_COLLISION_GROUP = "ScrapcorePlayers"
 local BREAKABLE_COLLISION_GROUP = "ScrapcoreBreakables"
+local CHARACTER_GHOST_COLLISION_GROUP = "ScrapcoreCharacterGhosts"
 
 type PlayerConnections = {
 	characterAdded: RBXScriptConnection,
@@ -17,6 +18,7 @@ local playerConnections: {[Player]: PlayerConnections} = {}
 local CollisionGroupService = {
 	PlayerCollisionGroup = PLAYER_COLLISION_GROUP,
 	BreakableCollisionGroup = BREAKABLE_COLLISION_GROUP,
+	CharacterGhostCollisionGroup = CHARACTER_GHOST_COLLISION_GROUP,
 }
 
 local function registerCollisionGroup(name: string)
@@ -28,11 +30,20 @@ end
 local function configureCollisionMatrix()
 	registerCollisionGroup(PLAYER_COLLISION_GROUP)
 	registerCollisionGroup(BREAKABLE_COLLISION_GROUP)
+	registerCollisionGroup(CHARACTER_GHOST_COLLISION_GROUP)
 
 	PhysicsService:CollisionGroupSetCollidable(PLAYER_COLLISION_GROUP, PLAYER_COLLISION_GROUP, false)
 	PhysicsService:CollisionGroupSetCollidable(PLAYER_COLLISION_GROUP, BREAKABLE_COLLISION_GROUP, false)
 	PhysicsService:CollisionGroupSetCollidable(PLAYER_COLLISION_GROUP, "Default", true)
 	PhysicsService:CollisionGroupSetCollidable(BREAKABLE_COLLISION_GROUP, "Default", true)
+	PhysicsService:CollisionGroupSetCollidable(
+		CHARACTER_GHOST_COLLISION_GROUP,
+		CHARACTER_GHOST_COLLISION_GROUP,
+		false
+	)
+	PhysicsService:CollisionGroupSetCollidable(CHARACTER_GHOST_COLLISION_GROUP, PLAYER_COLLISION_GROUP, false)
+	PhysicsService:CollisionGroupSetCollidable(CHARACTER_GHOST_COLLISION_GROUP, BREAKABLE_COLLISION_GROUP, false)
+	PhysicsService:CollisionGroupSetCollidable(CHARACTER_GHOST_COLLISION_GROUP, "Default", false)
 end
 
 function CollisionGroupService.ApplyCharacterPart(part: BasePart)
@@ -41,6 +52,10 @@ end
 
 function CollisionGroupService.ApplyBreakablePart(part: BasePart)
 	part.CollisionGroup = BREAKABLE_COLLISION_GROUP
+end
+
+function CollisionGroupService.ApplyCharacterGhostPart(part: BasePart)
+	part.CollisionGroup = CHARACTER_GHOST_COLLISION_GROUP
 end
 
 function CollisionGroupService.ApplyCharacter(character: Instance)

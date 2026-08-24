@@ -7,11 +7,14 @@ local Workspace = game:GetService("Workspace")
 
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local CombatConfig = require(shared:WaitForChild("CombatConfig"))
+local ClassConfig = require(shared:WaitForChild("ClassConfig"))
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
+local ClassService = require(script.Parent:WaitForChild("ClassService"))
 local BreakableObjectService = require(script.Parent:WaitForChild("BreakableObjectService"))
 local CollisionGroupService = require(script.Parent:WaitForChild("CollisionGroupService"))
 
 ProgressionService.Init()
+ClassService.Init()
 BreakableObjectService.Init()
 CollisionGroupService.Init()
 
@@ -423,21 +426,31 @@ local function handleAttackRequest(player: Player, sequenceValue: unknown, ...: 
 		return
 	end
 
+	local classId = ClassService.GetClassId(player)
+	local definition = ClassConfig.Definitions[classId]
+	local combatModifiers = if definition ~= nil then definition.Combat else nil
+	local cooldownPenalty = if combatModifiers ~= nil then combatModifiers.CooldownPenalty else 0
+	local maximumCooldown = if combatModifiers ~= nil
+		then math.min(combatModifiers.MaxCooldown, ClassConfig.MaxServerCooldown)
+		else CombatConfig.Cooldown
 	local cooldown = math.clamp(
-		ProgressionService.GetHammerCooldown(player, CombatConfig.Cooldown),
+		ProgressionService.GetHammerCooldown(player, CombatConfig.Cooldown) + cooldownPenalty,
 		CombatConfig.MinCooldown,
-		CombatConfig.Cooldown
+		maximumCooldown
 	)
+	local damageBonus = if combatModifiers ~= nil then combatModifiers.DamageBonus else 0
+	local maximumDamage = if combatModifiers ~= nil
+		then math.min(combatModifiers.MaxDamage, CombatConfig.MaxDamage)
+		else CombatConfig.MaxDamage
 	local attackDamage = math.clamp(
-		ProgressionService.GetHammerDamage(player, CombatConfig.Damage),
+		ProgressionService.GetHammerDamage(player, CombatConfig.Damage) + damageBonus,
 		0,
-		CombatConfig.MaxDamage
+		maximumDamage
 	)
-	local knockbackSpeed = math.clamp(
-		CombatConfig.HorizontalKnockbackSpeed,
-		0,
-		CombatConfig.MaxHorizontalKnockbackSpeed
-	)
+	local requestedKnockback = if combatModifiers ~= nil
+		then combatModifiers.KnockbackSpeed
+		else CombatConfig.HorizontalKnockbackSpeed
+	local knockbackSpeed = math.clamp(requestedKnockback, 0, CombatConfig.MaxHorizontalKnockbackSpeed)
 
 	state.nextAttackAt = now + cooldown
 	state.attackSerial += 1

@@ -9,6 +9,7 @@ local Workspace = game:GetService("Workspace")
 local player = Players.LocalPlayer
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local CombatConfig = require(shared:WaitForChild("CombatConfig"))
+local ClassConfig = require(shared:WaitForChild("ClassConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local attackRequestRemote = remotes:WaitForChild("HammerAttackRequest") :: RemoteEvent
@@ -22,6 +23,14 @@ type SwingState = {
 	predicted: boolean,
 }
 
+type CombatModifiers = {
+	DamageBonus: number,
+	MaxDamage: number,
+	KnockbackSpeed: number,
+	CooldownPenalty: number,
+	MaxCooldown: number,
+}
+
 local activeSwings: {[Model]: SwingState} = {}
 local requestSequence = 0
 local nextLocalAttackAt = 0
@@ -30,15 +39,29 @@ local function isFinite(value: number): boolean
 	return value == value and value > -math.huge and value < math.huge
 end
 
+local function getClassCombatModifiers(targetPlayer: Player): CombatModifiers?
+	local classValue = targetPlayer:GetAttribute(ClassConfig.ClassAttribute)
+	if typeof(classValue) ~= "string" then
+		return nil
+	end
+	local definition = ClassConfig.Definitions[classValue]
+	return if definition ~= nil then definition.Combat else nil
+end
+
 local function getCurrentCooldown(): number
 	local rankValue = player:GetAttribute("AttackRateUpgradeLevel")
 	local rank = if typeof(rankValue) == "number" and isFinite(rankValue)
 		then math.clamp(math.floor(rankValue), 0, ProgressionConfig.MaxUpgradeRank)
 		else 0
+	local combatModifiers = getClassCombatModifiers(player)
+	local cooldownPenalty = if combatModifiers ~= nil then combatModifiers.CooldownPenalty else 0
+	local maximumCooldown = if combatModifiers ~= nil
+		then math.min(combatModifiers.MaxCooldown, ClassConfig.MaxServerCooldown)
+		else CombatConfig.Cooldown
 	return math.clamp(
-		CombatConfig.Cooldown * ProgressionConfig.GetAttackRateMultiplier(rank),
+		CombatConfig.Cooldown * ProgressionConfig.GetAttackRateMultiplier(rank) + cooldownPenalty,
 		CombatConfig.MinCooldown,
-		CombatConfig.Cooldown
+		maximumCooldown
 	)
 end
 
@@ -58,7 +81,7 @@ local function getRestC0(motor: Motor6D): CFrame
 	return motor.C0
 end
 
-local function getSwingAngle(elapsed: number): number?
+local function getSwingAngle(character: Model, elapsed: number): number?
 	if elapsed < 0 then
 		return 0
 	end
@@ -76,9 +99,13 @@ local function getSwingAngle(elapsed: number): number?
 			+ (CombatConfig.SwingFollowThroughAngle - CombatConfig.SwingWindupAngle) * eased
 	end
 
+	local attacker = Players:GetPlayerFromCharacter(character)
+	local combatModifiers = if attacker ~= nil then getClassCombatModifiers(attacker) else nil
+	local recoveryDuration = CombatConfig.Recovery
+		+ (if combatModifiers ~= nil then combatModifiers.CooldownPenalty else 0)
 	local recoveryElapsed = activeElapsed - CombatConfig.ActiveTime
-	if recoveryElapsed < CombatConfig.Recovery then
-		local alpha = recoveryElapsed / CombatConfig.Recovery
+	if recoveryElapsed < recoveryDuration then
+		local alpha = recoveryElapsed / recoveryDuration
 		local eased = 1 - (1 - alpha) ^ 2
 		return CombatConfig.SwingFollowThroughAngle * (1 - eased)
 	end
@@ -175,7 +202,7 @@ RunService.PreRender:Connect(function()
 		end
 
 		local motor = getWeaponMotor(character)
-		local angle = getSwingAngle(now - swing.startedAt)
+		local angle = getSwingAngle(character, now - swing.startedAt)
 		if angle == nil then
 			if motor ~= nil then
 				motor.C0 = getRestC0(motor)

@@ -13,9 +13,9 @@ Players deploy as a basic robot into a continuous arena, destroy graybox objecti
 
 > Deploy basic bot → destroy objects or fight players → earn XP → level up → upgrade stats → evolve later → die and reset → redeploy
 
-This per-life arena-evolution loop is the current hypothesis to prove before spinner movement, classes, extraction, or permanent progression resume. Temporary levels, XP, upgrade points, and combat-stat upgrades reset on death; they are not account progression.
+This per-life arena-evolution loop is the current hypothesis to prove before extraction or permanent progression resumes. Temporary levels, XP, upgrade points, combat-stat upgrades, and the selected evolution path reset on death; they are not account progression.
 
-Class choices are planned as later evolution decisions at **Level 8** and **Level 20**. Those gates are product targets only: no classes, class UI, or class-specific abilities belong in the current progression prototype. The first test must establish that earning and spending temporary power is understandable and makes players want another run.
+The first original Level 8 evolution framework now prototypes **Striker** as the only enabled choice, with disabled **Spinner** and **Rammer** previews establishing the provisional branch shape. Level 20 specializations remain future design targets. The current test must establish that a mutually exclusive per-life class choice is understandable, creates readable counterplay, and makes players want another run without weakening server authority.
 
 ## 2. Design pillars
 
@@ -113,7 +113,7 @@ The desktop prototype keeps the smooth angled top-down camera as its default and
 
 Temporary stat upgrades use 30-rank resolution with one point granted at every run level, including Level 1. A Level 30 run therefore earns 30 total points to distribute freely across Speed, Attack Rate, Damage, Health, and Health Regen. Rank 30 reaches 31.2 maximum speed, a 0.630-second hammer cooldown, 35 hammer damage, 150 maximum health, or 3 health per second after five uninterrupted seconds without damage. Knockback remains fixed at its safe server-owned base value. These caps preserve the prior safe endpoints while Health Regen replaces upgradeable knockback; XP is never spent, and death resets all ranks with the rest of the run.
 
-Spinner movement and class implementation are paused until this progression loop is proven. Level 8 and Level 20 class choices remain planned evolution gates, not Phase 1 implementation scope.
+The Level 8 framework and Striker are the current narrow class experiment. Spinner, Rammer, all Level 20 specializations, alternate movement systems, and additional class weapons remain paused until Striker's selection flow, combat readability, authority, and death reset survive multiplayer playtesting.
 
 Player-elimination XP is provisional. Assist rewards, repeated-victim farming penalties, and level-difference reward scaling require later multiplayer tuning and are not part of this prototype.
 
@@ -443,9 +443,9 @@ We should test these instead of deciding them permanently now:
 
 ## 10. Immediate next decision
 
-Prove the per-life arena-evolution loop with the existing top-down robot and hammer before resuming spinner movement or implementing classes. The prototype should answer whether players understand object and PvP XP, enjoy choosing temporary stat upgrades, accept a full reset on death, and want to redeploy.
+Prove the original Level 8 Striker evolution within the existing per-life arena loop. The prototype should answer whether players notice and understand eligibility, can make the choice without losing control of combat, recognize Striker's heavier hit and slower recovery, find clear counterplay, accept losing the path on death, and want to earn the choice again.
 
-Level 8 and Level 20 remain the planned class-choice gates. Their class lists, abilities, presentation, and balance are intentionally deferred until progression pacing and combat readability survive playtesting.
+Spinner, Rammer, and the provisional Level 20 branches documented in `docs/CLASS_EVOLUTION_DESIGN.md` remain disabled future work. Do not implement another branch until fresh multiplayer testing validates class selection, server authority, reset behavior, and readable combat differences.
 
 ---
 

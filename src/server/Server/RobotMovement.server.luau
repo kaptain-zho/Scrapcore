@@ -46,6 +46,7 @@ type PlayerState = {
 	lastTelemetryAt: number,
 	lastSequence: number,
 	malformedRequests: number,
+	ghostConnections: {RBXScriptConnection},
 }
 
 local remotes = ReplicatedStorage:FindFirstChild("Remotes")
@@ -81,20 +82,65 @@ local function getSpeedMultiplier(player: Player): number
 	return ProgressionConfig.GetSpeedMultiplier(rank)
 end
 
-local function hideDefaultCharacter(character: Model)
-	for _, descendant in character:GetDescendants() do
+local function hideDefaultCharacter(character: Model): {RBXScriptConnection}
+	local connections: {RBXScriptConnection} = {}
+
+	local function isRobotPart(descendant: Instance): boolean
+		local chassis = character:FindFirstChild(ROBOT_CHASSIS_NAME)
+		return chassis ~= nil and descendant:IsDescendantOf(chassis)
+	end
+
+	local function configureDescendant(descendant: Instance)
+		if isRobotPart(descendant) then
+			return
+		end
 		if descendant:IsA("BasePart") then
-			descendant.Transparency = 1
-			descendant.CanCollide = false
-			descendant.CanTouch = false
-			descendant.CanQuery = false
-			descendant.CastShadow = false
 			descendant.Massless = true
-			CollisionGroupService.ApplyCharacterPart(descendant)
+			local function enforceGhostProperties()
+				if descendant.Parent == nil then
+					return
+				end
+				descendant.Transparency = 1
+				descendant.CanCollide = false
+				descendant.CanTouch = false
+				descendant.CanQuery = false
+				descendant.CastShadow = false
+				CollisionGroupService.ApplyCharacterGhostPart(descendant)
+			end
+			enforceGhostProperties()
+			table.insert(
+				connections,
+				descendant:GetPropertyChangedSignal("CanCollide"):Connect(enforceGhostProperties)
+			)
+			table.insert(
+				connections,
+				descendant:GetPropertyChangedSignal("CanTouch"):Connect(enforceGhostProperties)
+			)
+			table.insert(
+				connections,
+				descendant:GetPropertyChangedSignal("CanQuery"):Connect(enforceGhostProperties)
+			)
+			table.insert(
+				connections,
+				descendant:GetPropertyChangedSignal("CollisionGroup"):Connect(enforceGhostProperties)
+			)
 		elseif descendant:IsA("Decal") then
 			descendant.Transparency = 1
 		end
 	end
+
+	for _, descendant in character:GetDescendants() do
+		configureDescendant(descendant)
+	end
+	table.insert(connections, character.DescendantAdded:Connect(configureDescendant))
+	return connections
+end
+
+local function disconnectConnections(connections: {RBXScriptConnection})
+	for _, connection in connections do
+		connection:Disconnect()
+	end
+	table.clear(connections)
 end
 
 local function getRequiredTemplatePart(template: Model, partName: string): BasePart
@@ -103,6 +149,38 @@ local function getRequiredTemplatePart(template: Model, partName: string): BaseP
 		error(string.format("%s must contain BasePart %s", template:GetFullName(), partName))
 	end
 	return instance
+end
+
+local function getLowestVisualBottomOffset(
+	template: Model,
+	robotRoot: BasePart,
+	bodyCollision: BasePart
+): number
+	local minimumY = math.huge
+	for _, descendant in template:GetDescendants() do
+		if
+			descendant:IsA("BasePart")
+			and descendant ~= bodyCollision
+			and descendant.Transparency < 1
+		then
+			local relativeCFrame = robotRoot.CFrame:ToObjectSpace(descendant.CFrame)
+			local halfSize = descendant.Size * 0.5
+			for x = -1, 1, 2 do
+				for y = -1, 1, 2 do
+					for z = -1, 1, 2 do
+						local corner = relativeCFrame:PointToWorldSpace(
+							Vector3.new(halfSize.X * x, halfSize.Y * y, halfSize.Z * z)
+						)
+						minimumY = math.min(minimumY, corner.Y)
+					end
+				end
+			end
+		end
+	end
+	if minimumY == math.huge then
+		error(string.format("%s must contain visible robot geometry", template:GetFullName()))
+	end
+	return minimumY
 end
 
 local function validateRobotTemplate(template: Model)
@@ -143,6 +221,13 @@ local function validateRobotTemplate(template: Model)
 end
 
 validateRobotTemplate(robotTemplate)
+local templateRobotRoot = getRequiredTemplatePart(robotTemplate, "RobotRoot")
+local templateBodyCollision = getRequiredTemplatePart(robotTemplate, "BodyCollision")
+local robotVisualBottomOffset = getLowestVisualBottomOffset(
+	robotTemplate,
+	templateRobotRoot,
+	templateBodyCollision
+)
 
 local function removeExistingChassis(character: Model)
 	for _, child in character:GetChildren() do
@@ -171,8 +256,11 @@ local function createChassis(character: Model, humanoid: Humanoid, root: BasePar
 	local robotRoot = getRequiredTemplatePart(chassis, "RobotRoot")
 	local bodyCollision = getRequiredTemplatePart(chassis, "BodyCollision")
 	local sourceRootCFrame = robotRoot.CFrame
-	local verticalOffset = MovementConfig.ChassisGroundHeight - humanoid.HipHeight
-	local chassisRootCFrame = root.CFrame * CFrame.new(0, verticalOffset, 0)
+	local visualRootOffsetY = -root.Size.Y * 0.5
+		+ MovementConfig.VisualGroundClearance
+		- robotVisualBottomOffset
+	local chassisRootCFrame = root.CFrame * CFrame.new(0, visualRootOffsetY, 0)
+	local colliderCenterOffsetY = -root.Size.Y * 0.5 + MovementConfig.ChassisSize.Y * 0.5
 	chassis.PrimaryPart = robotRoot
 
 	for _, panelName in TEAM_PANEL_NAMES do
@@ -184,7 +272,13 @@ local function createChassis(character: Model, humanoid: Humanoid, root: BasePar
 	for _, descendant in chassis:GetDescendants() do
 		if descendant:IsA("BasePart") then
 			local rootOffset = sourceRootCFrame:ToObjectSpace(descendant.CFrame)
-			descendant.CFrame = chassisRootCFrame * rootOffset
+			if descendant == bodyCollision then
+				descendant.CFrame = root.CFrame
+					* CFrame.new(rootOffset.Position.X, colliderCenterOffsetY, rootOffset.Position.Z)
+					* rootOffset.Rotation
+			else
+				descendant.CFrame = chassisRootCFrame * rootOffset
+			end
 			descendant.Anchored = false
 			if descendant == bodyCollision then
 				descendant.Size = MovementConfig.ChassisSize
@@ -231,8 +325,13 @@ local function configureCharacter(player: Player, character: Model)
 		return
 	end
 
-	hideDefaultCharacter(character)
+	local previousState = playerStates[player]
+	if previousState ~= nil then
+		disconnectConnections(previousState.ghostConnections)
+	end
+	local ghostConnections = hideDefaultCharacter(character)
 	root.Massless = false
+	humanoid.HipHeight = MovementConfig.HumanoidHipHeight
 	createChassis(character, humanoid, root)
 
 	humanoid.AutoRotate = false
@@ -256,6 +355,7 @@ local function configureCharacter(player: Player, character: Model)
 		lastTelemetryAt = 0,
 		lastSequence = 0,
 		malformedRequests = 0,
+		ghostConnections = ghostConnections,
 	}
 end
 
@@ -300,6 +400,10 @@ end)
 
 Players.PlayerAdded:Connect(connectPlayer)
 Players.PlayerRemoving:Connect(function(player: Player)
+	local state = playerStates[player]
+	if state ~= nil then
+		disconnectConnections(state.ghostConnections)
+	end
 	playerStates[player] = nil
 end)
 

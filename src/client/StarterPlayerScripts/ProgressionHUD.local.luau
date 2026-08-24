@@ -1,8 +1,10 @@
 --!strict
 
 local Players = game:GetService("Players")
+local ContextActionService = game:GetService("ContextActionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
 local player = Players.LocalPlayer
@@ -29,6 +31,7 @@ local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "ScrapcoreProgressionHUD"
 screenGui.DisplayOrder = 20
 screenGui.IgnoreGuiInset = false
+screenGui.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
 screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = playerGui
@@ -125,11 +128,28 @@ xpLabel.Size = UDim2.fromScale(1, 1)
 xpLabel.ZIndex = 2
 xpLabel.Parent = xpBarBackground
 
+local upgradeToggleButton = Instance.new("TextButton")
+upgradeToggleButton.Name = "UpgradeToggleButton"
+upgradeToggleButton.Position = UDim2.fromOffset(6, 3)
+upgradeToggleButton.Size = UDim2.fromOffset(44, 44)
+upgradeToggleButton.BackgroundColor3 = Color3.fromRGB(255, 205, 70)
+upgradeToggleButton.BorderSizePixel = 0
+upgradeToggleButton.Font = Enum.Font.GothamBold
+upgradeToggleButton.Text = "E"
+upgradeToggleButton.TextColor3 = Color3.fromRGB(25, 28, 31)
+upgradeToggleButton.TextSize = 18
+upgradeToggleButton.Visible = false
+upgradeToggleButton.Parent = panel
+
+local upgradeToggleCorner = Instance.new("UICorner")
+upgradeToggleCorner.CornerRadius = UDim.new(0, 7)
+upgradeToggleCorner.Parent = upgradeToggleButton
+
 local healthPanel = Instance.new("Frame")
 healthPanel.Name = "PlayerHealth"
-healthPanel.AnchorPoint = Vector2.zero
-healthPanel.Position = UDim2.fromOffset(12, 12)
-healthPanel.Size = UDim2.new(0.22, 0, 0, 48)
+healthPanel.AnchorPoint = Vector2.new(0.5, 0)
+healthPanel.Position = UDim2.new(0.5, 0, 0, 12)
+healthPanel.Size = UDim2.fromOffset(600, 42)
 healthPanel.BackgroundColor3 = Color3.fromRGB(13, 18, 25)
 healthPanel.BackgroundTransparency = 0.18
 healthPanel.BorderSizePixel = 0
@@ -137,8 +157,8 @@ healthPanel.Visible = false
 healthPanel.Parent = screenGui
 
 local healthSizeConstraint = Instance.new("UISizeConstraint")
-healthSizeConstraint.MinSize = Vector2.new(200, 48)
-healthSizeConstraint.MaxSize = Vector2.new(280, 48)
+healthSizeConstraint.MinSize = Vector2.new(220, 42)
+healthSizeConstraint.MaxSize = Vector2.new(720, 42)
 healthSizeConstraint.Parent = healthPanel
 
 local healthCorner = Instance.new("UICorner")
@@ -151,8 +171,8 @@ healthLabel.BackgroundTransparency = 1
 healthLabel.Font = Enum.Font.GothamBold
 healthLabel.TextColor3 = Color3.fromRGB(240, 245, 250)
 healthLabel.TextSize = 12
-healthLabel.TextXAlignment = Enum.TextXAlignment.Left
-healthLabel.Position = UDim2.fromOffset(9, 5)
+healthLabel.TextXAlignment = Enum.TextXAlignment.Center
+healthLabel.Position = UDim2.fromOffset(9, 3)
 healthLabel.Size = UDim2.new(1, -18, 0, 17)
 healthLabel.Parent = healthPanel
 
@@ -160,8 +180,8 @@ local healthBarBackground = Instance.new("Frame")
 healthBarBackground.Name = "HealthBarBackground"
 healthBarBackground.BackgroundColor3 = Color3.fromRGB(40, 48, 60)
 healthBarBackground.BorderSizePixel = 0
-healthBarBackground.Position = UDim2.fromOffset(9, 27)
-healthBarBackground.Size = UDim2.new(1, -18, 0, 11)
+healthBarBackground.Position = UDim2.fromOffset(9, 24)
+healthBarBackground.Size = UDim2.new(1, -18, 0, 10)
 healthBarBackground.Parent = healthPanel
 
 local healthBarCorner = Instance.new("UICorner")
@@ -179,20 +199,39 @@ local healthFillCorner = Instance.new("UICorner")
 healthFillCorner.CornerRadius = UDim.new(0, 4)
 healthFillCorner.Parent = healthFill
 
-local function updateResponsiveHealthPosition()
+local function updateResponsiveLayout()
 	local currentCamera = Workspace.CurrentCamera
-	if currentCamera ~= nil and currentCamera.ViewportSize.X < currentCamera.ViewportSize.Y then
-		healthPanel.Position = UDim2.fromOffset(12, 330)
-	else
-		healthPanel.Position = UDim2.fromOffset(12, 12)
+	if currentCamera == nil then
+		return
 	end
+	local viewport = currentCamera.ViewportSize
+	local healthWidth: number
+	if viewport.X >= 900 then
+		healthWidth = math.clamp(viewport.X * 0.5, 420, 720)
+	elseif viewport.X > viewport.Y then
+		healthWidth = math.clamp(viewport.X * 0.72, 280, 540)
+	else
+		healthWidth = math.clamp(viewport.X - 24, 220, 420)
+	end
+	healthPanel.Size = UDim2.fromOffset(healthWidth, 42)
+	healthPanel.Position = UDim2.new(0.5, 0, 0, 12)
+	panel.Position = UDim2.new(1, -12, 0, if viewport.X >= 900 then 12 else 66)
 end
 
-local currentCamera = Workspace.CurrentCamera
-if currentCamera ~= nil then
-	currentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateResponsiveHealthPosition)
+local viewportConnection: RBXScriptConnection? = nil
+local function connectCurrentCamera()
+	if viewportConnection ~= nil then
+		viewportConnection:Disconnect()
+		viewportConnection = nil
+	end
+	local currentCamera = Workspace.CurrentCamera
+	if currentCamera ~= nil then
+		viewportConnection = currentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateResponsiveLayout)
+	end
+	updateResponsiveLayout()
 end
-updateResponsiveHealthPosition()
+Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(connectCurrentCamera)
+connectCurrentCamera()
 
 local upgradeHeader = Instance.new("TextLabel")
 upgradeHeader.Name = "UpgradeHeader"
@@ -280,6 +319,27 @@ for order, category in ProgressionConfig.UpgradeOrder do
 	buttons[category] = button
 end
 
+local upgradeMenuOpen = false
+local pendingAutomaticUpgradeOpen = false
+local lastObservedPoints: number? = nil
+
+local function getEvolutionPanel(): GuiObject?
+	local evolutionGui = playerGui:FindFirstChild("ClassEvolutionHUD")
+	if evolutionGui == nil or not evolutionGui:IsA("ScreenGui") then
+		return nil
+	end
+	local evolutionPanel = evolutionGui:FindFirstChild("EvolutionPanel")
+	return if evolutionPanel ~= nil and evolutionPanel:IsA("GuiObject") then evolutionPanel else nil
+end
+
+local function isEvolutionBlocking(): boolean
+	if player:GetAttribute("ClassEvolutionEligible") ~= true then
+		return false
+	end
+	local evolutionPanel = getEvolutionPanel()
+	return evolutionPanel == nil or evolutionPanel.Visible
+end
+
 local function updateHUD()
 	local level = getIntegerAttribute("RunLevel", 1, ProgressionConfig.LevelCap)
 	local xp = getIntegerAttribute("RunXP", 0, ProgressionConfig.MaxServerXPAward)
@@ -289,6 +349,24 @@ local function updateHUD()
 		0,
 		ProgressionConfig.MaxUnspentUpgradePoints
 	)
+	local initiallyAvailable = lastObservedPoints == nil and points > 0
+	local gainedPoint = lastObservedPoints ~= nil and points > (lastObservedPoints :: number)
+	local evolutionBlocking = isEvolutionBlocking()
+	if points <= 0 then
+		upgradeMenuOpen = false
+		pendingAutomaticUpgradeOpen = false
+	elseif evolutionBlocking then
+		if upgradeMenuOpen or initiallyAvailable or gainedPoint then
+			pendingAutomaticUpgradeOpen = true
+		end
+		upgradeMenuOpen = false
+	elseif pendingAutomaticUpgradeOpen then
+		upgradeMenuOpen = true
+		pendingAutomaticUpgradeOpen = false
+	elseif initiallyAvailable or gainedPoint then
+		upgradeMenuOpen = true
+	end
+	lastObservedPoints = points
 
 	levelLabel.Text = string.format("LEVEL %d", level)
 	pointsLabel.Text = string.format("%d %s", points, if points == 1 then "POINT" else "POINTS")
@@ -300,7 +378,14 @@ local function updateHUD()
 		xpFill.Size = UDim2.fromScale(math.clamp(xp / xpToNext, 0, 1), 1)
 	end
 
-	local showUpgradeChoices = points > 0
+	local showToggle = points > 0
+	upgradeToggleButton.Visible = showToggle
+	title.Position = UDim2.fromOffset(if showToggle then 58 else 10, 5)
+	title.Size = UDim2.new(1, if showToggle then -68 else -20, 0, 18)
+	levelLabel.Position = UDim2.fromOffset(if showToggle then 58 else 10, 25)
+	levelLabel.Size = UDim2.new(0.5, if showToggle then -58 else -10, 0, 18)
+
+	local showUpgradeChoices = points > 0 and upgradeMenuOpen and not evolutionBlocking
 	upgradeHeader.Visible = showUpgradeChoices
 	buttonContainer.Visible = showUpgradeChoices
 	panel.Size = UDim2.new(0.24, 0, 0, if showUpgradeChoices then 306 else 80)
@@ -320,6 +405,77 @@ local function updateHUD()
 		button.TextTransparency = if canUpgrade then 0 else 0.3
 	end
 end
+
+local function toggleUpgradeMenu()
+	local points = getIntegerAttribute(
+		"UnspentUpgradePoints",
+		0,
+		ProgressionConfig.MaxUnspentUpgradePoints
+	)
+	if points <= 0 then
+		return
+	end
+	if isEvolutionBlocking() then
+		pendingAutomaticUpgradeOpen = true
+		upgradeMenuOpen = false
+	else
+		upgradeMenuOpen = not upgradeMenuOpen
+		pendingAutomaticUpgradeOpen = false
+	end
+	updateHUD()
+end
+
+upgradeToggleButton.Activated:Connect(toggleUpgradeMenu)
+
+local UPGRADE_TOGGLE_ACTION_NAME = "ScrapcoreToggleUpgrades"
+local function handleUpgradeToggleAction(
+	_actionName: string,
+	inputState: Enum.UserInputState,
+	_inputObject: InputObject
+): Enum.ContextActionResult
+	if inputState ~= Enum.UserInputState.Begin then
+		return Enum.ContextActionResult.Pass
+	end
+	if UserInputService:GetFocusedTextBox() ~= nil then
+		return Enum.ContextActionResult.Pass
+	end
+	toggleUpgradeMenu()
+	return Enum.ContextActionResult.Sink
+end
+
+ContextActionService:UnbindAction(UPGRADE_TOGGLE_ACTION_NAME)
+ContextActionService:BindActionAtPriority(
+	UPGRADE_TOGGLE_ACTION_NAME,
+	handleUpgradeToggleAction,
+	false,
+	Enum.ContextActionPriority.High.Value + 2,
+	Enum.KeyCode.E
+)
+
+local evolutionPanelConnection: RBXScriptConnection? = nil
+local function bindEvolutionPanel()
+	if evolutionPanelConnection ~= nil then
+		evolutionPanelConnection:Disconnect()
+		evolutionPanelConnection = nil
+	end
+	local evolutionPanel = getEvolutionPanel()
+	if evolutionPanel ~= nil then
+		evolutionPanelConnection = evolutionPanel:GetPropertyChangedSignal("Visible"):Connect(updateHUD)
+	end
+	task.defer(updateHUD)
+end
+
+playerGui.ChildAdded:Connect(function(child: Instance)
+	if child.Name == "ClassEvolutionHUD" then
+		task.defer(bindEvolutionPanel)
+	end
+end)
+playerGui.ChildRemoved:Connect(function(child: Instance)
+	if child.Name == "ClassEvolutionHUD" then
+		bindEvolutionPanel()
+	end
+end)
+bindEvolutionPanel()
 
 local currentHumanoid: Humanoid? = nil
 local healthConnections: {RBXScriptConnection} = {}
@@ -402,6 +558,9 @@ local watchedAttributes = {
 	"RunXP",
 	"XPToNextLevel",
 	"UnspentUpgradePoints",
+	"RunClass",
+	"ClassEvolutionEligible",
+	"ClassEvolutionSelected",
 }
 for _, category in ProgressionConfig.UpgradeOrder do
 	table.insert(watchedAttributes, upgradeDefinitions[category].AttributeName)
@@ -424,5 +583,18 @@ end)
 if player.Character ~= nil then
 	task.spawn(bindCharacterHealth, player.Character)
 end
+
+script.Destroying:Connect(function()
+	ContextActionService:UnbindAction(UPGRADE_TOGGLE_ACTION_NAME)
+	if viewportConnection ~= nil then
+		viewportConnection:Disconnect()
+		viewportConnection = nil
+	end
+	if evolutionPanelConnection ~= nil then
+		evolutionPanelConnection:Disconnect()
+		evolutionPanelConnection = nil
+	end
+	disconnectHealthConnections()
+end)
 
 updateHUD()
