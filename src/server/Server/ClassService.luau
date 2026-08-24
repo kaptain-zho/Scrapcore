@@ -47,8 +47,14 @@ type PlayerClassState = {
 
 local ROBOT_CHASSIS_NAME = "RobotChassis"
 local EQUIPPED_HAMMER_NAME = "EquippedHammer"
+local HAMMER_ATTRIBUTE = "ScrapcoreEquippedHammer"
+local HAMMER_MOTOR_NAME = "WeaponMountMotor"
 local CLASS_VISUAL_MODEL_NAME = "ClassEvolutionVisuals"
-local STRIKER_CLASS_ID = "Striker"
+local SPINNER_ATTRIBUTE = "ScrapcoreEquippedSpinner"
+local FRONT_WEAPON_MOUNT_NAME = "FrontWeaponMount"
+local SPINNER_HIT_ORIGIN_NAME = "SpinnerHitOrigin"
+local STRIKER_CLASS_ID = ClassConfig.StrikerClassId
+local SPINNER_CLASS_ID = ClassConfig.SpinnerClassId
 
 local classDefinitions = ClassConfig.Definitions :: {[string]: ClassDefinition}
 local playerStates: {[Player]: PlayerClassState} = {}
@@ -132,7 +138,50 @@ local function enforceReplicatedState(player: Player)
 	updateEligibility(player)
 end
 
-local function restoreStandardHammer(chassis: Model)
+local function removeSpinner(chassis: Model)
+	for _, child in chassis:GetChildren() do
+		if child.Name == ClassConfig.EquippedSpinnerName or child:GetAttribute(SPINNER_ATTRIBUTE) == true then
+			child:Destroy()
+		end
+	end
+
+	local robotRoot = chassis:FindFirstChild("RobotRoot", true)
+	if robotRoot ~= nil then
+		local spinnerMotor = robotRoot:FindFirstChild(ClassConfig.SpinnerWeaponMotorName)
+		if spinnerMotor ~= nil then
+			spinnerMotor:Destroy()
+		end
+	end
+
+	local character = chassis.Parent
+	if character ~= nil and character:IsA("Model") then
+		character:SetAttribute("SpinnerReady", false)
+	end
+end
+
+local function removeHammer(chassis: Model)
+	for _, child in chassis:GetChildren() do
+		if child.Name == EQUIPPED_HAMMER_NAME or child:GetAttribute(HAMMER_ATTRIBUTE) == true then
+			child:Destroy()
+		end
+	end
+
+	local robotRoot = chassis:FindFirstChild("RobotRoot", true)
+	if robotRoot ~= nil then
+		local hammerMotor = robotRoot:FindFirstChild(HAMMER_MOTOR_NAME)
+		if hammerMotor ~= nil then
+			hammerMotor:Destroy()
+		end
+	end
+
+	local character = chassis.Parent
+	if character ~= nil and character:IsA("Model") then
+		character:SetAttribute("HammerReady", false)
+	end
+end
+
+local function restoreStandardLoadout(chassis: Model)
+	removeSpinner(chassis)
 	local hammer = chassis:FindFirstChild(EQUIPPED_HAMMER_NAME)
 	if hammer ~= nil and hammer:IsA("Model") then
 		local hammerHead = hammer:FindFirstChild("HammerHead", true)
@@ -197,7 +246,7 @@ local function applyStrikerVisuals(character: Model): boolean
 		return false
 	end
 
-	restoreStandardHammer(chassis)
+	restoreStandardLoadout(chassis)
 	local hammerHead = hammer:FindFirstChild("HammerHead", true)
 	local hammerFace = hammer:FindFirstChild("HammerFace", true)
 	if
@@ -238,6 +287,152 @@ local function applyStrikerVisuals(character: Model): boolean
 	return true
 end
 
+local function createSpinnerVisualPart(
+	parent: Model,
+	name: string,
+	spinnerRoot: BasePart,
+	localCFrame: CFrame,
+	size: Vector3,
+	color: Color3,
+	material: Enum.Material,
+	transparency: number?,
+	shape: Enum.PartType?
+): BasePart
+	local part = createWeldedVisual(parent, name, spinnerRoot, localCFrame, size, color, material)
+	part.Transparency = transparency or 0
+	part.Shape = shape or Enum.PartType.Block
+	return part
+end
+
+local function applySpinnerVisuals(character: Model): boolean
+	local chassisInstance = character:FindFirstChild(ROBOT_CHASSIS_NAME)
+	if chassisInstance == nil or not chassisInstance:IsA("Model") then
+		return false
+	end
+	local chassis = chassisInstance
+	local robotRoot = chassis:FindFirstChild("RobotRoot", true)
+	if robotRoot == nil or not robotRoot:IsA("BasePart") then
+		return false
+	end
+	local mountInstance = robotRoot:FindFirstChild(FRONT_WEAPON_MOUNT_NAME)
+	if mountInstance == nil or not mountInstance:IsA("Attachment") then
+		return false
+	end
+
+	restoreStandardLoadout(chassis)
+	removeHammer(chassis)
+
+	local classVisuals = Instance.new("Model")
+	classVisuals.Name = CLASS_VISUAL_MODEL_NAME
+	classVisuals:SetAttribute("ClassId", SPINNER_CLASS_ID)
+	classVisuals:SetAttribute("OriginalScrapcoreVisual", true)
+	classVisuals.Parent = chassis
+	createWeldedVisual(
+		classVisuals,
+		"SpinnerFrontBrace",
+		robotRoot,
+		CFrame.new(0, 0.48, -3.25),
+		Vector3.new(3.4, 0.48, 0.75),
+		Color3.fromRGB(52, 59, 69),
+		Enum.Material.Metal
+	)
+	createWeldedVisual(
+		classVisuals,
+		"SpinnerIdentificationAccent",
+		robotRoot,
+		CFrame.new(0, 0.86, -3.42),
+		Vector3.new(1.25, 0.14, 0.36),
+		ClassConfig.SpinnerAccentColor,
+		Enum.Material.SmoothPlastic
+	)
+
+	local spinner = Instance.new("Model")
+	spinner.Name = ClassConfig.EquippedSpinnerName
+	spinner:SetAttribute(SPINNER_ATTRIBUTE, true)
+	spinner:SetAttribute("ClassId", SPINNER_CLASS_ID)
+	spinner:SetAttribute("OriginalScrapcoreVisual", true)
+
+	local spinnerRoot = Instance.new("Part")
+	spinnerRoot.Name = "SpinnerRoot"
+	spinnerRoot.Size = Vector3.new(0.2, 0.2, 0.2)
+	spinnerRoot.CFrame = mountInstance.WorldCFrame
+	spinnerRoot.Transparency = 1
+	spinnerRoot.Anchored = false
+	spinnerRoot.Massless = true
+	spinnerRoot.CanCollide = false
+	spinnerRoot.CanTouch = false
+	spinnerRoot.CanQuery = false
+	spinnerRoot.CastShadow = false
+	spinnerRoot.Parent = spinner
+	CollisionGroupService.ApplyCharacterPart(spinnerRoot)
+
+	local hitOrigin = Instance.new("Attachment")
+	hitOrigin.Name = SPINNER_HIT_ORIGIN_NAME
+	hitOrigin.CFrame = CFrame.new(0, -0.18, -0.48)
+	hitOrigin.Parent = spinnerRoot
+
+	local discCFrame = CFrame.new(0, -0.18, -0.48) * CFrame.Angles(0, 0, math.rad(90))
+	createSpinnerVisualPart(
+		spinner,
+		"FlywheelCore",
+		spinnerRoot,
+		discCFrame,
+		Vector3.new(0.34, 4.2, 4.2),
+		Color3.fromRGB(57, 64, 73),
+		Enum.Material.Metal,
+		0,
+		Enum.PartType.Cylinder
+	)
+	createSpinnerVisualPart(
+		spinner,
+		"SpinnerMotionBlur",
+		spinnerRoot,
+		discCFrame,
+		Vector3.new(0.12, 4.65, 4.65),
+		ClassConfig.SpinnerAccentColor,
+		Enum.Material.Neon,
+		0.82,
+		Enum.PartType.Cylinder
+	)
+
+	local toothDefinitions = {
+		{ angle = math.rad(4), distance = 2.25, size = Vector3.new(0.78, 0.5, 1.15) },
+		{ angle = math.rad(127), distance = 2.18, size = Vector3.new(0.62, 0.46, 0.92) },
+		{ angle = math.rad(244), distance = 2.30, size = Vector3.new(0.92, 0.54, 1.02) },
+	}
+	for index, tooth in toothDefinitions do
+		local toothCFrame = CFrame.new(0, -0.12, -0.48)
+			* CFrame.Angles(0, tooth.angle, 0)
+			* CFrame.new(0, 0, -tooth.distance)
+		createSpinnerVisualPart(
+			spinner,
+			"AsymmetricTooth" .. index,
+			spinnerRoot,
+			toothCFrame,
+			tooth.size,
+			if index == 2 then ClassConfig.SpinnerAccentColor else Color3.fromRGB(86, 93, 102),
+			Enum.Material.Metal,
+			0,
+			Enum.PartType.Block
+		)
+	end
+
+	spinner.PrimaryPart = spinnerRoot
+	spinner.Parent = chassis
+
+	local spinnerMotor = Instance.new("Motor6D")
+	spinnerMotor.Name = ClassConfig.SpinnerWeaponMotorName
+	spinnerMotor.Part0 = robotRoot
+	spinnerMotor.Part1 = spinnerRoot
+	spinnerMotor.C0 = mountInstance.CFrame
+	spinnerMotor.C1 = CFrame.identity
+	spinnerMotor.Transform = CFrame.identity
+	spinnerMotor.Parent = robotRoot
+
+	character:SetAttribute("SpinnerReady", true)
+	return true
+end
+
 local function applyCurrentVisuals(player: Player)
 	local state = playerStates[player]
 	local character = player.Character
@@ -246,10 +441,11 @@ local function applyCurrentVisuals(player: Player)
 	end
 	local chassisInstance = character:FindFirstChild(ROBOT_CHASSIS_NAME)
 	if chassisInstance ~= nil and chassisInstance:IsA("Model") and currentClassId(player, state) == ClassConfig.BaseClassId then
-		restoreStandardHammer(chassisInstance)
+		restoreStandardLoadout(chassisInstance)
 		return
 	end
-	if currentClassId(player, state) ~= STRIKER_CLASS_ID then
+	local classId = currentClassId(player, state)
+	if classId ~= STRIKER_CLASS_ID and classId ~= SPINNER_CLASS_ID then
 		return
 	end
 
@@ -257,12 +453,15 @@ local function applyCurrentVisuals(player: Player)
 		if player.Character ~= character or character.Parent == nil then
 			return
 		end
-		if applyStrikerVisuals(character) then
+		local applied = if classId == STRIKER_CLASS_ID
+			then applyStrikerVisuals(character)
+			else applySpinnerVisuals(character)
+		if applied then
 			return
 		end
 		task.wait(0.05)
 	end
-	warn(string.format("Unable to apply Striker visuals for %s", player.Name))
+	warn(string.format("Unable to apply %s visuals for %s", classId, player.Name))
 end
 
 local function resetClass(player: Player)
@@ -349,6 +548,7 @@ local function bindCharacter(player: Player, character: Model)
 		state.diedConnection = nil
 	end
 	resetClass(player)
+	character:SetAttribute("SpinnerReady", false)
 
 	task.spawn(function()
 		local humanoidInstance = character:WaitForChild("Humanoid", 10)

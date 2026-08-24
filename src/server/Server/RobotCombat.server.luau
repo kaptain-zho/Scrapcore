@@ -421,12 +421,16 @@ local function handleAttackRequest(player: Player, sequenceValue: unknown, ...: 
 		rejectRequest(player, state)
 		return
 	end
+	local classId = ClassService.GetClassId(player)
+	if classId == ClassConfig.SpinnerClassId then
+		rejectRequest(player, state)
+		return
+	end
 	if now < state.nextAttackAt then
 		rejectRequest(player, state)
 		return
 	end
 
-	local classId = ClassService.GetClassId(player)
 	local definition = ClassConfig.Definitions[classId]
 	local combatModifiers = if definition ~= nil then definition.Combat else nil
 	local cooldownPenalty = if combatModifiers ~= nil then combatModifiers.CooldownPenalty else 0

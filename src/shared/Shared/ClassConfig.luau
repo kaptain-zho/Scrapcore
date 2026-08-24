@@ -45,10 +45,10 @@ local definitions: {[string]: ClassDefinition} = {
 	Spinner = table.freeze({
 		DisplayName = "Spinner",
 		Tier = 8,
-		Enabled = false,
-		Status = "Coming Soon",
-		Role = "Space-control specialist",
-		Tradeoff = "Future rotating pressure weapon with commitment risk.",
+		Enabled = true,
+		Status = "Prototype",
+		Role = "Sustained damage; Multiple nearby targets",
+		Tradeoff = "Low shove; Requires close contact.",
 	}),
 	Rammer = table.freeze({
 		DisplayName = "Rammer",
@@ -110,6 +110,8 @@ local definitions: {[string]: ClassDefinition} = {
 
 local ClassConfig = table.freeze({
 	BaseClassId = "ScrapRunner",
+	StrikerClassId = "Striker",
+	SpinnerClassId = "Spinner",
 	Level8Threshold = 8,
 	Level20Threshold = 20,
 	ClassAttribute = "RunClass",
@@ -125,6 +127,9 @@ local ClassConfig = table.freeze({
 	StandardHammerFaceSize = Vector3.new(3.312, 0.9, 0.688),
 	StrikerHammerHeadSize = Vector3.new(3.55, 1.65, 1.32),
 	StrikerHammerFaceSize = Vector3.new(4.05, 1.05, 0.82),
+	EquippedSpinnerName = "EquippedSpinner",
+	SpinnerWeaponMotorName = "SpinnerWeaponMotor",
+	SpinnerAccentColor = Color3.fromRGB(151, 91, 210),
 })
 
 return ClassConfig

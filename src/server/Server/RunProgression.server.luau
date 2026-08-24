@@ -2,6 +2,7 @@
 
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
 local ClassService = require(script.Parent:WaitForChild("ClassService"))
+local SpinnerCombatService = require(script.Parent:WaitForChild("SpinnerCombatService"))
 local CollisionGroupService = require(script.Parent:WaitForChild("CollisionGroupService"))
 local ArenaLayoutService = require(script.Parent:WaitForChild("ArenaLayoutService"))
 local BreakableObjectService = require(script.Parent:WaitForChild("BreakableObjectService"))
@@ -9,5 +10,6 @@ local BreakableObjectService = require(script.Parent:WaitForChild("BreakableObje
 CollisionGroupService.Init()
 ProgressionService.Init()
 ClassService.Init()
+SpinnerCombatService.Init()
 ArenaLayoutService.Init()
 BreakableObjectService.Init()

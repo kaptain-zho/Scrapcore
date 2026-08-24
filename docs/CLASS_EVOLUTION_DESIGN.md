@@ -44,14 +44,16 @@ Level 1: Scrap Runner
 - **Intended silhouette:** The Scrap Runner chassis with a visibly heavier rectangular hammer head, reinforced mount, and a restrained amber identification accent.
 - **Counterplay:** Stay outside the committed arc, force a miss, then close during recovery; do not contest the front at the impact frame.
 
-### Spinner — future work
+### Spinner — prototyped
 
-- **Combat role:** Space-control specialist that discourages opponents from lingering alongside it.
-- **Main weapon concept:** A segmented, chassis-integrated impact rotor with a deliberate spin-up and exposure cycle.
-- **Strengths:** Sustained local pressure and strong control of tight approaches.
-- **Weaknesses:** Commitment, vulnerable downtime, and reduced precision against opponents who disengage cleanly.
-- **Intended silhouette:** Low, wide robot with an unmistakable broken-ring rotor surrounding the central body while keeping front and rear readable.
-- **Counterplay:** Disengage during pressure, attack during spin-down, and use obstacles to break its preferred orbit.
+- **Combat role:** Sustained close-range pressure that can threaten several nearby targets while it maintains contact.
+- **Main weapon concept:** A low front-mounted scrap flywheel with three deliberately asymmetric striking teeth, a reinforced nose mount, and a visible spin-up cycle.
+- **Strengths:** Repeated damage pulses, multi-target pressure, and control of close frontal approaches.
+- **Weaknesses:** Low shove, less immediate burst than Striker, vulnerable spin-up and recovery, and a requirement to remain close.
+- **Intended silhouette:** The compact Scrap Runner chassis with a low exposed front disc, uneven tooth lengths, reinforced front bracing, and a restrained purple identification accent.
+- **Counterplay:** Leave its short weapon area during spin-up or active pressure, use walls to break contact, then punish spin-down and cooldown.
+
+Prototype Spinner tuning is provisional: spin-up interpolates from 0.40 seconds at Attack Rate Rank 0 to 0.28 seconds at Rank 30; pulse interval interpolates from 0.32 to 0.24 seconds; pulse damage interpolates from 7 to 10 across Damage ranks. The flywheel remains active while primary attack is continuously held, then spins down into a 1.1-second cooldown after release. A low-frequency client hold keepalive renews a tolerant server lease so lost input or focus cannot leave an attack running. Each server pulse applies 2.5 knockback and can affect no more than six validated targets.
 
 ### Rammer — future work
 

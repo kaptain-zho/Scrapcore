@@ -54,13 +54,13 @@ local UPGRADES = table.freeze({
 	["Attack Rate"] = table.freeze({
 		AttributeName = "AttackRateUpgradeLevel",
 		DisplayName = "Attack Rate",
-		Description = "Hammer attack rate",
+		Description = "Weapon attack rate",
 		PerPoint = 0.3 / MAX_UPGRADE_RANK,
 	}),
 	Damage = table.freeze({
 		AttributeName = "DamageUpgradeLevel",
 		DisplayName = "Damage",
-		Description = "Hammer damage",
+		Description = "Weapon damage",
 		PerPoint = 0.4 / MAX_UPGRADE_RANK,
 	}),
 	Health = table.freeze({

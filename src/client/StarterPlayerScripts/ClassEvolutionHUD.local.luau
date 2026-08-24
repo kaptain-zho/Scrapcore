@@ -200,7 +200,7 @@ local function addCard(classId: string, layoutOrder: number): TextButton
 end
 
 local strikerCard = addCard("Striker", 1)
-addCard("Spinner", 2)
+local spinnerCard = addCard("Spinner", 2)
 addCard("Rammer", 3)
 
 local evolveButton = Instance.new("TextButton")
@@ -240,7 +240,7 @@ confirmTitle.Position = UDim2.fromOffset(24, 56)
 confirmTitle.Size = UDim2.new(1, -48, 0, 30)
 confirmTitle.BackgroundTransparency = 1
 confirmTitle.Font = Enum.Font.GothamBold
-confirmTitle.Text = "EVOLVE INTO STRIKER?"
+confirmTitle.Text = "CONFIRM EVOLUTION?"
 confirmTitle.TextColor3 = COLORS.Text
 confirmTitle.TextSize = 20
 confirmTitle.ZIndex = 11
@@ -251,7 +251,7 @@ confirmBody.Position = UDim2.fromOffset(30, 98)
 confirmBody.Size = UDim2.new(1, -60, 0, 78)
 confirmBody.BackgroundTransparency = 1
 confirmBody.Font = Enum.Font.Gotham
-confirmBody.Text = "Heavy hammer hits, stronger shove, slower recovery.\n\nThis choice lasts until your robot is destroyed."
+confirmBody.Text = "This choice lasts until your robot is destroyed."
 confirmBody.TextColor3 = COLORS.MutedText
 confirmBody.TextSize = 14
 confirmBody.TextWrapped = true
@@ -271,7 +271,7 @@ confirmStatus.ZIndex = 11
 confirmStatus.Parent = confirmOverlay
 
 local confirmButton = Instance.new("TextButton")
-confirmButton.Name = "ConfirmStrikerButton"
+confirmButton.Name = "ConfirmEvolutionButton"
 confirmButton.Position = UDim2.new(0.5, 4, 1, -66)
 confirmButton.Size = UDim2.new(0.5, -20, 0, 44)
 confirmButton.BackgroundColor3 = COLORS.Confirm
@@ -306,6 +306,7 @@ local dismissed = false
 local wasEligible = false
 local awaitingSelection = false
 local requestSerial = 0
+local selectedClassId: string? = nil
 
 local function hasSelectedClass(): boolean
 	local classValue = player:GetAttribute(ClassConfig.ClassAttribute)
@@ -327,6 +328,7 @@ local function refreshVisibility()
 		evolveButton.Visible = false
 		confirmOverlay.Visible = false
 		awaitingSelection = false
+		selectedClassId = nil
 		return
 	end
 	panel.Visible = not dismissed
@@ -525,7 +527,7 @@ local function updateResponsiveLayout()
 	end
 
 	configureCard(strikerCard, mode)
-	configureCard(cards.SpinnerCard :: TextButton, mode)
+	configureCard(spinnerCard, mode)
 	configureCard(cards.RammerCard :: TextButton, mode)
 
 	task.defer(function()
@@ -589,6 +591,7 @@ end
 closeButton.Activated:Connect(function()
 	dismissed = true
 	confirmOverlay.Visible = false
+	selectedClassId = nil
 	refreshVisibility()
 end)
 
@@ -600,12 +603,30 @@ evolveButton.Activated:Connect(function()
 	refreshVisibility()
 end)
 
-strikerCard.Activated:Connect(function()
+local function openConfirmation(classId: string)
 	if not isEligible() or awaitingSelection then
 		return
 	end
+	local definition = ClassConfig.Definitions[classId]
+	if definition == nil or definition.Enabled ~= true then
+		return
+	end
+	selectedClassId = classId
+	confirmTitle.Text = string.format("EVOLVE INTO %s?", string.upper(definition.DisplayName))
+	confirmBody.Text = string.format(
+		"%s\n\nThis choice lasts until your robot is destroyed.",
+		definition.Tradeoff
+	)
 	confirmStatus.Text = ""
 	confirmOverlay.Visible = true
+end
+
+strikerCard.Activated:Connect(function()
+	openConfirmation(ClassConfig.StrikerClassId)
+end)
+
+spinnerCard.Activated:Connect(function()
+	openConfirmation(ClassConfig.SpinnerClassId)
 end)
 
 cancelButton.Activated:Connect(function()
@@ -613,17 +634,23 @@ cancelButton.Activated:Connect(function()
 		return
 	end
 	confirmOverlay.Visible = false
+	selectedClassId = nil
 end)
 
 confirmButton.Activated:Connect(function()
-	if awaitingSelection or not isEligible() then
+	local classId = selectedClassId
+	if awaitingSelection or not isEligible() or classId == nil then
+		return
+	end
+	local definition = ClassConfig.Definitions[classId]
+	if definition == nil or definition.Enabled ~= true then
 		return
 	end
 	awaitingSelection = true
 	requestSerial += 1
 	local thisRequest = requestSerial
 	confirmStatus.Text = "Requesting server approval…"
-	classRequestRemote:FireServer("Striker")
+	classRequestRemote:FireServer(classId)
 	task.delay(1.5, function()
 		if requestSerial ~= thisRequest or not awaitingSelection then
 			return
@@ -641,6 +668,7 @@ player:GetAttributeChangedSignal(ClassConfig.ClassAttribute):Connect(function()
 	if hasSelectedClass() then
 		requestSerial += 1
 		awaitingSelection = false
+		selectedClassId = nil
 	end
 	refreshVisibility()
 end)
