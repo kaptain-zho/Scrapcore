@@ -55,6 +55,8 @@ Level 1: Scrap Runner
 
 Prototype Spinner tuning is provisional: spin-up interpolates from 0.40 seconds at Attack Rate Rank 0 to 0.28 seconds at Rank 30; pulse interval interpolates from 0.32 to 0.24 seconds; pulse damage interpolates from 7 to 10 across Damage ranks. The flywheel remains active while primary attack is continuously held, then spins down into a 1.1-second cooldown after release. A low-frequency client hold keepalive renews a tolerant server lease so lost input or focus cannot leave an attack running. Each server pulse applies 2.5 knockback and can affect no more than six validated targets.
 
+Spinner applies a provisional `1.50` server-owned damage multiplier only to active breakables. Player damage, timing, range, line of sight, shove, and the six-target cap are unchanged. This makes Spinner an efficient scrap shredder when it earns sustained contact; contribution credit uses only effective damage applied before the breakable reaches zero health.
+
 Spinner's timing and damage interpolation use the same shared normalized exponential upgrade factor as every other temporary stat, with a provisional curve strength of 1.5. Early ranks make smaller but real changes, later ranks make progressively larger changes, and the Rank 0 and Rank 30 endpoints above remain unchanged. Hold LMB to spin; RMB remains camera orbit.
 
 ### Rammer — prototyped
@@ -69,6 +71,8 @@ Spinner's timing and damage interpolation use the same shared normalized exponen
 Prototype Rammer tuning is provisional. Minimum valid hold is 0.20 seconds. Full-charge time uses the shared exponential Attack Rate factor from 1.20 seconds at Rank 0 to 0.84 seconds at Rank 30; release cooldown uses the same factor from 1.35 to 0.95 seconds. Charging limits movement speed to 0.75 of its legal upgraded value and steering to 0.55; dash steering is limited to 0.20 for a 0.45-second authorized window. The dash adds 8 speed at minimum charge and 16 at full charge, reaching at most approximately 47.2 studs per second at Speed Rank 30.
 
 A minimum valid impact begins at 15 damage. A legitimate full-charge impact reaches 35 damage at Damage Rank 0 or 45 at Rank 30 and up to 26 knockback. Partial impact strength depends on server-measured hold duration and server-observed forward closing speed, both clamped to legal bounds. Only one player or active breakable can be hit per charge. The client sends start, bounded hold keepalive, release, or cancellation intent only; the server owns charge time, facing, dash authorization, spatial query, line of sight, damage, knockback, reward contribution, cooldown, and cancellation. Hold LMB and release to charge; RMB remains camera orbit.
+
+Rammer applies a provisional `3.00` server-owned damage multiplier only to active breakables, still bounded by the shared per-hit breakable safety cap. Destroying a breakable shortens that charge's recovery to `0.35` seconds from release; non-destroying breakable impacts and all player impacts retain the normal rank-derived cooldown. This makes Rammer a high-impact scrap crusher that benefits from matching partial charge to the target while preserving its one-target limit and accepted PvP behavior.
 
 ### Pilebreaker — future work
 

@@ -44,6 +44,7 @@ local SpinnerConfig = table.freeze({
 	PulseIntervalAtRankThirty = PULSE_INTERVAL_AT_RANK_THIRTY,
 	PulseDamageAtRankZero = PULSE_DAMAGE_AT_RANK_ZERO,
 	PulseDamageAtRankThirty = PULSE_DAMAGE_AT_RANK_THIRTY,
+	SpinnerBreakableDamageMultiplier = 1.50,
 	SpinDownDuration = 0.28,
 	PostSpinCooldown = 1.1,
 	HoldKeepaliveInterval = 0.4,

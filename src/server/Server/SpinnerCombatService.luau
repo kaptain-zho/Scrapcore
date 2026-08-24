@@ -285,7 +285,8 @@ local function resolvePulse(player: Player, state: SpinnerState): number
 			break
 		end
 		if candidate.breakable ~= nil then
-			local appliedDamage = BreakableObjectService.Damage(candidate.breakable, player, state.pulseDamage)
+			local breakableDamage = state.pulseDamage * SpinnerConfig.SpinnerBreakableDamageMultiplier
+			local appliedDamage = BreakableObjectService.Damage(candidate.breakable, player, breakableDamage)
 			if appliedDamage > 0 then
 				affected += 1
 			end
@@ -623,6 +624,8 @@ local function validateConfiguration()
 		or math.abs(SpinnerConfig.GetPulseInterval(ProgressionConfig.MaxUpgradeRank) - SpinnerConfig.PulseIntervalAtRankThirty) > epsilon
 		or math.abs(SpinnerConfig.GetPulseDamage(0) - SpinnerConfig.PulseDamageAtRankZero) > epsilon
 		or math.abs(SpinnerConfig.GetPulseDamage(ProgressionConfig.MaxUpgradeRank) - SpinnerConfig.PulseDamageAtRankThirty) > epsilon
+		or SpinnerConfig.SpinnerBreakableDamageMultiplier < 1.25
+		or SpinnerConfig.SpinnerBreakableDamageMultiplier > 1.75
 		or SpinnerConfig.PulseKnockbackSpeed > CombatConfig.MaxHorizontalKnockbackSpeed
 		or SpinnerConfig.MaximumTargetsPerPulse < 1
 		or SpinnerConfig.MaximumTargetsPerPulse > 6

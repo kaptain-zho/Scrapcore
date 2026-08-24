@@ -437,8 +437,15 @@ local function resolveImpact(player: Player, state: RammerState, now: number): b
 	local damage, knockback = calculateImpact(state, closingSpeed)
 	local affected = false
 	if candidate.breakable ~= nil then
-		local appliedDamage = BreakableObjectService.Damage(candidate.breakable, player, damage)
+		local breakableDamage = damage * RammerConfig.RammerBreakableDamageMultiplier
+		local appliedDamage, destroyed = BreakableObjectService.Damage(candidate.breakable, player, breakableDamage)
 		affected = appliedDamage > 0
+		if destroyed then
+			state.nextStartAt = math.min(
+				state.nextStartAt,
+				state.dashStartedAt + RammerConfig.RammerBreakableDestroyCooldown
+			)
+		end
 	elseif candidate.humanoid ~= nil and candidate.humanoid.Health > 0 then
 		local healthBefore = candidate.humanoid.Health
 		candidate.humanoid:TakeDamage(damage)
@@ -862,6 +869,14 @@ local function validateConfiguration()
 		or math.abs(RammerConfig.GetFullImpactDamage(0) - RammerConfig.FullImpactDamageAtRankZero) > epsilon
 		or math.abs(RammerConfig.GetFullImpactDamage(ProgressionConfig.MaxUpgradeRank) - RammerConfig.FullImpactDamageAtRankThirty) > epsilon
 		or math.abs(RammerConfig.GetAuthorizedDashSpeed(ProgressionConfig.MaxUpgradeRank, 1) - RammerConfig.MaximumAuthorizedDashSpeed) > epsilon
+		or RammerConfig.RammerBreakableDamageMultiplier < 2.5
+		or RammerConfig.RammerBreakableDamageMultiplier > 3.5
+		or RammerConfig.RammerBreakableDestroyCooldown < 0.35
+		or RammerConfig.RammerBreakableDestroyCooldown > 0.65
+		or math.min(
+			RammerConfig.FullImpactDamageAtRankThirty * RammerConfig.RammerBreakableDamageMultiplier,
+			ProgressionConfig.MaxBreakableDamagePerHit
+		) >= 150
 		or RammerConfig.HoldKeepaliveInterval <= RammerConfig.MinimumKeepaliveInterval
 		or RammerConfig.HoldLeaseTimeout <= RammerConfig.HoldKeepaliveInterval * 2
 		or RammerConfig.MaximumTargetsPerCharge ~= 1
