@@ -2,6 +2,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local shared = ReplicatedStorage:WaitForChild("Shared")
@@ -24,7 +25,12 @@ type PlayerRunState = {
 	acceptedRequests: number,
 	rejectedRequests: number,
 	characterAddedConnection: RBXScriptConnection?,
+	characterChildAddedConnection: RBXScriptConnection?,
 	diedConnection: RBXScriptConnection?,
+	healthChangedConnection: RBXScriptConnection?,
+	humanoid: Humanoid?,
+	lastObservedHealth: number,
+	lastDamageAt: number,
 }
 
 local upgradeDefinitions = ProgressionConfig.Upgrades :: {[string]: UpgradeDefinition}
@@ -92,9 +98,9 @@ local function resetRunAttributes(player: Player)
 	setUpgradeRanksToZero(player)
 end
 
-local function applyArmorToHumanoid(player: Player, humanoid: Humanoid)
-	local rank = ProgressionService.GetUpgradeRank(player, "Armor")
-	local newMaxHealth = ProgressionConfig.BaseMaxHealth + ProgressionConfig.GetArmorBonus(rank)
+local function applyHealthToHumanoid(player: Player, humanoid: Humanoid)
+	local rank = ProgressionService.GetUpgradeRank(player, "Health")
+	local newMaxHealth = ProgressionConfig.BaseMaxHealth + ProgressionConfig.GetHealthBonus(rank)
 	local oldMaxHealth = math.max(humanoid.MaxHealth, 1)
 	local healthRatio = math.clamp(humanoid.Health / oldMaxHealth, 0, 1)
 	humanoid.MaxHealth = newMaxHealth
@@ -114,7 +120,15 @@ local function resetRun(player: Player)
 		return
 	end
 	state.runSerial += 1
+	state.lastDamageAt = Workspace:GetServerTimeNow()
+	state.lastObservedHealth = if state.humanoid ~= nil then state.humanoid.Health else 0
 	resetRunAttributes(player)
+end
+
+local function disableDefaultHealthRegeneration(instance: Instance)
+	if instance.Name == "Health" and instance:IsA("BaseScript") then
+		instance.Enabled = false
+	end
 end
 
 local function bindCharacter(player: Player, character: Model)
@@ -129,6 +143,18 @@ local function bindCharacter(player: Player, character: Model)
 		state.diedConnection:Disconnect()
 		state.diedConnection = nil
 	end
+	if state.healthChangedConnection ~= nil then
+		state.healthChangedConnection:Disconnect()
+		state.healthChangedConnection = nil
+	end
+	if state.characterChildAddedConnection ~= nil then
+		state.characterChildAddedConnection:Disconnect()
+	end
+	for _, child in character:GetChildren() do
+		disableDefaultHealthRegeneration(child)
+	end
+	state.characterChildAddedConnection = character.ChildAdded:Connect(disableDefaultHealthRegeneration)
+	state.humanoid = nil
 
 	task.spawn(function()
 		local humanoidInstance = character:WaitForChild("Humanoid", 10)
@@ -144,10 +170,32 @@ local function bindCharacter(player: Player, character: Model)
 		end
 
 		local humanoid = humanoidInstance
-		applyArmorToHumanoid(player, humanoid)
+		applyHealthToHumanoid(player, humanoid)
+		currentState.humanoid = humanoid
+		currentState.lastObservedHealth = humanoid.Health
+		currentState.lastDamageAt = Workspace:GetServerTimeNow()
+		currentState.healthChangedConnection = humanoid.HealthChanged:Connect(function(health: number)
+			local latestState = playerStates[player]
+			if
+				latestState == nil
+				or latestState.runSerial ~= runSerial
+				or latestState.humanoid ~= humanoid
+			then
+				return
+			end
+			if health < latestState.lastObservedHealth - 0.001 then
+				latestState.lastDamageAt = Workspace:GetServerTimeNow()
+			end
+			latestState.lastObservedHealth = health
+		end)
 		currentState.diedConnection = humanoid.Died:Connect(function()
 			local latestState = playerStates[player]
 			if latestState ~= nil and latestState.runSerial == runSerial then
+				if latestState.healthChangedConnection ~= nil then
+					latestState.healthChangedConnection:Disconnect()
+					latestState.healthChangedConnection = nil
+				end
+				latestState.humanoid = nil
 				resetRun(player)
 			end
 		end)
@@ -168,7 +216,12 @@ local function connectPlayer(player: Player)
 		acceptedRequests = 0,
 		rejectedRequests = 0,
 		characterAddedConnection = nil,
+		characterChildAddedConnection = nil,
 		diedConnection = nil,
+		healthChangedConnection = nil,
+		humanoid = nil,
+		lastObservedHealth = 0,
+		lastDamageAt = now,
 	}
 	playerStates[player] = state
 	player:SetAttribute("ProgressionAcceptedUpgradeCount", 0)
@@ -194,6 +247,12 @@ local function disconnectPlayer(player: Player)
 	if state.diedConnection ~= nil then
 		state.diedConnection:Disconnect()
 	end
+	if state.characterChildAddedConnection ~= nil then
+		state.characterChildAddedConnection:Disconnect()
+	end
+	if state.healthChangedConnection ~= nil then
+		state.healthChangedConnection:Disconnect()
+	end
 	playerStates[player] = nil
 end
 
@@ -216,22 +275,19 @@ function ProgressionService.IsRunActive(player: Player, runSerial: number): bool
 end
 
 function ProgressionService.GetHammerDamage(player: Player, baseDamage: number): number
-	local multiplier = ProgressionConfig.GetPowerMultiplier(ProgressionService.GetUpgradeRank(player, "Power"))
+	local multiplier = ProgressionConfig.GetDamageMultiplier(ProgressionService.GetUpgradeRank(player, "Damage"))
 	return baseDamage * multiplier
 end
 
 function ProgressionService.GetHammerCooldown(player: Player, baseCooldown: number): number
-	local multiplier = ProgressionConfig.GetRecoveryMultiplier(ProgressionService.GetUpgradeRank(player, "Recovery"))
+	local multiplier = ProgressionConfig.GetAttackRateMultiplier(
+		ProgressionService.GetUpgradeRank(player, "Attack Rate")
+	)
 	return baseCooldown * multiplier
 end
 
-function ProgressionService.GetHammerKnockback(player: Player, baseKnockback: number): number
-	local multiplier = ProgressionConfig.GetForceMultiplier(ProgressionService.GetUpgradeRank(player, "Force"))
-	return baseKnockback * multiplier
-end
-
 function ProgressionService.GetMovementSpeed(player: Player, baseSpeed: number): number
-	local multiplier = ProgressionConfig.GetMobilityMultiplier(ProgressionService.GetUpgradeRank(player, "Mobility"))
+	local multiplier = ProgressionConfig.GetSpeedMultiplier(ProgressionService.GetUpgradeRank(player, "Speed"))
 	return baseSpeed * multiplier
 end
 
@@ -309,35 +365,34 @@ function ProgressionService.ResetRun(player: Player)
 	resetRun(player)
 	local humanoid = getAliveHumanoid(player)
 	if humanoid ~= nil then
-		applyArmorToHumanoid(player, humanoid)
+		applyHealthToHumanoid(player, humanoid)
 	end
 end
 
 local function isDerivedUpgradeValueSafe(category: string, rank: number): boolean
-	if category == "Power" then
-		local damage = CombatConfig.Damage * ProgressionConfig.GetPowerMultiplier(rank)
-		return isFinite(damage) and damage >= 0 and damage <= CombatConfig.MaxDamage
-	elseif category == "Armor" then
-		local maxHealth = ProgressionConfig.BaseMaxHealth + ProgressionConfig.GetArmorBonus(rank)
-		return isFinite(maxHealth)
-			and maxHealth >= ProgressionConfig.BaseMaxHealth
-			and maxHealth <= ProgressionConfig.MaxUpgradedMaxHealth
-	elseif category == "Mobility" then
-		local maxSpeed = MovementConfig.MaxSpeed * ProgressionConfig.GetMobilityMultiplier(rank)
+	if category == "Speed" then
+		local maxSpeed = MovementConfig.MaxSpeed * ProgressionConfig.GetSpeedMultiplier(rank)
 		return isFinite(maxSpeed)
 			and maxSpeed >= MovementConfig.MaxSpeed
 			and maxSpeed <= MovementConfig.MaxUpgradedSpeed + 0.001
-	elseif category == "Recovery" then
-		local cooldown = CombatConfig.Cooldown * ProgressionConfig.GetRecoveryMultiplier(rank)
+	elseif category == "Attack Rate" then
+		local cooldown = CombatConfig.Cooldown * ProgressionConfig.GetAttackRateMultiplier(rank)
 		return isFinite(cooldown)
 			and cooldown >= CombatConfig.MinCooldown
 			and cooldown <= CombatConfig.Cooldown
-	elseif category == "Force" then
-		local knockback = CombatConfig.HorizontalKnockbackSpeed
-			* ProgressionConfig.GetForceMultiplier(rank)
-		return isFinite(knockback)
-			and knockback >= 0
-			and knockback <= CombatConfig.MaxHorizontalKnockbackSpeed
+	elseif category == "Damage" then
+		local damage = CombatConfig.Damage * ProgressionConfig.GetDamageMultiplier(rank)
+		return isFinite(damage) and damage >= 0 and damage <= CombatConfig.MaxDamage
+	elseif category == "Health" then
+		local maxHealth = ProgressionConfig.BaseMaxHealth + ProgressionConfig.GetHealthBonus(rank)
+		return isFinite(maxHealth)
+			and maxHealth >= ProgressionConfig.BaseMaxHealth
+			and maxHealth <= ProgressionConfig.MaxUpgradedMaxHealth
+	elseif category == "Health Regen" then
+		local regenPerSecond = ProgressionConfig.GetHealthRegenPerSecond(rank)
+		return isFinite(regenPerSecond)
+			and regenPerSecond >= 0
+			and regenPerSecond <= ProgressionConfig.MaxHealthRegenPerSecond
 	end
 	return false
 end
@@ -445,15 +500,53 @@ local function handleUpgradeRequest(
 
 	player:SetAttribute("UnspentUpgradePoints", points - 1)
 	player:SetAttribute(definition.AttributeName, requestedRank)
-	if category == "Armor" then
+	if category == "Health" then
 		local humanoid = getAliveHumanoid(player)
 		if humanoid ~= nil then
-			applyArmorToHumanoid(player, humanoid)
+			applyHealthToHumanoid(player, humanoid)
 		end
 	end
 
 	state.acceptedRequests += 1
 	player:SetAttribute("ProgressionAcceptedUpgradeCount", state.acceptedRequests)
+end
+
+local healthRegenAccumulator = 0
+
+local function updateHealthRegeneration(deltaTime: number)
+	if not isFinite(deltaTime) or deltaTime <= 0 then
+		return
+	end
+	healthRegenAccumulator += deltaTime
+	if healthRegenAccumulator < ProgressionConfig.HealthRegenTickInterval then
+		return
+	end
+
+	local elapsed = healthRegenAccumulator
+	healthRegenAccumulator = 0
+	local now = Workspace:GetServerTimeNow()
+	for player, state in playerStates do
+		local humanoid = state.humanoid
+		if
+			humanoid == nil
+			or humanoid.Parent == nil
+			or humanoid.Health <= 0
+			or humanoid.Health >= humanoid.MaxHealth
+			or now - state.lastDamageAt < ProgressionConfig.HealthRegenDamageDelay
+		then
+			continue
+		end
+
+		local rank = ProgressionService.GetUpgradeRank(player, "Health Regen")
+		local regenPerSecond = ProgressionConfig.GetHealthRegenPerSecond(rank)
+		if regenPerSecond <= 0 or regenPerSecond > ProgressionConfig.MaxHealthRegenPerSecond then
+			continue
+		end
+
+		local newHealth = math.min(humanoid.Health + regenPerSecond * elapsed, humanoid.MaxHealth)
+		state.lastObservedHealth = newHealth
+		humanoid.Health = newHealth
+	end
 end
 
 function ProgressionService.Init()
@@ -487,6 +580,7 @@ function ProgressionService.Init()
 	end
 
 	(upgradeRequestRemote :: RemoteEvent).OnServerEvent:Connect(handleUpgradeRequest)
+	RunService.Heartbeat:Connect(updateHealthRegeneration)
 	Players.PlayerAdded:Connect(connectPlayer)
 	Players.PlayerRemoving:Connect(disconnectPlayer)
 	for _, player in Players:GetPlayers() do

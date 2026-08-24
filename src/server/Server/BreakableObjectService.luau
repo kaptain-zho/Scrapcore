@@ -7,12 +7,14 @@ local shared = ReplicatedStorage:WaitForChild("Shared")
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local ArenaLayoutService = require(script.Parent:WaitForChild("ArenaLayoutService"))
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
+local CollisionGroupService = require(script.Parent:WaitForChild("CollisionGroupService"))
 
 type BreakableDefinition = {
 	DisplayName: string,
 	MaxHealth: number,
 	XPReward: number,
 	RespawnDelay: number,
+	Rarity: string?,
 }
 
 type StoredPartState = {
@@ -339,6 +341,7 @@ local function bindBreakable(model: Model)
 	end
 
 	local storedParts: {StoredPartState} = {}
+	CollisionGroupService.ApplyBreakable(model)
 	for _, descendant in model:GetDescendants() do
 		if descendant:IsA("BasePart") then
 			if not descendant.Anchored then
@@ -377,6 +380,9 @@ local function bindBreakable(model: Model)
 		burst = burst,
 	}
 	states[model] = state
+	model:SetAttribute("BreakableXPReward", definition.XPReward)
+	model:SetAttribute("BreakableRespawnDelay", definition.RespawnDelay)
+	model:SetAttribute("BreakableRarity", definition.Rarity)
 	updateDisplay(state)
 end
 
@@ -433,6 +439,7 @@ function BreakableObjectService.Init()
 		return
 	end
 	initialized = true
+	CollisionGroupService.Init()
 	ProgressionService.Init()
 	ArenaLayoutService.Init()
 

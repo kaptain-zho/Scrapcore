@@ -31,12 +31,12 @@ local function isFinite(value: number): boolean
 end
 
 local function getCurrentCooldown(): number
-	local rankValue = player:GetAttribute("RecoveryUpgradeLevel")
+	local rankValue = player:GetAttribute("AttackRateUpgradeLevel")
 	local rank = if typeof(rankValue) == "number" and isFinite(rankValue)
 		then math.clamp(math.floor(rankValue), 0, ProgressionConfig.MaxUpgradeRank)
 		else 0
 	return math.clamp(
-		CombatConfig.Cooldown * ProgressionConfig.GetRecoveryMultiplier(rank),
+		CombatConfig.Cooldown * ProgressionConfig.GetAttackRateMultiplier(rank),
 		CombatConfig.MinCooldown,
 		CombatConfig.Cooldown
 	)

@@ -18,6 +18,7 @@ local camera = assert(Workspace.CurrentCamera, "CurrentCamera is required for ro
 local KNOCKBACK_VELOCITY_ATTRIBUTE = "CombatKnockbackVelocity"
 local KNOCKBACK_STARTED_AT_ATTRIBUTE = "CombatKnockbackStartedAt"
 local KNOCKBACK_UNTIL_ATTRIBUTE = "CombatKnockbackUntil"
+local CAMERA_ORBIT_ACTION_NAME = "RobotCameraOrbit"
 
 local function sinkDefaultMovement(): Enum.ContextActionResult
 	return Enum.ContextActionResult.Sink
@@ -44,8 +45,60 @@ local smoothedVelocity = Vector3.zero
 local cameraInitialized = false
 local telemetryAccumulator = 0
 local telemetrySequence = 0
+local cameraYaw = 0
+local targetCameraYaw = 0
+local cameraZoomScale = 1
+local targetCameraZoomScale = 1
+local isCameraOrbitDragging = false
+local previousMouseBehavior: Enum.MouseBehavior? = nil
+local humanoidDiedConnection: RBXScriptConnection? = nil
+
+local function wrapAngle(angle: number): number
+	return math.atan2(math.sin(angle), math.cos(angle))
+end
+
+local function releaseCameraOrbit()
+	if not isCameraOrbitDragging and previousMouseBehavior == nil then
+		return
+	end
+	isCameraOrbitDragging = false
+	local mouseBehavior = previousMouseBehavior
+	previousMouseBehavior = nil
+	UserInputService.MouseBehavior = if mouseBehavior ~= nil
+		then mouseBehavior
+		else Enum.MouseBehavior.Default
+end
+
+local function beginCameraOrbit()
+	if isCameraOrbitDragging or not script.Enabled then
+		return
+	end
+	previousMouseBehavior = UserInputService.MouseBehavior
+	isCameraOrbitDragging = true
+	UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
+end
+
+local function handleCameraOrbitAction(
+	_actionName: string,
+	inputState: Enum.UserInputState,
+	_inputObject: InputObject
+): Enum.ContextActionResult
+	if inputState == Enum.UserInputState.Begin then
+		beginCameraOrbit()
+		return if isCameraOrbitDragging
+			then Enum.ContextActionResult.Sink
+			else Enum.ContextActionResult.Pass
+	elseif inputState == Enum.UserInputState.End or inputState == Enum.UserInputState.Cancel then
+		releaseCameraOrbit()
+		return Enum.ContextActionResult.Sink
+	end
+	return if isCameraOrbitDragging
+		then Enum.ContextActionResult.Sink
+		else Enum.ContextActionResult.Pass
+end
 
 local function setCharacter(character: Model)
+	releaseCameraOrbit()
 	local humanoid = character:WaitForChild("Humanoid", 10)
 	local root = character:WaitForChild("HumanoidRootPart", 10)
 	if humanoid ~= nil and humanoid:IsA("Humanoid") and root ~= nil and root:IsA("BasePart") then
@@ -99,6 +152,10 @@ local function setCharacter(character: Model)
 		currentMovementVelocity = movementVelocity
 		smoothedVelocity = Vector3.zero
 		cameraInitialized = false
+		if humanoidDiedConnection ~= nil then
+			humanoidDiedConnection:Disconnect()
+		end
+		humanoidDiedConnection = humanoid.Died:Connect(releaseCameraOrbit)
 	end
 end
 
@@ -108,6 +165,11 @@ end)
 
 player.CharacterRemoving:Connect(function(character: Model)
 	if currentRoot ~= nil and currentRoot:IsDescendantOf(character) then
+		releaseCameraOrbit()
+		if humanoidDiedConnection ~= nil then
+			humanoidDiedConnection:Disconnect()
+			humanoidDiedConnection = nil
+		end
 		currentHumanoid = nil
 		currentRoot = nil
 		currentAimOrientation = nil
@@ -119,6 +181,36 @@ end)
 if player.Character ~= nil then
 	task.spawn(setCharacter, player.Character)
 end
+
+ContextActionService:BindActionAtPriority(
+	CAMERA_ORBIT_ACTION_NAME,
+	handleCameraOrbitAction,
+	false,
+	MovementConfig.CameraOrbitActionPriority,
+	Enum.UserInputType.MouseButton2
+)
+
+UserInputService.InputChanged:Connect(function(input: InputObject)
+	if input.UserInputType == Enum.UserInputType.MouseWheel then
+		targetCameraZoomScale = math.clamp(
+			targetCameraZoomScale - input.Position.Z * MovementConfig.CameraZoomWheelStep,
+			MovementConfig.CameraMinZoomScale,
+			MovementConfig.CameraMaxZoomScale
+		)
+	end
+end)
+
+UserInputService.WindowFocusReleased:Connect(releaseCameraOrbit)
+script:GetPropertyChangedSignal("Enabled"):Connect(function()
+	if not script.Enabled then
+		releaseCameraOrbit()
+	end
+end)
+script.Destroying:Connect(function()
+	releaseCameraOrbit()
+	ContextActionService:UnbindAction(CAMERA_ORBIT_ACTION_NAME)
+	ContextActionService:UnbindAction("SinkDefaultRobotMovement")
+end)
 
 local function getKeyboardAxes(): (number, number)
 	local horizontal = 0
@@ -197,11 +289,11 @@ local function isFinite(value: number): boolean
 end
 
 local function getCurrentMaxSpeed(): number
-	local rankValue = player:GetAttribute("MobilityUpgradeLevel")
+	local rankValue = player:GetAttribute("SpeedUpgradeLevel")
 	local rank = if typeof(rankValue) == "number" and isFinite(rankValue)
 		then math.clamp(math.floor(rankValue), 0, ProgressionConfig.MaxUpgradeRank)
 		else 0
-	return MovementConfig.MaxSpeed * ProgressionConfig.GetMobilityMultiplier(rank)
+	return MovementConfig.MaxSpeed * ProgressionConfig.GetSpeedMultiplier(rank)
 end
 
 local function getAuthorizedKnockback(root: BasePart): Vector3
@@ -291,8 +383,29 @@ local function updateCamera(deltaTime: number)
 		return
 	end
 
+	if isCameraOrbitDragging then
+		local mouseDelta = UserInputService:GetMouseDelta()
+		targetCameraYaw = wrapAngle(
+			targetCameraYaw - mouseDelta.X * MovementConfig.CameraOrbitDragSensitivity
+		)
+	end
+
+	local orbitAlpha = 1 - math.exp(-MovementConfig.CameraOrbitSharpness * deltaTime)
+	local yawDelta = wrapAngle(targetCameraYaw - cameraYaw)
+	cameraYaw = wrapAngle(cameraYaw + yawDelta * orbitAlpha)
+	local zoomAlpha = 1 - math.exp(-MovementConfig.CameraZoomSharpness * deltaTime)
+	cameraZoomScale += (targetCameraZoomScale - cameraZoomScale) * zoomAlpha
+
 	local lookAtPosition = root.Position + Vector3.new(0, MovementConfig.CameraLookAtHeight, 0)
-	local desiredCamera = CFrame.lookAt(root.Position + MovementConfig.CameraOffset, lookAtPosition)
+	local scaledOffset = MovementConfig.CameraOffset * cameraZoomScale
+	local orbitOffset = CFrame.Angles(0, cameraYaw, 0):VectorToWorldSpace(scaledOffset)
+	local cameraPosition = root.Position + orbitOffset
+	cameraPosition = Vector3.new(
+		cameraPosition.X,
+		math.max(cameraPosition.Y, root.Position.Y + MovementConfig.CameraMinimumHeight),
+		cameraPosition.Z
+	)
+	local desiredCamera = CFrame.lookAt(cameraPosition, lookAtPosition)
 	if not cameraInitialized then
 		camera.CFrame = desiredCamera
 		cameraInitialized = true

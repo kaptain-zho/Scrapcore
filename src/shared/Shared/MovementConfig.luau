@@ -25,6 +25,14 @@ local MovementConfig = table.freeze({
 	CameraOffset = Vector3.new(0, 34, 26),
 	CameraLookAtHeight = 0.5,
 	CameraFollowSharpness = 9,
+	CameraOrbitActionPriority = Enum.ContextActionPriority.High.Value + 1,
+	CameraOrbitDragSensitivity = 0.006,
+	CameraOrbitSharpness = 12,
+	CameraZoomWheelStep = 0.06,
+	CameraZoomSharpness = 10,
+	CameraMinZoomScale = 0.72,
+	CameraMaxZoomScale = 1.15,
+	CameraMinimumHeight = 18,
 })
 
 return MovementConfig

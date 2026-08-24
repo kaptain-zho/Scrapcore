@@ -9,9 +9,11 @@ local shared = ReplicatedStorage:WaitForChild("Shared")
 local CombatConfig = require(shared:WaitForChild("CombatConfig"))
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
 local BreakableObjectService = require(script.Parent:WaitForChild("BreakableObjectService"))
+local CollisionGroupService = require(script.Parent:WaitForChild("CollisionGroupService"))
 
 ProgressionService.Init()
 BreakableObjectService.Init()
+CollisionGroupService.Init()
 
 local ROBOT_CHASSIS_NAME = "RobotChassis"
 local EQUIPPED_HAMMER_NAME = "EquippedHammer"
@@ -163,11 +165,13 @@ local function attachHammer(character: Model): Model?
 			descendant.CanCollide = false
 			descendant.CanTouch = false
 			descendant.CanQuery = false
+			CollisionGroupService.ApplyCharacterPart(descendant)
 		end
 	end
 
 	hammer.PrimaryPart = weaponRoot
 	hammer.Parent = chassis
+	CollisionGroupService.ApplyCharacter(hammer)
 
 	local mountMotor = Instance.new("Motor6D")
 	mountMotor.Name = WEAPON_MOTOR_NAME
@@ -430,7 +434,7 @@ local function handleAttackRequest(player: Player, sequenceValue: unknown, ...: 
 		CombatConfig.MaxDamage
 	)
 	local knockbackSpeed = math.clamp(
-		ProgressionService.GetHammerKnockback(player, CombatConfig.HorizontalKnockbackSpeed),
+		CombatConfig.HorizontalKnockbackSpeed,
 		0,
 		CombatConfig.MaxHorizontalKnockbackSpeed
 	)

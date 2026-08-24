@@ -1,7 +1,6 @@
 --!strict
 
 local Players = game:GetService("Players")
-local PhysicsService = game:GetService("PhysicsService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
@@ -11,11 +10,11 @@ local shared = ReplicatedStorage:WaitForChild("Shared")
 local MovementConfig = require(shared:WaitForChild("MovementConfig"))
 local CombatConfig = require(shared:WaitForChild("CombatConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
+local CollisionGroupService = require(script.Parent:WaitForChild("CollisionGroupService"))
 
 local ROBOT_CHASSIS_NAME = "RobotChassis"
 local LEGACY_FRONT_INDICATOR_NAME = "FrontIndicator"
 local ROBOT_VISUAL_ATTRIBUTE = "ScrapcorePlayableRobot"
-local HIDDEN_RIG_COLLISION_GROUP = "ScrapcoreHiddenRig"
 local ROBOT_TEMPLATE_NAME = "Robot_ChunkyIndustrial_B"
 local KNOCKBACK_UNTIL_ATTRIBUTE = "CombatKnockbackUntil"
 local TEMPORARY_TEAM_COLOR = Color3.fromRGB(0, 170, 255)
@@ -33,11 +32,7 @@ if not robotTemplateInstance:IsA("Model") then
 end
 local robotTemplate = robotTemplateInstance
 
-pcall(function()
-	PhysicsService:RegisterCollisionGroup(HIDDEN_RIG_COLLISION_GROUP)
-end)
-PhysicsService:CollisionGroupSetCollidable(HIDDEN_RIG_COLLISION_GROUP, "Default", false)
-PhysicsService:CollisionGroupSetCollidable(HIDDEN_RIG_COLLISION_GROUP, HIDDEN_RIG_COLLISION_GROUP, false)
+CollisionGroupService.Init()
 
 type PlayerState = {
 	character: Model?,
@@ -78,12 +73,12 @@ local function isFinite(value: number): boolean
 	return value == value and value > -math.huge and value < math.huge
 end
 
-local function getMobilityMultiplier(player: Player): number
-	local rankValue = player:GetAttribute("MobilityUpgradeLevel")
+local function getSpeedMultiplier(player: Player): number
+	local rankValue = player:GetAttribute("SpeedUpgradeLevel")
 	local rank = if typeof(rankValue) == "number" and isFinite(rankValue)
 		then math.clamp(math.floor(rankValue), 0, ProgressionConfig.MaxUpgradeRank)
 		else 0
-	return ProgressionConfig.GetMobilityMultiplier(rank)
+	return ProgressionConfig.GetSpeedMultiplier(rank)
 end
 
 local function hideDefaultCharacter(character: Model)
@@ -95,7 +90,7 @@ local function hideDefaultCharacter(character: Model)
 			descendant.CanQuery = false
 			descendant.CastShadow = false
 			descendant.Massless = true
-			descendant.CollisionGroup = HIDDEN_RIG_COLLISION_GROUP
+			CollisionGroupService.ApplyCharacterPart(descendant)
 		elseif descendant:IsA("Decal") then
 			descendant.Transparency = 1
 		end
@@ -198,7 +193,7 @@ local function createChassis(character: Model, humanoid: Humanoid, root: BasePar
 				descendant.CanTouch = false
 				descendant.CanQuery = true
 				descendant.Massless = true
-				descendant.CollisionGroup = "Default"
+				CollisionGroupService.ApplyCharacterPart(descendant)
 				descendant.CustomPhysicalProperties = PhysicalProperties.new(
 					MovementConfig.CollisionDensity,
 					MovementConfig.CollisionFriction,
@@ -211,13 +206,14 @@ local function createChassis(character: Model, humanoid: Humanoid, root: BasePar
 				descendant.CanTouch = false
 				descendant.CanQuery = false
 				descendant.Massless = true
-				descendant.CollisionGroup = HIDDEN_RIG_COLLISION_GROUP
+				CollisionGroupService.ApplyCharacterPart(descendant)
 			end
 			table.insert(chassisParts, descendant)
 		end
 	end
 
 	chassis.Parent = character
+	CollisionGroupService.ApplyCharacter(chassis)
 	for _, part in chassisParts do
 		local rootWeld = Instance.new("WeldConstraint")
 		rootWeld.Name = "GameplayRootWeld"
@@ -343,13 +339,13 @@ RunService.Heartbeat:Connect(function(deltaTime: number)
 		local underAuthorizedKnockback = typeof(knockbackUntil) == "number"
 			and isFinite(knockbackUntil)
 			and Workspace:GetServerTimeNow() <= knockbackUntil
-		local mobilityMultiplier = getMobilityMultiplier(player)
-		local legalMaxSpeed = MovementConfig.MaxSpeed * mobilityMultiplier
+		local speedMultiplier = getSpeedMultiplier(player)
+		local legalMaxSpeed = MovementConfig.MaxSpeed * speedMultiplier
 		local speedAllowance = if underAuthorizedKnockback then CombatConfig.MaxHorizontalKnockbackSpeed else 0
 		local accelerationAllowance = if underAuthorizedKnockback then CombatConfig.KnockbackAccelerationAllowance else 0
 		local teleported = distance > MovementConfig.ServerMaxTeleportDistance
 		local exceededSpeed = math.max(measuredSpeed, physicalSpeed) > legalMaxSpeed + MovementConfig.ServerSpeedTolerance + speedAllowance
-		local exceededAcceleration = measuredAcceleration > MovementConfig.ServerMaxAcceleration * mobilityMultiplier + accelerationAllowance
+		local exceededAcceleration = measuredAcceleration > MovementConfig.ServerMaxAcceleration * speedMultiplier + accelerationAllowance
 		local violatedMovementLimit = teleported or exceededSpeed or exceededAcceleration
 
 		if violatedMovementLimit then

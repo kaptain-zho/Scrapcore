@@ -105,9 +105,13 @@ Do not begin full production until the project can be opened, tested, published 
 - A rapid death reset that removes all temporary levels and combat upgrades before redeployment.
 - Simple two-player and four-player tests.
 
-**Provisional Milestone 3.1 arena target:** expand the graybox progression space from 120 x 120 to approximately 380 x 380 studs (about ten times the playable area). Preserve the existing object density with roughly 80 ScrapPiles in the outer region, 40 ReinforcedCrates in the middle region, and 20 PowerCores near the identifiable center. Treat these dimensions and counts as playtest tuning, not a final production-map commitment.
+**Provisional Milestone 3.1 arena target:** expand the graybox progression space from 120 x 120 to approximately 380 x 380 studs (about ten times the playable area). Preserve 140 runtime breakables: 80 ScrapPiles, 40 ReinforcedCrates, and 20 PowerCores. ScrapPiles are split into 60 broadly available Common piles, 16 medium-risk Rare piles, and 4 scarce interior Epic piles. Treat these dimensions, counts, rarity rewards, and placements as playtest tuning, not a final production-map commitment.
 
-Temporary stat upgrades use 30-rank resolution with one point granted at every run level, including Level 1. A Level 30 run therefore earns 30 total points to distribute freely across the five upgrade categories. Rank 30 preserves the former safe Rank 5 endpoint rather than increasing maximum combat power; this is a presentation and granularity change, not a progression-speed or balance-cap increase.
+Prototype ScrapPile tuning is Common at 25 health, 10 XP, and an 8-second respawn; Rare at 75 health, 30 XP, and a 15-second respawn; and Epic at 150 health, 60 XP, and a 30-second respawn. All damage, contribution accounting, XP distribution, and respawning remain server-owned.
+
+The desktop prototype keeps the smooth angled top-down camera as its default and permits limited right-mouse orbit plus mouse-wheel zoom. Movement remains camera-relative and mouse aiming remains world-correct after camera rotation. Player robots pass through one another and through breakables using server-configured collision groups, while arena floors, walls, and important world obstacles remain solid.
+
+Temporary stat upgrades use 30-rank resolution with one point granted at every run level, including Level 1. A Level 30 run therefore earns 30 total points to distribute freely across Speed, Attack Rate, Damage, Health, and Health Regen. Rank 30 reaches 31.2 maximum speed, a 0.630-second hammer cooldown, 35 hammer damage, 150 maximum health, or 3 health per second after five uninterrupted seconds without damage. Knockback remains fixed at its safe server-owned base value. These caps preserve the prior safe endpoints while Health Regen replaces upgradeable knockback; XP is never spent, and death resets all ranks with the rest of the run.
 
 Spinner movement and class implementation are paused until this progression loop is proven. Level 8 and Level 20 class choices remain planned evolution gates, not Phase 1 implementation scope.
 

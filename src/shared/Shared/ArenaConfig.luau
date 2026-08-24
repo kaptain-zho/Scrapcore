@@ -9,8 +9,10 @@ local SPAWN_POSITIONS = table.freeze({
 
 local BREAKABLE_ZONES = table.freeze({
 	table.freeze({ Name = "Center", BreakableType = "PowerCore", Count = 20, MinAxisDistance = 18, MaxAxisDistance = 55 }),
+	table.freeze({ Name = "InteriorEpic", BreakableType = "ScrapPileEpic", Count = 4, MinAxisDistance = 42, MaxAxisDistance = 72 }),
 	table.freeze({ Name = "Middle", BreakableType = "ReinforcedCrate", Count = 40, MinAxisDistance = 65, MaxAxisDistance = 115 }),
-	table.freeze({ Name = "Outer", BreakableType = "ScrapPile", Count = 80, MinAxisDistance = 125, MaxAxisDistance = 170 }),
+	table.freeze({ Name = "MiddleRare", BreakableType = "ScrapPileRare", Count = 16, MinAxisDistance = 85, MaxAxisDistance = 135 }),
+	table.freeze({ Name = "Outer", BreakableType = "ScrapPileCommon", Count = 60, MinAxisDistance = 125, MaxAxisDistance = 170 }),
 })
 
 local ArenaConfig = table.freeze({

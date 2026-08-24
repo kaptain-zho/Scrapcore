@@ -2,6 +2,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local player = Players.LocalPlayer
@@ -322,6 +323,9 @@ end
 
 local currentHumanoid: Humanoid? = nil
 local healthConnections: {RBXScriptConnection} = {}
+local displayedHealthRatio = 1
+local targetHealthRatio = 1
+local HEALTH_FILL_SHARPNESS = 14
 
 local function disconnectHealthConnections()
 	for _, connection in healthConnections do
@@ -330,23 +334,29 @@ local function disconnectHealthConnections()
 	table.clear(healthConnections)
 end
 
-local function updateHealthHUD()
+local function updateHealthHUD(snapFill: boolean?)
 	local humanoid = currentHumanoid
 	if humanoid == nil or humanoid.Parent == nil then
 		healthPanel.Visible = false
+		displayedHealthRatio = 0
+		targetHealthRatio = 0
 		return
 	end
 
 	local maxHealth = math.max(humanoid.MaxHealth, 1)
 	local currentHealth = math.clamp(humanoid.Health, 0, maxHealth)
 	local healthRatio = math.clamp(currentHealth / maxHealth, 0, 1)
+	targetHealthRatio = healthRatio
+	if snapFill == true then
+		displayedHealthRatio = healthRatio
+	end
 	healthPanel.Visible = true
 	healthLabel.Text = string.format(
 		"ROBOT HEALTH  %d/%d",
 		math.floor(currentHealth + 0.5),
 		math.floor(maxHealth + 0.5)
 	)
-	healthFill.Size = UDim2.fromScale(healthRatio, 1)
+	healthFill.Size = UDim2.fromScale(displayedHealthRatio, 1)
 	healthFill.BackgroundColor3 = if healthRatio <= 0.3
 		then Color3.fromRGB(240, 80, 70)
 		elseif healthRatio <= 0.6
@@ -375,8 +385,17 @@ local function bindCharacterHealth(character: Model)
 	table.insert(healthConnections, humanoidInstance:GetPropertyChangedSignal("MaxHealth"):Connect(function()
 		updateHealthHUD()
 	end))
-	updateHealthHUD()
+	updateHealthHUD(true)
 end
+
+RunService.PreRender:Connect(function(deltaTime: number)
+	if not healthPanel.Visible then
+		return
+	end
+	local alpha = 1 - math.exp(-HEALTH_FILL_SHARPNESS * deltaTime)
+	displayedHealthRatio += (targetHealthRatio - displayedHealthRatio) * alpha
+	healthFill.Size = UDim2.fromScale(math.clamp(displayedHealthRatio, 0, 1), 1)
+end)
 
 local watchedAttributes = {
 	"RunLevel",

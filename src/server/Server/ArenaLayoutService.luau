@@ -7,7 +7,16 @@ local Workspace = game:GetService("Workspace")
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local ArenaConfig = require(shared:WaitForChild("ArenaConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
-local breakableDefinitions = ProgressionConfig.Breakables :: {[string]: unknown}
+local CollisionGroupService = require(script.Parent:WaitForChild("CollisionGroupService"))
+
+type BreakableDefinition = {
+	TemplateName: string,
+	Rarity: string?,
+	BaseColor: Color3?,
+	AccentColor: Color3?,
+}
+
+local breakableDefinitions = ProgressionConfig.Breakables :: {[string]: BreakableDefinition}
 
 type ZoneDefinition = {
 	Name: string,
@@ -30,6 +39,8 @@ type Placement = {
 }
 
 local GENERATED_ATTRIBUTE = "ArenaGeneratedBreakable"
+local SCRAP_BASE_PART_NAME = "ScrapPlateA"
+local SCRAP_ACCENT_PART_NAME = "ScrapPlateB"
 local initialized = false
 local generatedCount = 0
 
@@ -43,9 +54,9 @@ local function getRequiredFolder(parent: Instance, name: string): Folder
 	return instance
 end
 
-local function validateTemplate(template: Model, breakableType: string)
-	if template:GetAttribute("BreakableType") ~= breakableType then
-		error(string.format("%s must have BreakableType %s", template:GetFullName(), breakableType))
+local function validateTemplate(template: Model, templateName: string)
+	if template:GetAttribute("BreakableType") ~= templateName then
+		error(string.format("%s must have BreakableType %s", template:GetFullName(), templateName))
 	end
 	if template.PrimaryPart == nil then
 		error(string.format("%s requires a PrimaryPart", template:GetFullName()))
@@ -63,6 +74,34 @@ local function validateTemplate(template: Model, breakableType: string)
 	if partCount == 0 then
 		error(string.format("%s requires at least one BasePart", template:GetFullName()))
 	end
+end
+
+local function getRequiredPart(model: Model, name: string): BasePart
+	local part = model:FindFirstChild(name, true)
+	if part == nil or not part:IsA("BasePart") then
+		error(string.format("%s requires BasePart %s", model:GetFullName(), name))
+	end
+	return part
+end
+
+local function configureBreakableIdentity(clone: Model, definition: BreakableDefinition)
+	local rarity = definition.Rarity
+	if rarity == nil then
+		return
+	end
+
+	local basePart = getRequiredPart(clone, SCRAP_BASE_PART_NAME)
+	local accentPart = getRequiredPart(clone, SCRAP_ACCENT_PART_NAME)
+	if definition.BaseColor ~= nil then
+		basePart.Color = definition.BaseColor
+	end
+	if definition.AccentColor ~= nil then
+		accentPart.Color = definition.AccentColor
+	end
+	basePart.Material = Enum.Material.Metal
+	accentPart.Material = Enum.Material.Metal
+	clone:SetAttribute("ScrapPileRarity", rarity)
+	clone:SetAttribute("BreakableRarity", rarity)
 end
 
 local function isClear(candidate: Vector2, placements: {Placement}, exclusions: {Exclusion}): boolean
@@ -163,6 +202,7 @@ function ArenaLayoutService.Init()
 		return
 	end
 	initialized = true
+	CollisionGroupService.Init()
 
 	local arena = Workspace:WaitForChild("GrayboxArena")
 	local floorInstance = arena:WaitForChild("Floor", 10)
@@ -185,27 +225,41 @@ function ArenaLayoutService.Init()
 	local templates: {[string]: Model} = {}
 	for _, zoneValue in ArenaConfig.BreakableZones do
 		local zone = zoneValue :: ZoneDefinition
-		if templates[zone.BreakableType] ~= nil then
+		local definition = breakableDefinitions[zone.BreakableType]
+		if definition == nil then
+			error(string.format("Arena zone %s uses unknown breakable type %s", zone.Name, zone.BreakableType))
+		end
+		local templateName = definition.TemplateName
+		if typeof(templateName) ~= "string" or templateName == "" then
+			error(string.format("Breakable type %s requires TemplateName", zone.BreakableType))
+		end
+		if templates[templateName] ~= nil then
 			continue
 		end
-		local templateInstance = templateFolder:WaitForChild(zone.BreakableType, 10)
+		local templateInstance = templateFolder:WaitForChild(templateName, 10)
 		if templateInstance == nil or not templateInstance:IsA("Model") then
-			error(string.format("%s.%s must be a Model", templateFolder:GetFullName(), zone.BreakableType))
+			error(string.format("%s.%s must be a Model", templateFolder:GetFullName(), templateName))
 		end
-		validateTemplate(templateInstance, zone.BreakableType)
-		templates[zone.BreakableType] = templateInstance
+		validateTemplate(templateInstance, templateName)
+		templates[templateName] = templateInstance
 	end
 
 	local placements = generatePlacements()
 	local floorTop = floor.Position.Y + floor.Size.Y * 0.5
 	local random = Random.new(ArenaConfig.GenerationSeed + 1)
 	for _, placement in placements do
-		local template = templates[placement.breakableType]
+		local definition = breakableDefinitions[placement.breakableType]
+		local template = templates[definition.TemplateName]
 		local clone = template:Clone()
-		clone.Name = string.format("%s_%03d", placement.breakableType, placement.index)
+		clone.Name = if definition.Rarity ~= nil
+			then string.format("ScrapPile_%s_%03d", definition.Rarity, placement.index)
+			else string.format("%s_%03d", placement.breakableType, placement.index)
 		clone:SetAttribute(GENERATED_ATTRIBUTE, true)
+		clone:SetAttribute("BreakableType", placement.breakableType)
 		clone:SetAttribute("ArenaZone", placement.zoneName)
 		clone:SetAttribute("ArenaGenerationIndex", placement.index)
+		configureBreakableIdentity(clone, definition)
+		CollisionGroupService.ApplyBreakable(clone)
 		local primaryPart = clone.PrimaryPart :: BasePart
 		local y = floorTop + primaryPart.Size.Y * 0.5
 		clone:PivotTo(

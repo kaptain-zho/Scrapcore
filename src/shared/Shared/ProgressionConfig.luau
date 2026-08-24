@@ -37,60 +37,86 @@ local XP_REQUIREMENTS = table.freeze({
 })
 
 local UPGRADE_ORDER = table.freeze({
-	"Power",
-	"Armor",
-	"Mobility",
-	"Recovery",
-	"Force",
+	"Speed",
+	"Attack Rate",
+	"Damage",
+	"Health",
+	"Health Regen",
 })
 
 local UPGRADES = table.freeze({
-	Power = table.freeze({
-		AttributeName = "PowerUpgradeLevel",
-		DisplayName = "Power",
+	Speed = table.freeze({
+		AttributeName = "SpeedUpgradeLevel",
+		DisplayName = "Speed",
+		Description = "Maximum movement speed",
+		PerPoint = 0.2 / MAX_UPGRADE_RANK,
+	}),
+	["Attack Rate"] = table.freeze({
+		AttributeName = "AttackRateUpgradeLevel",
+		DisplayName = "Attack Rate",
+		Description = "Hammer attack rate",
+		PerPoint = 0.3 / MAX_UPGRADE_RANK,
+	}),
+	Damage = table.freeze({
+		AttributeName = "DamageUpgradeLevel",
+		DisplayName = "Damage",
 		Description = "Hammer damage",
 		PerPoint = 0.4 / MAX_UPGRADE_RANK,
 	}),
-	Armor = table.freeze({
-		AttributeName = "ArmorUpgradeLevel",
-		DisplayName = "Armor",
+	Health = table.freeze({
+		AttributeName = "HealthUpgradeLevel",
+		DisplayName = "Health",
 		Description = "Maximum health",
 		PerPoint = 50 / MAX_UPGRADE_RANK,
 	}),
-	Mobility = table.freeze({
-		AttributeName = "MobilityUpgradeLevel",
-		DisplayName = "Mobility",
-		Description = "Movement speed",
-		PerPoint = 0.2 / MAX_UPGRADE_RANK,
-	}),
-	Recovery = table.freeze({
-		AttributeName = "RecoveryUpgradeLevel",
-		DisplayName = "Recovery",
-		Description = "Hammer recovery",
-		PerPoint = 0.3 / MAX_UPGRADE_RANK,
-	}),
-	Force = table.freeze({
-		AttributeName = "ForceUpgradeLevel",
-		DisplayName = "Force",
-		Description = "Hammer knockback",
-		PerPoint = 0.4 / MAX_UPGRADE_RANK,
+	["Health Regen"] = table.freeze({
+		AttributeName = "HealthRegenUpgradeLevel",
+		DisplayName = "Health Regen",
+		Description = "Health restored after avoiding damage",
+		PerPoint = 0.1,
 	}),
 })
 
 local BREAKABLES = table.freeze({
-	ScrapPile = table.freeze({
-		DisplayName = "SCRAP PILE",
+	ScrapPileCommon = table.freeze({
+		TemplateName = "ScrapPile",
+		Rarity = "Common",
+		DisplayName = "COMMON SCRAP",
 		MaxHealth = 25,
 		XPReward = 10,
 		RespawnDelay = 8,
+		BaseColor = Color3.fromRGB(64, 72, 80),
+		AccentColor = Color3.fromRGB(45, 180, 210),
+	}),
+	ScrapPileRare = table.freeze({
+		TemplateName = "ScrapPile",
+		Rarity = "Rare",
+		DisplayName = "RARE SCRAP",
+		MaxHealth = 75,
+		XPReward = 30,
+		RespawnDelay = 15,
+		BaseColor = Color3.fromRGB(64, 72, 80),
+		AccentColor = Color3.fromRGB(145, 85, 215),
+	}),
+	ScrapPileEpic = table.freeze({
+		TemplateName = "ScrapPile",
+		Rarity = "Epic",
+		DisplayName = "EPIC SCRAP",
+		MaxHealth = 150,
+		XPReward = 60,
+		RespawnDelay = 30,
+		BaseColor = Color3.fromRGB(64, 72, 80),
+		AccentColor = Color3.fromRGB(235, 150, 45),
 	}),
 	ReinforcedCrate = table.freeze({
+		TemplateName = "ReinforcedCrate",
 		DisplayName = "REINFORCED CRATE",
 		MaxHealth = 75,
 		XPReward = 30,
 		RespawnDelay = 15,
 	}),
 	PowerCore = table.freeze({
+		TemplateName = "PowerCore",
 		DisplayName = "POWER CORE",
 		MaxHealth = 150,
 		XPReward = 75,
@@ -115,24 +141,24 @@ local function getEarnedUpgradePoints(level: number): number
 	return safeLevel * UPGRADE_POINTS_PER_LEVEL
 end
 
-local function getPowerMultiplier(rank: number): number
-	return 1 + clampUpgradeRank(rank) * UPGRADES.Power.PerPoint
+local function getSpeedMultiplier(rank: number): number
+	return 1 + clampUpgradeRank(rank) * UPGRADES.Speed.PerPoint
 end
 
-local function getArmorBonus(rank: number): number
-	return clampUpgradeRank(rank) * UPGRADES.Armor.PerPoint
+local function getAttackRateMultiplier(rank: number): number
+	return math.max(0.7, 1 - clampUpgradeRank(rank) * UPGRADES["Attack Rate"].PerPoint)
 end
 
-local function getMobilityMultiplier(rank: number): number
-	return 1 + clampUpgradeRank(rank) * UPGRADES.Mobility.PerPoint
+local function getDamageMultiplier(rank: number): number
+	return 1 + clampUpgradeRank(rank) * UPGRADES.Damage.PerPoint
 end
 
-local function getRecoveryMultiplier(rank: number): number
-	return math.max(0.7, 1 - clampUpgradeRank(rank) * UPGRADES.Recovery.PerPoint)
+local function getHealthBonus(rank: number): number
+	return clampUpgradeRank(rank) * UPGRADES.Health.PerPoint
 end
 
-local function getForceMultiplier(rank: number): number
-	return 1 + clampUpgradeRank(rank) * UPGRADES.Force.PerPoint
+local function getHealthRegenPerSecond(rank: number): number
+	return clampUpgradeRank(rank) * UPGRADES["Health Regen"].PerPoint
 end
 
 local ProgressionConfig = table.freeze({
@@ -145,6 +171,9 @@ local ProgressionConfig = table.freeze({
 	PlayerEliminationXP = 60,
 	BaseMaxHealth = 100,
 	MaxUpgradedMaxHealth = 150,
+	HealthRegenDamageDelay = 5,
+	HealthRegenTickInterval = 0.1,
+	MaxHealthRegenPerSecond = 3,
 	UpgradeRequestWindow = 1,
 	MaxUpgradeRequestsPerWindow = 8,
 	MinimumUpgradeRequestInterval = 0.08,
@@ -156,11 +185,11 @@ local ProgressionConfig = table.freeze({
 	ClampUpgradeRank = clampUpgradeRank,
 	GetXPToNextLevel = getXPToNextLevel,
 	GetEarnedUpgradePoints = getEarnedUpgradePoints,
-	GetPowerMultiplier = getPowerMultiplier,
-	GetArmorBonus = getArmorBonus,
-	GetMobilityMultiplier = getMobilityMultiplier,
-	GetRecoveryMultiplier = getRecoveryMultiplier,
-	GetForceMultiplier = getForceMultiplier,
+	GetSpeedMultiplier = getSpeedMultiplier,
+	GetAttackRateMultiplier = getAttackRateMultiplier,
+	GetDamageMultiplier = getDamageMultiplier,
+	GetHealthBonus = getHealthBonus,
+	GetHealthRegenPerSecond = getHealthRegenPerSecond,
 })
 
 return ProgressionConfig
