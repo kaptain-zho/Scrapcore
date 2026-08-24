@@ -115,6 +115,8 @@ Temporary stat upgrades use 30-rank resolution with one point granted at every r
 
 The Level 8 framework, Striker, and Spinner are the current narrow class experiment. Spinner sustains its server-authoritative flywheel only while primary attack remains held; a validated hold lease safely ends the attack if release or focus state is lost. Rammer, all Level 20 specializations, alternate movement systems, and additional class weapons remain paused until both implemented choices survive multiplayer selection, combat-readability, authority, and death-reset playtesting.
 
+Studio-only developer tools are approved as testing infrastructure for rapidly exercising the existing per-life progression and class lifecycle. They are not player progression, balance content, or a production feature. Authorization and all mutations remain server-owned; the outside-Studio switch stays disabled and its server-only UserId allowlist stays empty by default. Tool-assisted results must still be followed by normal-path and multiplayer acceptance tests.
+
 Player-elimination XP is provisional. Assist rewards, repeated-victim farming penalties, and level-difference reward scaling require later multiplayer tuning and are not part of this prototype.
 
 ### Questions to answer

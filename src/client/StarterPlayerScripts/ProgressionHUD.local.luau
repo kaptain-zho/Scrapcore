@@ -21,6 +21,7 @@ type UpgradeDefinition = {
 }
 
 local upgradeDefinitions = ProgressionConfig.Upgrades :: {[string]: UpgradeDefinition}
+local DEV_UNLIMITED_ATTRIBUTE = "DevUnlimitedUpgradePoints"
 local playerGui = player:WaitForChild("PlayerGui")
 local oldGui = playerGui:FindFirstChild("ScrapcoreProgressionHUD")
 if oldGui ~= nil then
@@ -296,6 +297,7 @@ for order, category in ProgressionConfig.UpgradeOrder do
 	corner.Parent = button
 
 	button.Activated:Connect(function()
+		local unlimitedPoints = player:GetAttribute(DEV_UNLIMITED_ATTRIBUTE) == true
 		local points = getIntegerAttribute(
 			"UnspentUpgradePoints",
 			0,
@@ -306,7 +308,7 @@ for order, category in ProgressionConfig.UpgradeOrder do
 			0,
 			ProgressionConfig.MaxUpgradeRank
 		)
-		if points <= 0 or rank >= ProgressionConfig.MaxUpgradeRank then
+		if (not unlimitedPoints and points <= 0) or rank >= ProgressionConfig.MaxUpgradeRank then
 			return
 		end
 		local now = Workspace:GetServerTimeNow()
@@ -322,6 +324,7 @@ end
 local upgradeMenuOpen = false
 local pendingAutomaticUpgradeOpen = false
 local lastObservedPoints: number? = nil
+local lastObservedUnlimited = false
 
 local function getEvolutionPanel(): GuiObject?
 	local evolutionGui = playerGui:FindFirstChild("ClassEvolutionHUD")
@@ -349,27 +352,32 @@ local function updateHUD()
 		0,
 		ProgressionConfig.MaxUnspentUpgradePoints
 	)
+	local unlimitedPoints = player:GetAttribute(DEV_UNLIMITED_ATTRIBUTE) == true
 	local initiallyAvailable = lastObservedPoints == nil and points > 0
 	local gainedPoint = lastObservedPoints ~= nil and points > (lastObservedPoints :: number)
+	local gainedUnlimited = unlimitedPoints and not lastObservedUnlimited
 	local evolutionBlocking = isEvolutionBlocking()
-	if points <= 0 then
+	if points <= 0 and not unlimitedPoints then
 		upgradeMenuOpen = false
 		pendingAutomaticUpgradeOpen = false
 	elseif evolutionBlocking then
-		if upgradeMenuOpen or initiallyAvailable or gainedPoint then
+		if upgradeMenuOpen or initiallyAvailable or gainedPoint or gainedUnlimited then
 			pendingAutomaticUpgradeOpen = true
 		end
 		upgradeMenuOpen = false
 	elseif pendingAutomaticUpgradeOpen then
 		upgradeMenuOpen = true
 		pendingAutomaticUpgradeOpen = false
-	elseif initiallyAvailable or gainedPoint then
+	elseif initiallyAvailable or gainedPoint or gainedUnlimited then
 		upgradeMenuOpen = true
 	end
 	lastObservedPoints = points
+	lastObservedUnlimited = unlimitedPoints
 
 	levelLabel.Text = string.format("LEVEL %d", level)
-	pointsLabel.Text = string.format("%d %s", points, if points == 1 then "POINT" else "POINTS")
+	pointsLabel.Text = if unlimitedPoints
+		then "∞ POINTS"
+		else string.format("%d %s", points, if points == 1 then "POINT" else "POINTS")
 	if level >= ProgressionConfig.LevelCap or xpToNext <= 0 then
 		xpLabel.Text = "LEVEL CAP"
 		xpFill.Size = UDim2.fromScale(1, 1)
@@ -378,14 +386,15 @@ local function updateHUD()
 		xpFill.Size = UDim2.fromScale(math.clamp(xp / xpToNext, 0, 1), 1)
 	end
 
-	local showToggle = points > 0
+	local showToggle = points > 0 or unlimitedPoints
 	upgradeToggleButton.Visible = showToggle
 	title.Position = UDim2.fromOffset(if showToggle then 58 else 10, 5)
 	title.Size = UDim2.new(1, if showToggle then -68 else -20, 0, 18)
 	levelLabel.Position = UDim2.fromOffset(if showToggle then 58 else 10, 25)
 	levelLabel.Size = UDim2.new(0.5, if showToggle then -58 else -10, 0, 18)
 
-	local showUpgradeChoices = points > 0 and upgradeMenuOpen and not evolutionBlocking
+	local showUpgradeChoices = showToggle and upgradeMenuOpen and not evolutionBlocking
+	upgradeHeader.Text = if unlimitedPoints then "UNLIMITED POINTS" else "SPEND 1 POINT"
 	upgradeHeader.Visible = showUpgradeChoices
 	buttonContainer.Visible = showUpgradeChoices
 	panel.Size = UDim2.new(0.24, 0, 0, if showUpgradeChoices then 306 else 80)
@@ -412,7 +421,7 @@ local function toggleUpgradeMenu()
 		0,
 		ProgressionConfig.MaxUnspentUpgradePoints
 	)
-	if points <= 0 then
+	if points <= 0 and player:GetAttribute(DEV_UNLIMITED_ATTRIBUTE) ~= true then
 		return
 	end
 	if isEvolutionBlocking() then
@@ -561,6 +570,7 @@ local watchedAttributes = {
 	"RunClass",
 	"ClassEvolutionEligible",
 	"ClassEvolutionSelected",
+	DEV_UNLIMITED_ATTRIBUTE,
 }
 for _, category in ProgressionConfig.UpgradeOrder do
 	table.insert(watchedAttributes, upgradeDefinitions[category].AttributeName)

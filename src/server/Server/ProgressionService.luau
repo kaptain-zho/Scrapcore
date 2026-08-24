@@ -19,6 +19,8 @@ type UpgradeDefinition = {
 
 type PlayerRunState = {
 	runSerial: number,
+	unlimitedUpgradePoints: boolean,
+	writingUnlimitedAttribute: boolean,
 	requestWindowStartedAt: number,
 	requestsInWindow: number,
 	lastRequestAt: number,
@@ -28,6 +30,7 @@ type PlayerRunState = {
 	characterChildAddedConnection: RBXScriptConnection?,
 	diedConnection: RBXScriptConnection?,
 	healthChangedConnection: RBXScriptConnection?,
+	unlimitedAttributeConnection: RBXScriptConnection?,
 	humanoid: Humanoid?,
 	lastObservedHealth: number,
 	lastDamageAt: number,
@@ -37,6 +40,7 @@ local upgradeDefinitions = ProgressionConfig.Upgrades :: {[string]: UpgradeDefin
 local playerStates: {[Player]: PlayerRunState} = {}
 local initialized = false
 local upgradeRequestRemote: RemoteEvent? = nil
+local DEV_UNLIMITED_ATTRIBUTE = "DevUnlimitedUpgradePoints"
 
 local ProgressionService = {}
 
@@ -210,6 +214,8 @@ local function connectPlayer(player: Player)
 	local now = Workspace:GetServerTimeNow()
 	local state: PlayerRunState = {
 		runSerial = 0,
+		unlimitedUpgradePoints = false,
+		writingUnlimitedAttribute = false,
 		requestWindowStartedAt = now,
 		requestsInWindow = 0,
 		lastRequestAt = -math.huge,
@@ -219,6 +225,7 @@ local function connectPlayer(player: Player)
 		characterChildAddedConnection = nil,
 		diedConnection = nil,
 		healthChangedConnection = nil,
+		unlimitedAttributeConnection = nil,
 		humanoid = nil,
 		lastObservedHealth = 0,
 		lastDamageAt = now,
@@ -226,7 +233,17 @@ local function connectPlayer(player: Player)
 	playerStates[player] = state
 	player:SetAttribute("ProgressionAcceptedUpgradeCount", 0)
 	player:SetAttribute("ProgressionRejectedUpgradeCount", 0)
+	player:SetAttribute(DEV_UNLIMITED_ATTRIBUTE, false)
 	resetRun(player)
+
+	state.unlimitedAttributeConnection = player:GetAttributeChangedSignal(DEV_UNLIMITED_ATTRIBUTE):Connect(function()
+		if state.writingUnlimitedAttribute then
+			return
+		end
+		state.writingUnlimitedAttribute = true
+		player:SetAttribute(DEV_UNLIMITED_ATTRIBUTE, state.unlimitedUpgradePoints)
+		state.writingUnlimitedAttribute = false
+	end)
 
 	state.characterAddedConnection = player.CharacterAdded:Connect(function(character: Model)
 		bindCharacter(player, character)
@@ -253,6 +270,9 @@ local function disconnectPlayer(player: Player)
 	if state.healthChangedConnection ~= nil then
 		state.healthChangedConnection:Disconnect()
 	end
+	if state.unlimitedAttributeConnection ~= nil then
+		state.unlimitedAttributeConnection:Disconnect()
+	end
 	playerStates[player] = nil
 end
 
@@ -277,6 +297,53 @@ end
 function ProgressionService.GetHammerDamage(player: Player, baseDamage: number): number
 	local multiplier = ProgressionConfig.GetDamageMultiplier(ProgressionService.GetUpgradeRank(player, "Damage"))
 	return baseDamage * multiplier
+end
+
+function ProgressionService.IsUnlimitedUpgradePoints(player: Player): boolean
+	local state = playerStates[player]
+	return state ~= nil and state.unlimitedUpgradePoints
+end
+
+function ProgressionService.SetUnlimitedUpgradePoints(player: Player, enabled: boolean): boolean
+	local state = playerStates[player]
+	if state == nil then
+		return false
+	end
+	state.unlimitedUpgradePoints = enabled
+	state.writingUnlimitedAttribute = true
+	player:SetAttribute(DEV_UNLIMITED_ATTRIBUTE, enabled)
+	state.writingUnlimitedAttribute = false
+	return true
+end
+
+function ProgressionService.GetXPNeededToReachLevel(player: Player, targetLevel: number): number
+	if not isFinite(targetLevel) or targetLevel % 1 ~= 0 then
+		return 0
+	end
+	local level = getStrictIntegerAttribute(player, "RunLevel", 1, ProgressionConfig.LevelCap)
+	local xp = getStrictIntegerAttribute(player, "RunXP", 0, ProgressionConfig.MaxServerXPAward)
+	local safeTarget = math.clamp(targetLevel, 1, ProgressionConfig.LevelCap)
+	if level == nil or xp == nil or level >= safeTarget then
+		return 0
+	end
+
+	local needed = math.max(ProgressionConfig.GetXPToNextLevel(level) - xp, 0)
+	for intermediateLevel = level + 1, safeTarget - 1 do
+		needed += ProgressionConfig.GetXPToNextLevel(intermediateLevel)
+	end
+	return needed
+end
+
+function ProgressionService.HealToFull(player: Player): boolean
+	local state = playerStates[player]
+	local humanoid = getAliveHumanoid(player)
+	if state == nil or humanoid == nil then
+		return false
+	end
+	applyHealthToHumanoid(player, humanoid)
+	humanoid.Health = humanoid.MaxHealth
+	state.lastObservedHealth = humanoid.Health
+	return true
 end
 
 function ProgressionService.GetHammerCooldown(player: Player, baseCooldown: number): number
@@ -485,20 +552,31 @@ local function handleUpgradeRequest(
 
 	local earnedPoints = ProgressionConfig.GetEarnedUpgradePoints(level)
 	local rank = ranksByCategory[category]
+	local unlimitedUpgradePoints = state.unlimitedUpgradePoints
 	if
-		points <= 0
-		or rank >= ProgressionConfig.MaxUpgradeRank
+		rank >= ProgressionConfig.MaxUpgradeRank
 		or requestedRank ~= rank + 1
 		or requestedRank > ProgressionConfig.MaxUpgradeRank
-		or totalSpent >= earnedPoints
-		or points ~= earnedPoints - totalSpent
 		or not isDerivedUpgradeValueSafe(category, requestedRank)
 	then
 		rejectUpgradeRequest(player, state)
 		return
 	end
+	if
+		not unlimitedUpgradePoints
+		and (
+			points <= 0
+			or totalSpent >= earnedPoints
+			or points ~= earnedPoints - totalSpent
+		)
+	then
+		rejectUpgradeRequest(player, state)
+		return
+	end
 
-	player:SetAttribute("UnspentUpgradePoints", points - 1)
+	if not unlimitedUpgradePoints then
+		player:SetAttribute("UnspentUpgradePoints", points - 1)
+	end
 	player:SetAttribute(definition.AttributeName, requestedRank)
 	if category == "Health" then
 		local humanoid = getAliveHumanoid(player)
