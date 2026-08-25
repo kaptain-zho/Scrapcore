@@ -65,16 +65,23 @@ Mock profiles persist only for the life of the running Studio server. Stop and r
 
 The existing authorized developer request channel also accepts explicitly named Studio test actions for moving the current character to the Main Arena portal or extraction fixture, applying ten points of authoritative test damage, selecting the mock profile write mode, and reloading the mock profile from its adapter. Each action is rejected outside Studio and remains behind the unchanged developer authorization and request limiter. They are not shown to ordinary players and do not directly grant banked XP.
 
-For a future published private persistence test:
+## Live DataStore validation
 
-1. Use a separate private test place or private version of the linked experience.
-2. Keep Studio API access disabled.
-3. Set `EnableLiveDataStore = true` in a reviewed private-test build while leaving `AllowLiveDataStoreInStudio = false`.
-4. Extract a known amount, leave the private server, rejoin, and verify the exact banked value and extraction count.
-5. Exercise a repeated receipt/retry scenario and inspect server logs for bounded failure messages.
-6. Restore the live switch to `false` before returning to ordinary Studio development.
+On August 24, 2026, the committed profile architecture was validated against Roblox's live DataStore service in the existing private Scrapcore experience. The published test build used the isolated `ScrapcoreProfile_LiveTest_v1` namespace and `BankedProfileXP` scope. Studio continued to use the mock adapter, Studio API access remained disabled, and no future production namespace was read, written, migrated, deleted, or overwritten.
 
-Studio mock results prove gameplay flow and idempotency logic, not Roblox live persistence. Live DataStore persistence remains unproven until the published private-server validation is completed.
+The validation produced this evidence:
+
+- A newly loaded isolated profile began with 0 banked XP.
+- Extracting exactly 100 unbanked XP changed the bank from 0 to 100, and 100 survived a rejoin into a separate published server.
+- Extracting a second 50 XP changed the bank from 100 to 150, and a later rejoin loaded exactly 150 rather than duplicating either extraction.
+- Authoritative death with 100 unbanked XP left the bank at 150.
+- Disconnecting with another 100 unbanked XP also left the bank at 150 after rejoining.
+- Redeployment after extraction and rejoining began a canonical Level 1 run with zero unbanked run XP.
+- No DataStore throttling, load/save failure, uncertain-write, or duplicate-receipt warning was observed during the controlled live test.
+
+The Studio mock suite remains the evidence for deliberately simulated failed and uncertain writes, including receipt reconciliation. The live test did not manufacture Roblox networking failures.
+
+After validation, the private published build was restored to the reviewed safe configuration with `EnableLiveDataStore = false`; Studio still defaults to the mock adapter, and the isolated live-test data was retained for audit purposes. The persistence architecture is therefore **validated against Roblox's live service but not launched for production**. A future production launch requires a separate reviewed configuration change, an explicitly approved production namespace, operational monitoring, and rollout evidence; it must not reuse or migrate the isolated live-test namespace by assumption.
 
 ## Deferred work
 

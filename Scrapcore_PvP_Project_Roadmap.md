@@ -171,7 +171,7 @@ No shop, season pass, giant map, detailed garage, ranked mode, complicated craft
 - Basic bounty and live leaderboard.
 - Spawn protection and anti-camping measures.
 - First-pass account data for settings and a small number of permanent unlocks.
-- Schema-versioned, receipt-idempotent banked profile XP for future cosmetic-only unlocks, using a mock adapter by default until a private published DataStore test is approved.
+- Schema-versioned, receipt-idempotent banked profile XP for future cosmetic-only unlocks. The architecture passed an isolated private published DataStore validation on August 24, 2026; ordinary development and the restored private build still use the safe persistence-disabled configuration, so production persistence is validated but not launched.
 - Basic onboarding, settings, reporting, and accessibility controls.
 - Event logging for joins, deployments, fights, eliminations, deaths, upgrades, extractions, and exits.
 
@@ -453,9 +453,9 @@ We should test these instead of deciding them permanently now:
 
 ## 10. Immediate next decision
 
-Validate the arena extraction and banked-profile-XP experiment with two real clients before expanding permanent progression. The test must establish that the portal rules and countdown are readable, authoritative damage visibly resets the full ten seconds, leaving cancels cleanly, retrying works, and successful banking credits the exact unbanked total once before returning only that player to the lobby. The other player's run must remain unchanged, redeployment must start a fresh Level 1 run, and all consoles must remain clean.
+The extraction and profile-XP validation gate is complete. Two-client testing established readable portal and countdown behavior, authoritative damage resets, cancellation and retry behavior, exact one-time banking, isolated player sessions, safe lobby return, canonical redeployment, and clean consoles. A controlled private published test then proved exact live persistence across separate servers: 100 XP survived the first rejoin, a second 50 XP increased the bank to exactly 150, and later death and disconnect tests did not bank either unfinished 100-XP run.
 
-Live persistence still requires a published private-server DataStore validation; Studio's default mock adapter is not proof of live durability. The provisional Level 20 branches documented in `docs/CLASS_EVOLUTION_DESIGN.md` remain disabled future work. Level 300 progression, functional skins, live leaderboards, matchmaking, extra modes, death choices, paid revives, ads, spending systems, and monetization remain outside this validation gate.
+The test used an isolated live-test namespace, left production data untouched, and ended by restoring the published private build to `EnableLiveDataStore = false`. Production persistence is **validated but not launched**. Any production rollout still requires a separate explicit approval, reviewed namespace and configuration, monitoring, and rollback plan. The next bounded planning decision may address Level 300 progression, while the provisional Level 20 branches documented in `docs/CLASS_EVOLUTION_DESIGN.md`, functional skins, live leaderboards, matchmaking, extra modes, death choices, paid revives, ads, spending systems, and monetization remain separate future milestones.
 
 ---
 
