@@ -558,18 +558,29 @@ local function updateResponsiveLayout()
 		local progressLeft = progressPanel.AbsolutePosition.X
 		local progressBottom = progressPanel.AbsolutePosition.Y + progressPanel.AbsoluteSize.Y
 		local healthBottom = healthPanel.AbsolutePosition.Y + healthPanel.AbsoluteSize.Y
+		local extractionBottom = healthBottom
+		local extractionGui = playerGui:FindFirstChild("ScrapcoreExtractionHUD")
+		if extractionGui ~= nil and extractionGui:IsA("ScreenGui") then
+			local extractionSummary = extractionGui:FindFirstChild("ProfileXPSummary")
+			if extractionSummary ~= nil and extractionSummary:IsA("GuiObject") and extractionSummary.Visible then
+				extractionBottom = math.max(
+					extractionBottom,
+					extractionSummary.AbsolutePosition.Y + extractionSummary.AbsoluteSize.Y
+				)
+			end
+		end
 		local desiredPanelX = panel.AbsolutePosition.X
 		local desiredPanelY = panel.AbsolutePosition.Y
 		local desiredWidth = panel.AbsoluteSize.X
 		local desiredHeight = panel.AbsoluteSize.Y
 
 		if mode == "landscapeCompact" then
-			desiredPanelY = healthBottom + 12
+			desiredPanelY = extractionBottom + 12
 			desiredWidth = math.clamp(progressLeft - 24, 280, 380)
 			desiredPanelX = progressLeft - 12 - desiredWidth
 		elseif mode == "portraitCompact" then
 			desiredPanelX = 12
-			desiredPanelY = healthBottom + 12
+			desiredPanelY = extractionBottom + 12
 			desiredWidth = math.max(progressLeft - 12 - desiredPanelX, 136)
 			desiredHeight = math.clamp(viewport.Y - desiredPanelY - 12, 286, 306)
 		else

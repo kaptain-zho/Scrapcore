@@ -38,6 +38,11 @@ local LEVEL_ACTIONS = table.freeze({
 	ToLevel8 = 8,
 	ToLevel20 = 20,
 	ToLevel30 = 30,
+	ToLevel35 = 35,
+	ToLevel75 = 75,
+	ToLevel150 = 150,
+	ToLevel250 = 250,
+	ToLevel300 = 300,
 })
 
 local states: {[Player]: PlayerDevState} = {}
@@ -105,9 +110,9 @@ local function fireState(player: Player, authorized: boolean)
 	end
 	remote:FireClient(player, {
 		Authorized = true,
-		Level = getIntegerAttribute(player, "RunLevel", 1, ProgressionConfig.LevelCap),
-		XP = getIntegerAttribute(player, "RunXP", 0, ProgressionConfig.MaxServerXPAward),
-		XPToNext = getIntegerAttribute(player, "XPToNextLevel", 0, ProgressionConfig.MaxServerXPAward),
+		Level = getIntegerAttribute(player, "RunLevel", 1, ProgressionConfig.MaximumTrackedLevel),
+		XP = getIntegerAttribute(player, "RunXP", 0, ProgressionConfig.MaxRunXP),
+		XPToNext = getIntegerAttribute(player, "XPToNextLevel", 0, ProgressionConfig.MaxRunXP),
 		Points = getIntegerAttribute(
 			player,
 			"UnspentUpgradePoints",

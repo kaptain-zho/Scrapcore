@@ -10,6 +10,7 @@ local Workspace = game:GetService("Workspace")
 local player = Players.LocalPlayer
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local ClassConfig = require(shared:WaitForChild("ClassConfig"))
+local EvolutionConfig = require(shared:WaitForChild("EvolutionConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -374,9 +375,9 @@ local function isEvolutionBlocking(): boolean
 end
 
 local function updateHUD()
-	local level = getIntegerAttribute("RunLevel", 1, ProgressionConfig.LevelCap)
-	local xp = getIntegerAttribute("RunXP", 0, ProgressionConfig.MaxServerXPAward)
-	local xpToNext = getIntegerAttribute("XPToNextLevel", 0, ProgressionConfig.MaxServerXPAward)
+	local level = getIntegerAttribute("RunLevel", 1, ProgressionConfig.MaximumTrackedLevel)
+	local xp = getIntegerAttribute("RunXP", 0, ProgressionConfig.MaxRunXP)
+	local xpToNext = getIntegerAttribute("XPToNextLevel", 0, ProgressionConfig.MaxRunXP)
 	local points = getIntegerAttribute(
 		"UnspentUpgradePoints",
 		0,
@@ -423,12 +424,18 @@ local function updateHUD()
 	lastObservedPoints = points
 	lastObservedUnlimited = unlimitedPoints
 
-	levelLabel.Text = string.format("LEVEL %d", level)
+	local camera = Workspace.CurrentCamera
+	local compactViewport = camera ~= nil and camera.ViewportSize.X < 900
+	levelLabel.Text = if level >= ProgressionConfig.ScoreOnlyStartLevel
+		then string.format(if compactViewport then "LV %d • SCORE" else "LEVEL %d • SCORE", level)
+		else string.format(if compactViewport then "LV %d" else "LEVEL %d", level)
 	pointsLabel.Text = if unlimitedPoints
-		then "∞ POINTS"
-		else string.format("%d %s", points, if points == 1 then "POINT" else "POINTS")
-	if level >= ProgressionConfig.LevelCap or xpToNext <= 0 then
-		xpLabel.Text = "LEVEL CAP"
+		then if compactViewport then "∞ PTS" else "∞ POINTS"
+		else if compactViewport
+			then string.format("%d PTS", points)
+			else string.format("%d %s", points, if points == 1 then "POINT" else "POINTS")
+	if level >= ProgressionConfig.MaximumTrackedLevel or xpToNext <= 0 then
+		xpLabel.Text = "SCORE LIMIT"
 		xpFill.Size = UDim2.fromScale(1, 1)
 	else
 		xpLabel.Text = string.format("%d / %d XP", xp, xpToNext)
@@ -455,7 +462,8 @@ local function updateHUD()
 		evolutionStatusLabel.Text = "EVOLUTION READY"
 		evolutionStatusLabel.TextColor3 = Color3.fromRGB(255, 205, 70)
 	else
-		evolutionStatusLabel.Text = "Evolution at Level 8"
+		local nextGate = EvolutionConfig.GetNextGate(level)
+		evolutionStatusLabel.Text = string.format("Evolution at Level %d", nextGate or ClassConfig.Level8Threshold)
 		evolutionStatusLabel.TextColor3 = Color3.fromRGB(170, 185, 198)
 	end
 
@@ -463,8 +471,19 @@ local function updateHUD()
 	upgradeToggleButton.Visible = showToggle
 	title.Position = UDim2.fromOffset(if showToggle then 58 else 10, 5)
 	title.Size = UDim2.new(1, if showToggle then -68 else -20, 0, 18)
-	levelLabel.Position = UDim2.fromOffset(if showToggle then 58 else 10, 25)
-	levelLabel.Size = UDim2.new(0.5, if showToggle then -58 else -10, 0, 18)
+	if showToggle and compactViewport then
+		levelLabel.Position = UDim2.fromOffset(58, 25)
+		levelLabel.Size = UDim2.new(1, -128, 0, 18)
+		pointsLabel.AnchorPoint = Vector2.new(1, 0)
+		pointsLabel.Position = UDim2.new(1, -10, 0, 25)
+		pointsLabel.Size = UDim2.fromOffset(62, 18)
+	else
+		levelLabel.Position = UDim2.fromOffset(if showToggle then 58 else 10, 25)
+		levelLabel.Size = UDim2.new(0.5, if showToggle then -58 else -10, 0, 18)
+		pointsLabel.AnchorPoint = Vector2.zero
+		pointsLabel.Position = UDim2.new(0.5, 0, 0, 25)
+		pointsLabel.Size = UDim2.new(0.5, -10, 0, 18)
+	end
 
 	local collapsedHeight = if showClassControl then 114 else 96
 	local upgradeHeaderY = collapsedHeight + 4

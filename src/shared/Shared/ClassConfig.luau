@@ -1,5 +1,7 @@
 --!strict
 
+local EvolutionConfig = require(script.Parent:WaitForChild("EvolutionConfig"))
+
 export type CombatModifiers = {
 	DamageBonus: number,
 	MaxDamage: number,
@@ -113,8 +115,9 @@ local ClassConfig = table.freeze({
 	StrikerClassId = "Striker",
 	SpinnerClassId = "Spinner",
 	RammerClassId = "Rammer",
-	Level8Threshold = 8,
-	Level20Threshold = 20,
+	Level8Threshold = EvolutionConfig.Gates[1],
+	Level20Threshold = EvolutionConfig.Gates[2],
+	EvolutionGates = EvolutionConfig.Gates,
 	ClassAttribute = "RunClass",
 	EligibilityAttribute = "ClassEvolutionEligible",
 	SelectedAttribute = "ClassEvolutionSelected",

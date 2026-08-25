@@ -21,6 +21,11 @@ type UpgradeDefinition = {
 
 type PlayerRunState = {
 	runSerial: number,
+	destroyedRunHumanoid: Humanoid?,
+	destroyedRunSerial: number,
+	destroyedRunXP: number,
+	destroyedRunAt: number,
+	destroyedRunClaimed: boolean,
 	unlimitedUpgradePoints: boolean,
 	writingUnlimitedAttribute: boolean,
 	writingUnbankedAttribute: boolean,
@@ -131,10 +136,21 @@ local function rejectUpgradeRequest(player: Player, state: PlayerRunState)
 	player:SetAttribute("ProgressionRejectedUpgradeCount", state.rejectedRequests)
 end
 
-local function resetRun(player: Player)
+local function clearDestroyedRun(state: PlayerRunState)
+	state.destroyedRunHumanoid = nil
+	state.destroyedRunSerial = -1
+	state.destroyedRunXP = 0
+	state.destroyedRunAt = -math.huge
+	state.destroyedRunClaimed = false
+end
+
+local function resetRun(player: Player, preserveDestroyedRun: boolean?)
 	local state = playerStates[player]
 	if state == nil then
 		return
+	end
+	if preserveDestroyedRun ~= true then
+		clearDestroyedRun(state)
 	end
 	ProfileDataService.AbandonPendingReceipt(player, state.runSerial)
 	state.runSerial += 1
@@ -149,13 +165,15 @@ local function disableDefaultHealthRegeneration(instance: Instance)
 	end
 end
 
-local function bindCharacter(player: Player, character: Model)
+local function bindCharacter(player: Player, character: Model, resetForNewCharacter: boolean?)
 	local state = playerStates[player]
 	if state == nil then
 		return
 	end
 
-	resetRun(player)
+	if resetForNewCharacter ~= false then
+		resetRun(player)
+	end
 	local runSerial = state.runSerial
 	if state.diedConnection ~= nil then
 		state.diedConnection:Disconnect()
@@ -209,12 +227,17 @@ local function bindCharacter(player: Player, character: Model)
 		currentState.diedConnection = humanoid.Died:Connect(function()
 			local latestState = playerStates[player]
 			if latestState ~= nil and latestState.runSerial == runSerial then
+				latestState.destroyedRunHumanoid = humanoid
+				latestState.destroyedRunSerial = runSerial
+				latestState.destroyedRunXP = latestState.unbankedRunXP
+				latestState.destroyedRunAt = Workspace:GetServerTimeNow()
+				latestState.destroyedRunClaimed = humanoid:GetAttribute("ScrapcoreEliminationRewarded") == true
 				if latestState.healthChangedConnection ~= nil then
 					latestState.healthChangedConnection:Disconnect()
 					latestState.healthChangedConnection = nil
 				end
 				latestState.humanoid = nil
-				resetRun(player)
+				resetRun(player, true)
 			end
 		end)
 	end)
@@ -228,6 +251,11 @@ local function connectPlayer(player: Player)
 	local now = Workspace:GetServerTimeNow()
 	local state: PlayerRunState = {
 		runSerial = 0,
+		destroyedRunHumanoid = nil,
+		destroyedRunSerial = -1,
+		destroyedRunXP = 0,
+		destroyedRunAt = -math.huge,
+		destroyedRunClaimed = false,
 		unlimitedUpgradePoints = false,
 		writingUnlimitedAttribute = false,
 		writingUnbankedAttribute = false,
@@ -357,8 +385,8 @@ function ProgressionService.GetXPNeededToReachLevel(player: Player, targetLevel:
 	then
 		return 0
 	end
-	local level = getStrictIntegerAttribute(player, "RunLevel", 1, ProgressionConfig.LevelCap)
-	local xp = getStrictIntegerAttribute(player, "RunXP", 0, ProgressionConfig.MaxServerXPAward)
+	local level = getStrictIntegerAttribute(player, "RunLevel", 1, ProgressionConfig.MaximumTrackedLevel)
+	local xp = getStrictIntegerAttribute(player, "RunXP", 0, ProgressionConfig.MaxRunXP)
 	local safeTarget = math.clamp(targetLevel, 1, ProgressionConfig.LevelCap)
 	if level == nil or xp == nil or level >= safeTarget then
 		return 0
@@ -395,11 +423,9 @@ function ProgressionService.GetMovementSpeed(player: Player, baseSpeed: number):
 	return baseSpeed * multiplier
 end
 
-function ProgressionService.AwardXP(player: Player, amount: number): number
-	local state = playerStates[player]
+local function applyXPAward(player: Player, state: PlayerRunState, amount: number, maximumAward: number): number
 	if
-		state == nil
-		or not PlayerSessionService.IsArena(player)
+		not PlayerSessionService.IsArena(player)
 		or getAliveHumanoid(player) == nil
 		or not isFinite(amount)
 		or amount <= 0
@@ -410,10 +436,16 @@ function ProgressionService.AwardXP(player: Player, amount: number): number
 		return 0
 	end
 
-	local remaining = math.clamp(math.floor(amount), 0, ProgressionConfig.MaxServerXPAward)
+	local availableUnbankedXP = math.max(ExtractionConfig.MaximumUnbankedRunXP - state.unbankedRunXP, 0)
+	local remaining = math.clamp(
+		math.floor(amount),
+		0,
+		math.min(maximumAward, availableUnbankedXP)
+	)
 	local requestedAward = remaining
-	local level = getIntegerAttribute(player, "RunLevel", 1, ProgressionConfig.LevelCap)
-	local xp = getIntegerAttribute(player, "RunXP", 0, ProgressionConfig.MaxServerXPAward)
+	local level = getIntegerAttribute(player, "RunLevel", 1, ProgressionConfig.MaximumTrackedLevel)
+	local startingLevel = level
+	local xp = getIntegerAttribute(player, "RunXP", 0, ProgressionConfig.MaxRunXP)
 	local points = getIntegerAttribute(
 		player,
 		"UnspentUpgradePoints",
@@ -421,8 +453,11 @@ function ProgressionService.AwardXP(player: Player, amount: number): number
 		ProgressionConfig.MaxUnspentUpgradePoints
 	)
 
-	while remaining > 0 and level < ProgressionConfig.LevelCap do
+	while remaining > 0 and level < ProgressionConfig.MaximumTrackedLevel do
 		local needed = ProgressionConfig.GetXPToNextLevel(level)
+		if needed <= 0 then
+			break
+		end
 		local room = math.max(needed - xp, 0)
 		if remaining < room then
 			xp += remaining
@@ -431,18 +466,29 @@ function ProgressionService.AwardXP(player: Player, amount: number): number
 			remaining -= room
 			level += 1
 			xp = 0
-			points = math.clamp(
-				points + ProgressionConfig.UpgradePointsPerLevel,
-				0,
-				ProgressionConfig.MaxUnspentUpgradePoints
-			)
+
+			-- Score-only levels use one fixed requirement. Bulk advance them so a
+			-- large server-owned elimination transfer cannot create a long loop.
+			if level >= ProgressionConfig.PowerLevelCap and remaining >= ProgressionConfig.ScoreOnlyXPPerLevel then
+				local availableLevels = ProgressionConfig.MaximumTrackedLevel - level
+				local fullLevels = math.min(
+					math.floor(remaining / ProgressionConfig.ScoreOnlyXPPerLevel),
+					availableLevels
+				)
+				level += fullLevels
+				remaining -= fullLevels * ProgressionConfig.ScoreOnlyXPPerLevel
+			end
 		end
 	end
 
-	if level >= ProgressionConfig.LevelCap then
-		level = ProgressionConfig.LevelCap
+	if level >= ProgressionConfig.MaximumTrackedLevel then
+		level = ProgressionConfig.MaximumTrackedLevel
 		xp = 0
 	end
+
+	local newlyEarnedPoints = ProgressionConfig.GetEarnedUpgradePoints(level)
+		- ProgressionConfig.GetEarnedUpgradePoints(startingLevel)
+	points = math.clamp(points + newlyEarnedPoints, 0, ProgressionConfig.MaxUnspentUpgradePoints)
 
 	player:SetAttribute("RunLevel", level)
 	player:SetAttribute("RunXP", xp)
@@ -460,28 +506,96 @@ function ProgressionService.AwardXP(player: Player, amount: number): number
 	return appliedAward
 end
 
+function ProgressionService.AwardXP(player: Player, amount: number): number
+	local state = playerStates[player]
+	if state == nil then
+		return 0
+	end
+	return applyXPAward(player, state, amount, ProgressionConfig.MaxServerXPAward)
+end
+
 function ProgressionService.AwardElimination(
 	attacker: Player,
 	targetPlayer: Player?,
 	targetHumanoid: Humanoid
 ): boolean
+	if targetPlayer == nil then
+		return false
+	end
+	local attackerState = playerStates[attacker]
+	local targetState = playerStates[targetPlayer]
 	if
-		targetPlayer == nil
+		attackerState == nil
+		or targetState == nil
 		or targetPlayer == attacker
 		or not PlayerSessionService.IsArena(attacker)
 		or not PlayerSessionService.IsArena(targetPlayer)
+		or getAliveHumanoid(attacker) == nil
 		or targetHumanoid.Health > 0
 		or targetHumanoid:GetAttribute("ScrapcoreEliminationRewarded") == true
 	then
 		return false
 	end
 
-	targetHumanoid:SetAttribute("ScrapcoreEliminationRewarded", true)
-	return ProgressionService.AwardXP(attacker, ProgressionConfig.PlayerEliminationXP) > 0
+	local now = Workspace:GetServerTimeNow()
+	local transferXP: number? = nil
+	if targetState.humanoid == targetHumanoid then
+		transferXP = targetState.unbankedRunXP
+	elseif
+		targetState.destroyedRunHumanoid == targetHumanoid
+		and not targetState.destroyedRunClaimed
+		and now - targetState.destroyedRunAt <= 2
+	then
+		transferXP = targetState.destroyedRunXP
+	end
+	if transferXP == nil then
+		return false
+	end
+
+	local function markTransferClaimed()
+		targetHumanoid:SetAttribute("ScrapcoreEliminationRewarded", true)
+		if targetState.destroyedRunHumanoid == targetHumanoid then
+			targetState.destroyedRunClaimed = true
+		end
+	end
+	if transferXP <= 0 then
+		markTransferClaimed()
+		attacker:SetAttribute("LastEliminationTransferredXP", 0)
+		return true
+	end
+	if
+		ProfileDataService.HasPendingReceipt(attacker, attackerState.runSerial)
+		or transferXP > ExtractionConfig.MaximumUnbankedRunXP - attackerState.unbankedRunXP
+	then
+		return false
+	end
+
+	local applied = applyXPAward(
+		attacker,
+		attackerState,
+		transferXP,
+		ExtractionConfig.MaximumUnbankedRunXP
+	)
+	if applied ~= transferXP then
+		warn(string.format(
+			"Elimination XP transfer was safely blocked for %s: requested %d, applied %d",
+			attacker.Name,
+			transferXP,
+			applied
+		))
+		return false
+	end
+	markTransferClaimed()
+	attacker:SetAttribute("LastEliminationTransferredXP", applied)
+	return true
 end
 
 function ProgressionService.ResetRun(player: Player)
 	resetRun(player)
+	local character = player.Character
+	if character ~= nil then
+		bindCharacter(player, character, false)
+	end
 	local humanoid = getAliveHumanoid(player)
 	if humanoid ~= nil then
 		applyHealthToHumanoid(player, humanoid)
@@ -517,6 +631,47 @@ local function isDerivedUpgradeValueSafe(category: string, rank: number): boolea
 end
 
 local function validateUpgradeConfiguration()
+	if #ProgressionConfig.UpgradePointLevels ~= 80 then
+		error("ProgressionConfig must define exactly 80 upgrade-point grant levels")
+	end
+	local previousGrantLevel = 0
+	for _, grantLevel in ProgressionConfig.UpgradePointLevels do
+		if
+			typeof(grantLevel) ~= "number"
+			or not isFinite(grantLevel)
+			or grantLevel % 1 ~= 0
+			or grantLevel <= previousGrantLevel
+			or grantLevel < 1
+			or grantLevel > ProgressionConfig.PowerLevelCap
+		then
+			error("ProgressionConfig upgrade-point schedule is invalid")
+		end
+		previousGrantLevel = grantLevel
+	end
+	if
+		ProgressionConfig.GetEarnedUpgradePoints(1) ~= 1
+		or ProgressionConfig.GetEarnedUpgradePoints(8) ~= 8
+		or ProgressionConfig.GetEarnedUpgradePoints(30) ~= 30
+		or ProgressionConfig.GetEarnedUpgradePoints(300) ~= 80
+		or ProgressionConfig.GetEarnedUpgradePoints(301) ~= 80
+	then
+		error("ProgressionConfig upgrade-point schedule endpoints are invalid")
+	end
+	if ProgressionConfig.GetCumulativeXPToReachLevel(300) ~= 12_820 then
+		error("ProgressionConfig Level 300 XP target drifted from the reviewed baseline")
+	end
+	for level = 1, ProgressionConfig.PowerLevelCap do
+		local xpToNext = ProgressionConfig.GetXPToNextLevel(level)
+		if
+			not isFinite(xpToNext)
+			or xpToNext % 1 ~= 0
+			or xpToNext <= 0
+			or xpToNext > ProgressionConfig.MaxRunXP
+		then
+			error(string.format("ProgressionConfig Level %d XP requirement is invalid", level))
+		end
+	end
+
 	local previousFactor = -1
 	local previousGain = -1
 	for rank = 0, ProgressionConfig.MaxUpgradeRank do
@@ -597,7 +752,7 @@ local function handleUpgradeRequest(
 		return
 	end
 
-	local level = getStrictIntegerAttribute(player, "RunLevel", 1, ProgressionConfig.LevelCap)
+	local level = getStrictIntegerAttribute(player, "RunLevel", 1, ProgressionConfig.MaximumTrackedLevel)
 	local points = getStrictIntegerAttribute(
 		player,
 		"UnspentUpgradePoints",

@@ -20,9 +20,10 @@ Unauthorized clients receive no usable controls: the menu remains disabled, hidd
 ## Controls
 
 - **Add 10/50/100/500 XP** awards the exact amount through the canonical server XP path. Level gains, points, class eligibility, and caps therefore behave normally.
-- **To Level 8/20/30** calculates and awards only the XP still required to reach that threshold. It does not directly write level or XP attributes.
+- **To Level 8/20/30/35/75/150/250/300** calculates and awards only the XP still required to reach that threshold. It does not directly write level or XP attributes. The later actions exercise the reviewed upgrade-point schedule and evolution gates without enabling any unimplemented class.
 - **Unlimited Points** toggles a server-owned Studio-session testing exception. While enabled, the existing upgrade request path can raise each category to its normal rank-30 cap without spending points. The progression HUD shows `∞ POINTS`, and the E menu remains available. Ordinary server rank, category, shape, timing, and safety validation still applies.
 - **Reset Run** uses the canonical character reload lifecycle. It returns the player to Level 1, clears XP and upgrade ranks, resets the class, cancels attacks, and restores exactly one standard Scrap Runner hammer.
+- **Move to Arena Portal** is a Studio-only proximity-test setup. It moves the robot beside the real lobby portal; deployment still requires the normal prompt and all server proximity/session validation.
 - **Heal** reapplies the authoritative maximum-health calculation and restores current health to that maximum.
 
 Unlimited Points persists across death and respawn during the same authorized Studio player session. Turning it off performs the same clean canonical run reset so no free ranks, evolved class, or weapon state survives.

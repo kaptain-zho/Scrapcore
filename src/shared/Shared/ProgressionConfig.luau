@@ -1,11 +1,14 @@
 --!strict
 
-local LEVEL_CAP = 30
-local UPGRADE_POINTS_PER_LEVEL = 1
+local POWER_LEVEL_CAP = 300
+local MAXIMUM_TRACKED_LEVEL = 1_000_000
+local SCORE_ONLY_XP_PER_LEVEL = 50
 local MAX_UPGRADE_RANK = 30
 local CURVE_STRENGTH = 1.5
 
-local XP_REQUIREMENTS = table.freeze({
+-- Preserve the validated Level 8 pacing. Requirements from Level 8 onward use
+-- the bounded curve below so active Level 300 runs remain a 20–45 minute goal.
+local EARLY_XP_REQUIREMENTS = table.freeze({
 	40,
 	55,
 	70,
@@ -13,28 +16,18 @@ local XP_REQUIREMENTS = table.freeze({
 	115,
 	145,
 	180,
-	220,
-	265,
-	315,
-	370,
-	430,
-	495,
-	565,
-	640,
-	720,
-	805,
-	895,
-	990,
-	1090,
-	1195,
-	1305,
-	1420,
-	1540,
-	1665,
-	1795,
-	1930,
-	2070,
-	2215,
+})
+
+-- Levels 1–30 preserve the accepted prototype schedule. The remaining 50
+-- grants are deliberately explicit so later pacing changes remain reviewable.
+local UPGRADE_POINT_LEVELS = table.freeze({
+	1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+	11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+	21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+	35, 40, 45, 50, 55, 60, 65, 70, 75,
+	80, 86, 91, 97, 102, 108, 113, 118, 124, 129, 134, 140, 145, 150,
+	156, 161, 167, 172, 178, 183, 189, 194, 200, 206, 211, 217, 222, 228, 233, 239, 244, 250,
+	256, 262, 268, 274, 280, 286, 292, 296, 300,
 })
 
 local UPGRADE_ORDER = table.freeze({
@@ -153,17 +146,55 @@ local function getUpgradeValue(rank: number, rankZeroValue: number, rankThirtyVa
 	return rankZeroValue + (rankThirtyValue - rankZeroValue) * factor
 end
 
+local function clampTrackedLevel(level: number): number
+	if not isFinite(level) then
+		return 1
+	end
+	return math.clamp(math.floor(level), 1, MAXIMUM_TRACKED_LEVEL)
+end
+
 local function getXPToNextLevel(level: number): number
-	local safeLevel = math.clamp(math.floor(level), 1, LEVEL_CAP)
-	if safeLevel >= LEVEL_CAP then
+	local safeLevel = clampTrackedLevel(level)
+	if safeLevel >= MAXIMUM_TRACKED_LEVEL then
 		return 0
 	end
-	return XP_REQUIREMENTS[safeLevel]
+	if safeLevel <= #EARLY_XP_REQUIREMENTS then
+		return EARLY_XP_REQUIREMENTS[safeLevel]
+	end
+	if safeLevel >= POWER_LEVEL_CAP then
+		return SCORE_ONLY_XP_PER_LEVEL
+	end
+
+	local curveStartLevel = #EARLY_XP_REQUIREMENTS + 1
+	local curveEndLevel = POWER_LEVEL_CAP - 1
+	local normalizedLevel = (safeLevel - curveStartLevel) / (curveEndLevel - curveStartLevel)
+	local requirement = 35 + 15 * normalizedLevel ^ 1.3
+	return math.floor(requirement + 0.5)
+end
+
+local function getCumulativeXPToReachLevel(level: number): number
+	local safeLevel = clampTrackedLevel(level)
+	local cappedTarget = math.min(safeLevel, POWER_LEVEL_CAP)
+	local total = 0
+	for currentLevel = 1, cappedTarget - 1 do
+		total += getXPToNextLevel(currentLevel)
+	end
+	if safeLevel > POWER_LEVEL_CAP then
+		total += (safeLevel - POWER_LEVEL_CAP) * SCORE_ONLY_XP_PER_LEVEL
+	end
+	return total
 end
 
 local function getEarnedUpgradePoints(level: number): number
-	local safeLevel = math.clamp(math.floor(level), 1, LEVEL_CAP)
-	return safeLevel * UPGRADE_POINTS_PER_LEVEL
+	local safeLevel = math.min(clampTrackedLevel(level), POWER_LEVEL_CAP)
+	local points = 0
+	for _, grantLevel in UPGRADE_POINT_LEVELS do
+		if grantLevel > safeLevel then
+			break
+		end
+		points += 1
+	end
+	return points
 end
 
 local function getSpeedMultiplier(rank: number): number
@@ -187,14 +218,19 @@ local function getHealthRegenPerSecond(rank: number): number
 end
 
 local ProgressionConfig = table.freeze({
-	LevelCap = LEVEL_CAP,
-	UpgradePointsPerLevel = UPGRADE_POINTS_PER_LEVEL,
-	StartingUpgradePoints = UPGRADE_POINTS_PER_LEVEL,
+	-- LevelCap remains the power-progression boundary for compatibility. RunLevel
+	-- continues through MaximumTrackedLevel, but levels above 300 grant score only.
+	LevelCap = POWER_LEVEL_CAP,
+	PowerLevelCap = POWER_LEVEL_CAP,
+	MaximumTrackedLevel = MAXIMUM_TRACKED_LEVEL,
+	ScoreOnlyStartLevel = POWER_LEVEL_CAP + 1,
+	ScoreOnlyXPPerLevel = SCORE_ONLY_XP_PER_LEVEL,
+	StartingUpgradePoints = 1,
 	MaxUpgradeRank = MAX_UPGRADE_RANK,
 	CurveStrength = CURVE_STRENGTH,
-	MaxUnspentUpgradePoints = LEVEL_CAP * UPGRADE_POINTS_PER_LEVEL,
-	MaxServerXPAward = 10000,
-	PlayerEliminationXP = 60,
+	MaxUnspentUpgradePoints = #UPGRADE_POINT_LEVELS,
+	MaxServerXPAward = 10_000,
+	MaxRunXP = 180,
 	BaseMaxHealth = 100,
 	MaxUpgradedMaxHealth = 150,
 	HealthRegenDamageDelay = 5,
@@ -204,7 +240,8 @@ local ProgressionConfig = table.freeze({
 	MaxUpgradeRequestsPerWindow = 8,
 	MinimumUpgradeRequestInterval = 0.08,
 	MaxBreakableDamagePerHit = 100,
-	XPRequirements = XP_REQUIREMENTS,
+	EarlyXPRequirements = EARLY_XP_REQUIREMENTS,
+	UpgradePointLevels = UPGRADE_POINT_LEVELS,
 	UpgradeOrder = UPGRADE_ORDER,
 	Upgrades = UPGRADES,
 	Breakables = BREAKABLES,
@@ -212,6 +249,7 @@ local ProgressionConfig = table.freeze({
 	GetUpgradeFactor = getUpgradeFactor,
 	GetUpgradeValue = getUpgradeValue,
 	GetXPToNextLevel = getXPToNextLevel,
+	GetCumulativeXPToReachLevel = getCumulativeXPToReachLevel,
 	GetEarnedUpgradePoints = getEarnedUpgradePoints,
 	GetSpeedMultiplier = getSpeedMultiplier,
 	GetAttackRateMultiplier = getAttackRateMultiplier,

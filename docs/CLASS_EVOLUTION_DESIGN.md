@@ -7,7 +7,7 @@
 
 Class evolution gives a temporary run a mutually exclusive playstyle decision without turning XP into a currency. Every life begins as **Scrap Runner**. Reaching Level 8 unlocks one Level 8 choice; choosing it does not spend XP, consume upgrade points, or reset existing stat upgrades. Death clears the chosen path along with the rest of the run and the next deployment begins as Scrap Runner again.
 
-Level 20 branches are provisional design targets only. They are not implemented by the current milestone, and their names, silhouettes, mechanics, and balance must survive original-design review and playtesting before production work begins.
+Level 20 branches are provisional design targets only. They are not implemented by the current milestone, and their names, silhouettes, mechanics, and balance must survive original-design review and playtesting before production work begins. The Level 300 progression foundation reserves later gates without inventing their robots prematurely.
 
 ## Provisional tree
 
@@ -23,6 +23,17 @@ Level 1: Scrap Runner
    ├─ Level 20: Ironclad
    └─ Level 20: Liftjack
 ```
+
+## Long-run gate foundation
+
+The ordered evolution gates are Levels **8, 20, 35, 75, 150, 250, and 300**. `EvolutionConfig` records the gates and the existing Scrap Runner → Level 8 → provisional Level 20 routes.
+
+- Level 8 is implemented and server-selectable.
+- Level 20 route names and parent relationships are defined, but selection and gameplay remain disabled.
+- Levels 35, 75, 150, 250, and 300 are reserved route-data gates only. They have no class names, silhouettes, weapons, statistics, or UI choices yet.
+- Level 300 is the final gate that may grant power. Levels above 300 continue only as run score.
+
+Later design work must extend the selected parent route rather than offering unrelated global choices, but the number of children and the shape of those later branches remain undecided. Defining a gate is not authorization to build its robot.
 
 ## Class briefs
 

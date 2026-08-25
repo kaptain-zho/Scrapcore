@@ -20,9 +20,15 @@ local ACTIONS = {
 	{ "To Level 8", "ToLevel8" },
 	{ "To Level 20", "ToLevel20" },
 	{ "To Level 30", "ToLevel30" },
+	{ "To Level 35", "ToLevel35" },
+	{ "To Level 75", "ToLevel75" },
+	{ "To Level 150", "ToLevel150" },
+	{ "To Level 250", "ToLevel250" },
+	{ "To Level 300", "ToLevel300" },
 	{ "Unlimited Points", "ToggleUnlimitedPoints" },
 	{ "Reset Run", "ResetRun" },
 	{ "Return to Lobby", "ReturnToLobby" },
+	{ "Move to Arena Portal", "StudioTestMoveToMainPortal" },
 	{ "Heal to Full", "HealToFull" },
 }
 
@@ -45,7 +51,7 @@ local panel = Instance.new("Frame")
 panel.Name = "Panel"
 panel.AnchorPoint = Vector2.new(0, 0.5)
 panel.Position = UDim2.new(0, 18, 0.5, 0)
-panel.Size = UDim2.fromOffset(380, 470)
+panel.Size = UDim2.fromOffset(380, 620)
 panel.BackgroundColor3 = Color3.fromRGB(16, 18, 24)
 panel.BackgroundTransparency = 0.06
 panel.BorderSizePixel = 0
@@ -53,8 +59,8 @@ panel.Visible = false
 panel.Parent = screenGui
 
 local sizeConstraint = Instance.new("UISizeConstraint")
-sizeConstraint.MinSize = Vector2.new(320, 435)
-sizeConstraint.MaxSize = Vector2.new(400, 490)
+sizeConstraint.MinSize = Vector2.new(320, 500)
+sizeConstraint.MaxSize = Vector2.new(400, 640)
 sizeConstraint.Parent = panel
 
 local corner = Instance.new("UICorner")

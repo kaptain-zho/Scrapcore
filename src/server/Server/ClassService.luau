@@ -6,6 +6,7 @@ local Workspace = game:GetService("Workspace")
 
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local ClassConfig = require(shared:WaitForChild("ClassConfig"))
+local EvolutionConfig = require(shared:WaitForChild("EvolutionConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
@@ -92,7 +93,7 @@ local function getStrictRunLevel(player: Player): number?
 		or not isFinite(value)
 		or value % 1 ~= 0
 		or value < 1
-		or value > ProgressionConfig.LevelCap
+		or value > ProgressionConfig.MaximumTrackedLevel
 	then
 		return nil
 	end
@@ -760,6 +761,52 @@ local function handleClassRequest(player: Player, classValue: unknown, ...: unkn
 	task.spawn(applyCurrentVisuals, player)
 end
 
+local function validateEvolutionConfiguration()
+	local expectedGates = { 8, 20, 35, 75, 150, 250, 300 }
+	if #EvolutionConfig.Gates ~= #expectedGates then
+		error("EvolutionConfig must define the seven reviewed evolution gates")
+	end
+	for index, expectedGate in expectedGates do
+		if EvolutionConfig.Gates[index] ~= expectedGate then
+			error("EvolutionConfig gate order drifted from the reviewed progression foundation")
+		end
+	end
+
+	local rootNode = EvolutionConfig.RouteNodes[ClassConfig.BaseClassId]
+	if rootNode == nil or rootNode.Level ~= 1 or #rootNode.Children ~= #ClassConfig.Level8Order then
+		error("EvolutionConfig Scrap Runner route is invalid")
+	end
+	for index, classId in ClassConfig.Level8Order do
+		local definition = classDefinitions[classId]
+		local node = EvolutionConfig.RouteNodes[classId]
+		if
+			rootNode.Children[index] ~= classId
+			or definition == nil
+			or definition.Tier ~= ClassConfig.Level8Threshold
+			or not definition.Enabled
+			or node == nil
+			or node.Level ~= ClassConfig.Level8Threshold
+			or node.ParentId ~= ClassConfig.BaseClassId
+		then
+			error(string.format("EvolutionConfig Level 8 route %s is invalid", classId))
+		end
+		for _, childId in node.Children do
+			local childDefinition = classDefinitions[childId]
+			local childNode = EvolutionConfig.RouteNodes[childId]
+			if
+				childDefinition == nil
+				or childDefinition.Enabled
+				or childDefinition.Tier ~= ClassConfig.Level20Threshold
+				or childNode == nil
+				or childNode.Level ~= ClassConfig.Level20Threshold
+				or childNode.ParentId ~= classId
+			then
+				error(string.format("EvolutionConfig Level 20 route %s is invalid", childId))
+			end
+		end
+	end
+end
+
 local function bindCharacter(player: Player, character: Model)
 	local state = playerStates[player]
 	if state == nil then
@@ -875,6 +922,7 @@ function ClassService.Init()
 		return
 	end
 	initialized = true
+	validateEvolutionConfiguration()
 	PlayerSessionService.Init()
 	ProgressionService.Init()
 	CollisionGroupService.Init()

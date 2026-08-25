@@ -2,7 +2,7 @@
 
 ## Purpose and boundaries
 
-This milestone tests one safe answer to arena banking without making permanent progression a source of combat power. A run still starts at Level 1 with zero XP, one unspent upgrade point, zero upgrade ranks, and `ScrapRunner`. XP earned from breakables and player eliminations is temporary until the player completes a physical extraction.
+This milestone tests one safe answer to arena banking without making permanent progression a source of combat power. A run still starts at Level 1 with zero XP, one unspent upgrade point, zero upgrade ranks, and `ScrapRunner`. XP earned from breakables and the exact unbanked-XP transfer from a valid player elimination is temporary until the player completes a physical extraction.
 
 Two XP values now have deliberately different meanings:
 
@@ -85,4 +85,4 @@ After validation, the private published build was restored to the reviewed safe 
 
 ## Deferred work
 
-This milestone deliberately defers Level 300 progression, the Level 20 evolution graph, additional modes, functional skins, a profile-XP store, monetization, Robux revival, production analytics, and multi-place migration. Any future use of banked XP must remain cosmetic-only and pass a separate design and security review.
+The Level 300 run-progression foundation is documented separately in `docs/LEVEL300_PROGRESSION_FOUNDATION.md`; it does not change the cosmetic-only purpose of banked profile XP. Level 20 robot implementation, later evolution robots, additional modes, functional skins, a profile-XP store, monetization, Robux revival, production analytics, and multi-place migration remain deferred. Any future use of banked XP must remain cosmetic-only and pass a separate design and security review.
