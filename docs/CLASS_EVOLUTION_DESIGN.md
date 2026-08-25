@@ -7,9 +7,9 @@
 
 Class evolution gives a temporary run a mutually exclusive playstyle decision without turning XP into a currency. Every life begins as **Scrap Runner**. Reaching Level 8 unlocks one Level 8 choice; choosing it does not spend XP, consume upgrade points, or reset existing stat upgrades. Death clears the chosen path along with the rest of the run and the next deployment begins as Scrap Runner again.
 
-Level 20 branches are provisional design targets only. They are not implemented by the current milestone, and their names, silhouettes, mechanics, and balance must survive original-design review and playtesting before production work begins. The Level 300 progression foundation reserves later gates without inventing their robots prematurely.
+The checked-in Level 20 branches remain disabled configuration placeholders. The approved structural direction instead uses three unrestricted Level 20 families and moves the six concepts below to Level 35. No Level 20 gameplay is implemented, and every name, silhouette, mechanic, and balance choice still requires its scoped implementation and playtest gate.
 
-## Provisional tree
+## Current configured placeholder tree — disabled
 
 ```text
 Level 1: Scrap Runner
@@ -29,11 +29,18 @@ Level 1: Scrap Runner
 The ordered evolution gates are Levels **8, 20, 35, 75, 150, 250, and 300**. `EvolutionConfig` records the gates and the existing Scrap Runner → Level 8 → provisional Level 20 routes.
 
 - Level 8 is implemented and server-selectable.
-- Level 20 route names and parent relationships are defined, but selection and gameplay remain disabled.
+- The current Luau configuration still contains the disabled placeholder Level 20 names and parent relationships shown above.
+- The approved design direction uses Impact Foundry, Motion Works, and Field Rig at Level 20, accessible from every Level 8 class. It is documentation-only and not yet configured.
 - Levels 35, 75, 150, 250, and 300 are reserved route-data gates only. They have no class names, silhouettes, weapons, statistics, or UI choices yet.
 - Level 300 is the final gate that may grant power. Levels above 300 continue only as run score.
 
-Later design work must extend the selected parent route rather than offering unrelated global choices, but the number of children and the shape of those later branches remain undecided. Defining a gate is not authorization to build its robot.
+After the Level 20 family commitment, later design work must extend the selected parent route rather than offering unrelated global choices. The current configured placeholder still links each Level 8 class to specific provisional Level 20 concepts; the master proposal below deliberately leaves the Level 20 family choice unrestricted. Defining a gate or a design proposal is not authorization to build its robot.
+
+## Approved master-graph direction
+
+`docs/EVOLUTION_TREE_MASTER_PLAN.md` contains the approved 37-node directed graph. It keeps the current Level 8 classes intact, makes Level 20 an unrestricted three-family commitment, and moves the six provisional concepts below to Level 35 so they can serve as focused or shared descendants. Level 20 replaces the Level 8 combat kit rather than stacking abilities, while restrained visual ancestry cues may remain. The approved graph does not change the checked-in `EvolutionConfig` or `ClassConfig`; the configured tree in this document remains the current disabled placeholder until a separate implementation milestone.
+
+Initial ranged mechanics use server-authoritative raycasts with client-only cosmetic projectile visuals. Control effects cannot hard-stun, remove input, or disrupt the camera and require short bounds plus immunity or diminishing returns. Defensive mechanics remain damageable and cannot create long invulnerability, unlimited reflection, or unavoidable retaliation. The 37-node graph is the planning ceiling. Impact Foundry is the first internal prototype, but ordinary players cannot access Level 20 until all three families are implemented and validated.
 
 ## Class briefs
 
@@ -85,54 +92,54 @@ A minimum valid impact begins at 15 damage. A legitimate full-charge impact reac
 
 Rammer applies a provisional `3.00` server-owned damage multiplier only to active breakables, still bounded by the shared per-hit breakable safety cap. Destroying a breakable shortens that charge's recovery to `0.35` seconds from release; non-destroying breakable impacts and all player impacts retain the normal rank-derived cooldown. This makes Rammer a high-impact scrap crusher that benefits from matching partial charge to the target while preserving its one-target limit and accepted PvP behavior.
 
-### Pilebreaker — future work
+### Pilebreaker — proposed Level 35 future work
 
-- **Combat role:** Single-impact armor breaker and Level 20 Striker specialization.
+- **Combat role:** Single-impact armor breaker descending from Impact Foundry.
 - **Main weapon concept:** A vertical industrial pile-driver that stores force for one compact strike.
 - **Strengths:** Exceptional payoff against slow or cornered targets.
 - **Weaknesses:** Obvious preparation, narrow contact zone, and the longest punish window in its branch.
 - **Intended silhouette:** Tall reinforced nose tower with one central downward-driving tool and heavy front bracing.
 - **Counterplay:** Move laterally during its preparation and punish the tool's reset cycle.
 
-### Twin Maul — future work
+### Twin Maul — proposed Level 35 future work
 
-- **Combat role:** Sustained close-range bruiser and Level 20 Striker specialization.
+- **Combat role:** Sustained close-range Impact Foundry/Motion Works hybrid.
 - **Main weapon concept:** Two compact offset mauls that alternate instead of landing one oversized blow.
 - **Strengths:** Repeated pressure and better coverage during a close engagement.
 - **Weaknesses:** Lower single-hit threat, wider commitment footprint, and difficulty disengaging safely.
 - **Intended silhouette:** Broad reinforced shoulders with visibly staggered left and right hammer mechanisms.
 - **Counterplay:** Create distance, attack through the timing gap, and avoid remaining between both swing lanes.
 
-### Stormring — future work
+### Stormring — proposed Level 35 future work
 
-- **Combat role:** Perimeter-control specialist and Level 20 Spinner specialization.
+- **Combat role:** Perimeter-control Motion Works/Field Rig hybrid.
 - **Main weapon concept:** A segmented guard ring that delivers intermittent powered impact arcs.
 - **Strengths:** Strong multi-directional denial and protection while holding contested space.
 - **Weaknesses:** Telegraphs its powered arcs and gives up focused pursuit pressure.
 - **Intended silhouette:** Wide circular guard broken by three distinctive powered segments around a compact central robot.
 - **Counterplay:** Read the powered segment, enter through an inactive gap, or force it away from the space it wants to hold.
 
-### Ripsaw — future work
+### Ripsaw — proposed Level 35 future work
 
-- **Combat role:** Focused pursuit specialist and Level 20 Spinner specialization.
+- **Combat role:** Focused pursuit specialist descending from Motion Works.
 - **Main weapon concept:** A low forward industrial cutter that must maintain alignment to build pressure.
 - **Strengths:** Threatens retreating or pinned targets with sustained frontal contact.
 - **Weaknesses:** Narrow threat direction, poor side coverage, and dependence on uninterrupted pursuit.
 - **Intended silhouette:** Compact triangular nose framing one low exposed cutting assembly, with the original chassis still recognizable behind it.
 - **Counterplay:** Break line, change direction sharply, and attack from the sides while it tries to realign.
 
-### Ironclad — future work
+### Ironclad — proposed Level 35 future work
 
-- **Combat role:** Defensive line breaker and Level 20 Rammer specialization.
+- **Combat role:** Defensive Impact Foundry/Field Rig hybrid.
 - **Main weapon concept:** A broad energy-absorbing plow that trades peak speed for reliable frontal control.
 - **Strengths:** Stable frontal engagements and strong resistance to displacement while committed.
 - **Weaknesses:** Wide turning radius, limited rear defense, and weak chase pressure.
 - **Intended silhouette:** Broad armored prow, low roof, and clearly exposed rear machinery.
 - **Counterplay:** Refuse the frontal contest, rotate around the wide chassis, and attack its exposed recovery path.
 
-### Liftjack — future work
+### Liftjack — proposed Level 35 future work
 
-- **Combat role:** Positional-control specialist and Level 20 Rammer specialization.
+- **Combat role:** Positional-control specialist descending from Field Rig.
 - **Main weapon concept:** Short front lifting forks powered by a visible central jack mechanism.
 - **Strengths:** Reorients opponents and creates wall or teammate follow-up opportunities.
 - **Weaknesses:** Low direct damage, precise alignment requirement, and limited threat when isolated.
