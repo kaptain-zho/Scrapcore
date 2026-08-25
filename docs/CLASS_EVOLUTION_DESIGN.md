@@ -7,38 +7,32 @@
 
 Class evolution gives a temporary run a mutually exclusive playstyle decision without turning XP into a currency. Every life begins as **Scrap Runner**. Reaching Level 8 unlocks one Level 8 choice; choosing it does not spend XP, consume upgrade points, or reset existing stat upgrades. Death clears the chosen path along with the rest of the run and the next deployment begins as Scrap Runner again.
 
-The checked-in Level 20 branches remain disabled configuration placeholders. The approved structural direction instead uses three unrestricted Level 20 families and moves the six concepts below to Level 35. No Level 20 gameplay is implemented, and every name, silhouette, mechanic, and balance choice still requires its scoped implementation and playtest gate.
+The checked-in route graph uses three unrestricted Level 20 families and places the six concepts below at Level 35. Impact Foundry is the first internal Level 20 prototype, but ordinary players cannot select any Level 20 route. Motion Works, Field Rig, and every Level 35-or-later node remain configuration and design data only.
 
-## Current configured placeholder tree — disabled
+## Current configured route foundation
 
 ```text
 Level 1: Scrap Runner
-├─ Level 8: Striker
-│  ├─ Level 20: Pilebreaker
-│  └─ Level 20: Twin Maul
-├─ Level 8: Spinner
-│  ├─ Level 20: Stormring
-│  └─ Level 20: Ripsaw
-└─ Level 8: Rammer
-   ├─ Level 20: Ironclad
-   └─ Level 20: Liftjack
+└─ Level 8: Striker, Spinner, or Rammer
+   └─ Level 20: Impact Foundry, Motion Works, or Field Rig
+      └─ Level 35 and later: approved 37-node graph data
 ```
 
 ## Long-run gate foundation
 
-The ordered evolution gates are Levels **8, 20, 35, 75, 150, 250, and 300**. `EvolutionConfig` records the gates and the existing Scrap Runner → Level 8 → provisional Level 20 routes.
+The ordered evolution gates are Levels **8, 20, 35, 75, 150, 250, and 300**. `EvolutionConfig` records every approved node and legal edge in the 37-node graph.
 
 - Level 8 is implemented and server-selectable.
-- The current Luau configuration still contains the disabled placeholder Level 20 names and parent relationships shown above.
-- The approved design direction uses Impact Foundry, Motion Works, and Field Rig at Level 20, accessible from every Level 8 class. It is documentation-only and not yet configured.
-- Levels 35, 75, 150, 250, and 300 are reserved route-data gates only. They have no class names, silhouettes, weapons, statistics, or UI choices yet.
+- Impact Foundry, Motion Works, and Field Rig are configured at Level 20 and are reachable from every Level 8 class.
+- Impact Foundry is Studio-testable through a server-authorized developer action. It is not publicly selectable.
+- Motion Works, Field Rig, and Levels 35, 75, 150, 250, and 300 remain unavailable route data with no enabled gameplay choice.
 - Level 300 is the final gate that may grant power. Levels above 300 continue only as run score.
 
-After the Level 20 family commitment, later design work must extend the selected parent route rather than offering unrelated global choices. The current configured placeholder still links each Level 8 class to specific provisional Level 20 concepts; the master proposal below deliberately leaves the Level 20 family choice unrestricted. Defining a gate or a design proposal is not authorization to build its robot.
+After the Level 20 family commitment, later design work must extend the selected parent route rather than offering unrelated global choices. Level 20 deliberately leaves the family choice unrestricted across Striker, Spinner, and Rammer. Defining a legal graph edge is not authorization to enable its robot.
 
 ## Approved master-graph direction
 
-`docs/EVOLUTION_TREE_MASTER_PLAN.md` contains the approved 37-node directed graph. It keeps the current Level 8 classes intact, makes Level 20 an unrestricted three-family commitment, and moves the six provisional concepts below to Level 35 so they can serve as focused or shared descendants. Level 20 replaces the Level 8 combat kit rather than stacking abilities, while restrained visual ancestry cues may remain. The approved graph does not change the checked-in `EvolutionConfig` or `ClassConfig`; the configured tree in this document remains the current disabled placeholder until a separate implementation milestone.
+`docs/EVOLUTION_TREE_MASTER_PLAN.md` contains the approved 37-node directed graph. The matching configuration keeps the current Level 8 classes intact, makes Level 20 an unrestricted three-family commitment, and places the six provisional concepts below at Level 35 so they can serve as focused or shared descendants. A Level 20 route replaces the complete Level 8 combat kit rather than stacking abilities, while restrained visual ancestry cues may remain.
 
 Initial ranged mechanics use server-authoritative raycasts with client-only cosmetic projectile visuals. Control effects cannot hard-stun, remove input, or disrupt the camera and require short bounds plus immunity or diminishing returns. Defensive mechanics remain damageable and cannot create long invulnerability, unlimited reflection, or unavoidable retaliation. The 37-node graph is the planning ceiling. Impact Foundry is the first internal prototype, but ordinary players cannot access Level 20 until all three families are implemented and validated.
 
@@ -91,6 +85,18 @@ Prototype Rammer tuning is provisional. Minimum valid hold is 0.20 seconds. Full
 A minimum valid impact begins at 15 damage. A legitimate full-charge impact reaches 35 damage at Damage Rank 0 or 45 at Rank 30 and up to 26 knockback. Partial impact strength depends on server-measured hold duration and server-observed forward closing speed, both clamped to legal bounds. Only one player or active breakable can be hit per charge. The client sends start, bounded hold keepalive, release, or cancellation intent only; the server owns charge time, facing, dash authorization, spatial query, line of sight, damage, knockback, reward contribution, cooldown, and cancellation. Hold LMB and release to charge; RMB remains camera orbit.
 
 Rammer applies a provisional `3.00` server-owned damage multiplier only to active breakables, still bounded by the shared per-hit breakable safety cap. Destroying a breakable shortens that charge's recovery to `0.35` seconds from release; non-destroying breakable impacts and all player impacts retain the normal rank-derived cooldown. This makes Rammer a high-impact scrap crusher that benefits from matching partial charge to the target while preserving its one-target limit and accepted PvP behavior.
+
+### Impact Foundry — internal Level 20 prototype
+
+- **Combat role:** Telegraph-heavy close-range impact family that commits its front to one forge strike.
+- **Main weapon concept:** A broad impulse block retracts during a server-timed windup and drives one heavy striking face forward automatically at the impact frame.
+- **Strengths:** Heavy burst, strong shove, clear frontal commitment, and bounded resistance to frontal displacement while winding up.
+- **Weaknesses:** Reduced movement and turning during windup, no manual hold or cancel, a punishable miss, normal damage vulnerability, and no resistance against side or rear displacement.
+- **Intended silhouette:** A low broad striking face, central impulse housing, asymmetric industrial braces, exposed rear, and restrained teal identification light. It completely replaces the Level 8 weapon and class visual kit.
+- **Counterplay:** Leave the frontal query before impact, move behind cover, attack off-axis, displace it from the side or rear, or punish recovery. Frontal resistance never anchors the robot, blocks vertical motion, reduces damage, or grants immunity.
+- **Availability:** Studio prototype only. A server-authorized developer action requires a valid Level 8 selection and Level 20 eligibility. Ordinary players cannot select it.
+
+Provisional Rank 0 to Rank 30 tuning is 0.55 to 0.42 seconds of windup, 1.50 to 1.20 seconds between accepted attacks, and 38 to 50 player damage. A strike applies 25 horizontal knockback, affects at most two targets, uses a 5.8 × 3.2 × 4.6-stud server query with range and line-of-sight checks, and applies a `1.75` multiplier only to active breakables. During windup, legal movement speed is 0.65 and steering response is 0.60 of the upgraded baseline. Only incoming knockback from the protected front arc is multiplied by 0.45. These values are provisional and do not alter any Level 8 class tuning.
 
 ### Pilebreaker — proposed Level 35 future work
 

@@ -15,6 +15,7 @@ local ProfileDataService = require(script.Parent:WaitForChild("ProfileDataServic
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
 local RammerCombatService = require(script.Parent:WaitForChild("RammerCombatService"))
 local SpinnerCombatService = require(script.Parent:WaitForChild("SpinnerCombatService"))
+local ImpactFoundryCombatService = require(script.Parent:WaitForChild("ImpactFoundryCombatService"))
 
 type AttemptState = {
 	phase: string,
@@ -352,6 +353,7 @@ local function completeAttempt(player: Player, state: AttemptState, serial: numb
 	fireStatus(player, state, "Banked", amount)
 	SpinnerCombatService.CancelForPlayer(player)
 	RammerCombatService.CancelForPlayer(player)
+	ImpactFoundryCombatService.CancelForPlayer(player)
 	PlayerSessionService.ReturnToLobby(player)
 end
 
@@ -522,6 +524,7 @@ function ExtractionService.Init()
 	ProgressionService.Init()
 	SpinnerCombatService.Init()
 	RammerCombatService.Init()
+	ImpactFoundryCombatService.Init()
 	statusRemote = getOrCreateRemote()
 	zonePrompt = buildExtractionZone()
 	local activeZonePrompt = zonePrompt :: ProximityPrompt

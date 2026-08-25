@@ -8,6 +8,7 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui") :: PlayerGui
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local ClassConfig = require(shared:WaitForChild("ClassConfig"))
+local HUDLayoutConfig = require(shared:WaitForChild("HUDLayoutConfig"))
 local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local classRequestRemote = remotes:WaitForChild("ClassEvolutionRequest") :: RemoteEvent
@@ -316,9 +317,20 @@ local function hasSelectedClass(): boolean
 end
 
 local function isEligible(): boolean
-	return player:GetAttribute(SessionConfig.SessionAttribute) == SessionConfig.ArenaState
-		and player:GetAttribute(ClassConfig.EligibilityAttribute) == true
-		and not hasSelectedClass()
+	if player:GetAttribute(SessionConfig.SessionAttribute) ~= SessionConfig.ArenaState or hasSelectedClass() then
+		return false
+	end
+	local character = player.Character
+	local humanoid = if character ~= nil then character:FindFirstChildOfClass("Humanoid") else nil
+	if humanoid == nil or humanoid.Health <= 0 then
+		return false
+	end
+	local levelValue = player:GetAttribute("RunLevel")
+	local hasServerLevel = typeof(levelValue) == "number"
+		and levelValue == levelValue
+		and levelValue % 1 == 0
+		and levelValue >= ClassConfig.Level8Threshold
+	return player:GetAttribute(ClassConfig.EligibilityAttribute) == true or hasServerLevel
 end
 
 local function refreshVisibility()
@@ -420,15 +432,17 @@ local function updateResponsiveLayout()
 	local mode = "desktop"
 	if viewport.X < viewport.Y then
 		mode = "portraitCompact"
-	elseif viewport.Y < 700 then
+	elseif viewport.X < HUDLayoutConfig.DesktopMinimumWidth or viewport.Y < 700 then
 		mode = "landscapeCompact"
 	end
 
 	panelScale.Scale = 1
 	if mode == "landscapeCompact" then
 		local compactWidth = math.clamp(viewport.X - 472, 300, 380)
-		panel.AnchorPoint = Vector2.new(0.5, 0)
-		panel.Position = UDim2.new(0.5, 0, 0, 12)
+		local compactX = viewport.X - HUDLayoutConfig.Margin - compactWidth
+		local compactY = 170
+		panel.AnchorPoint = Vector2.zero
+		panel.Position = UDim2.fromOffset(compactX, compactY)
 		panel.Size = UDim2.fromOffset(compactWidth, 156)
 		header.Text = "LEVEL 8 EVOLUTION"
 		header.Position = UDim2.fromOffset(12, 5)
@@ -444,8 +458,8 @@ local function updateResponsiveLayout()
 		cards.Size = UDim2.new(1, -20, 1, -68)
 		cardLayout.FillDirection = Enum.FillDirection.Horizontal
 		cardLayout.Padding = UDim.new(0, 6)
-		evolveButton.AnchorPoint = Vector2.new(0.5, 0)
-		evolveButton.Position = UDim2.new(0.5, 0, 0, 12)
+		evolveButton.AnchorPoint = Vector2.zero
+		evolveButton.Position = UDim2.fromOffset(compactX, compactY)
 		evolveButton.Size = UDim2.fromOffset(112, 44)
 		confirmTitle.Position = UDim2.fromOffset(18, 8)
 		confirmTitle.Size = UDim2.new(1, -36, 0, 24)
@@ -463,7 +477,7 @@ local function updateResponsiveLayout()
 	elseif mode == "portraitCompact" then
 		local compactWidth = math.clamp(viewport.X - 246, 140, 180)
 		panel.AnchorPoint = Vector2.zero
-		panel.Position = UDim2.fromOffset(12, 12)
+		panel.Position = UDim2.fromOffset(HUDLayoutConfig.Margin, HUDLayoutConfig.PortraitEvolutionTop)
 		panel.Size = UDim2.fromOffset(compactWidth, 306)
 		header.Text = "EVOLUTION"
 		header.Position = UDim2.fromOffset(10, 8)
@@ -480,7 +494,7 @@ local function updateResponsiveLayout()
 		cardLayout.FillDirection = Enum.FillDirection.Vertical
 		cardLayout.Padding = UDim.new(0, 4)
 		evolveButton.AnchorPoint = Vector2.zero
-		evolveButton.Position = UDim2.fromOffset(12, 12)
+		evolveButton.Position = UDim2.fromOffset(HUDLayoutConfig.Margin, HUDLayoutConfig.PortraitEvolutionTop)
 		evolveButton.Size = UDim2.fromOffset(compactWidth, 44)
 		confirmTitle.Position = UDim2.fromOffset(12, 38)
 		confirmTitle.Size = UDim2.new(1, -24, 0, 28)
@@ -496,9 +510,17 @@ local function updateResponsiveLayout()
 		confirmButton.Position = UDim2.new(0.5, 3, 1, -54)
 		confirmButton.Size = UDim2.new(0.5, -13, 0, 42)
 	else
-		local panelCenterY = math.clamp(330 + PANEL_HEIGHT * 0.5, PANEL_HEIGHT * 0.5 + 12, viewport.Y - PANEL_HEIGHT * 0.5 - 12)
-		panel.AnchorPoint = Vector2.new(1, 0.5)
-		panel.Position = UDim2.new(1, -12, 0, panelCenterY)
+		local panelX = math.max(
+			HUDLayoutConfig.Margin,
+			viewport.X - HUDLayoutConfig.DesktopPlayerListReserveWidth - HUDLayoutConfig.Margin - PANEL_WIDTH
+		)
+		local panelY = math.clamp(
+			(viewport.Y - PANEL_HEIGHT) * 0.5,
+			HUDLayoutConfig.UpperRailTop,
+			math.max(HUDLayoutConfig.UpperRailTop, viewport.Y - PANEL_HEIGHT - HUDLayoutConfig.Margin)
+		)
+		panel.AnchorPoint = Vector2.zero
+		panel.Position = UDim2.fromOffset(panelX, panelY)
 		panel.Size = UDim2.fromOffset(PANEL_WIDTH, PANEL_HEIGHT)
 		header.Text = "LEVEL 8 EVOLUTION"
 		header.Position = UDim2.fromOffset(16, 12)
@@ -514,8 +536,8 @@ local function updateResponsiveLayout()
 		cards.Size = UDim2.new(1, -24, 1, -88)
 		cardLayout.FillDirection = Enum.FillDirection.Vertical
 		cardLayout.Padding = UDim.new(0, 7)
-		evolveButton.AnchorPoint = Vector2.new(1, 0)
-		evolveButton.Position = UDim2.new(1, -12, 0, 330)
+		evolveButton.AnchorPoint = Vector2.zero
+		evolveButton.Position = UDim2.fromOffset(panelX + PANEL_WIDTH - 98, panelY)
 		evolveButton.Size = UDim2.fromOffset(98, 44)
 		confirmTitle.Position = UDim2.fromOffset(24, 56)
 		confirmTitle.Size = UDim2.new(1, -48, 0, 30)
@@ -536,73 +558,6 @@ local function updateResponsiveLayout()
 	configureCard(spinnerCard, mode)
 	configureCard(rammerCard, mode)
 
-	task.defer(function()
-		if panel.Parent == nil or Workspace.CurrentCamera ~= camera then
-			return
-		end
-		local progressionGui = playerGui:FindFirstChild("ScrapcoreProgressionHUD")
-		if progressionGui == nil or not progressionGui:IsA("ScreenGui") then
-			return
-		end
-		local progressPanel = progressionGui:FindFirstChild("Panel")
-		local healthPanel = progressionGui:FindFirstChild("PlayerHealth")
-		if
-			progressPanel == nil
-			or not progressPanel:IsA("GuiObject")
-			or healthPanel == nil
-			or not healthPanel:IsA("GuiObject")
-		then
-			return
-		end
-
-		local progressLeft = progressPanel.AbsolutePosition.X
-		local progressBottom = progressPanel.AbsolutePosition.Y + progressPanel.AbsoluteSize.Y
-		local healthBottom = healthPanel.AbsolutePosition.Y + healthPanel.AbsoluteSize.Y
-		local extractionBottom = healthBottom
-		local extractionGui = playerGui:FindFirstChild("ScrapcoreExtractionHUD")
-		if extractionGui ~= nil and extractionGui:IsA("ScreenGui") then
-			local extractionSummary = extractionGui:FindFirstChild("ProfileXPSummary")
-			if extractionSummary ~= nil and extractionSummary:IsA("GuiObject") and extractionSummary.Visible then
-				extractionBottom = math.max(
-					extractionBottom,
-					extractionSummary.AbsolutePosition.Y + extractionSummary.AbsoluteSize.Y
-				)
-			end
-		end
-		local desiredPanelX = panel.AbsolutePosition.X
-		local desiredPanelY = panel.AbsolutePosition.Y
-		local desiredWidth = panel.AbsoluteSize.X
-		local desiredHeight = panel.AbsoluteSize.Y
-
-		if mode == "landscapeCompact" then
-			desiredPanelY = extractionBottom + 12
-			desiredWidth = math.clamp(progressLeft - 24, 280, 380)
-			desiredPanelX = progressLeft - 12 - desiredWidth
-		elseif mode == "portraitCompact" then
-			desiredPanelX = 12
-			desiredPanelY = extractionBottom + 12
-			desiredWidth = math.max(progressLeft - 12 - desiredPanelX, 136)
-			desiredHeight = math.clamp(viewport.Y - desiredPanelY - 12, 286, 306)
-		else
-			desiredPanelY = progressBottom + 12
-		end
-
-		panel.Size = UDim2.fromOffset(desiredWidth, desiredHeight)
-		panel.Position += UDim2.fromOffset(
-			desiredPanelX - panel.AbsolutePosition.X,
-			desiredPanelY - panel.AbsolutePosition.Y
-		)
-
-		local desiredEvolveX = if mode == "landscapeCompact"
-			then desiredPanelX + (desiredWidth - evolveButton.AbsoluteSize.X) * 0.5
-			elseif mode == "portraitCompact" then desiredPanelX
-			else desiredPanelX + desiredWidth - evolveButton.AbsoluteSize.X
-		local desiredEvolveY = desiredPanelY
-		evolveButton.Position += UDim2.fromOffset(
-			desiredEvolveX - evolveButton.AbsolutePosition.X,
-			desiredEvolveY - evolveButton.AbsolutePosition.Y
-		)
-	end)
 end
 
 closeButton.Activated:Connect(function()
@@ -694,7 +649,11 @@ player:GetAttributeChangedSignal(ClassConfig.ClassAttribute):Connect(function()
 	refreshVisibility()
 end)
 player:GetAttributeChangedSignal(ClassConfig.EligibilityAttribute):Connect(refreshVisibility)
+player:GetAttributeChangedSignal("RunLevel"):Connect(refreshVisibility)
 player:GetAttributeChangedSignal(SessionConfig.SessionAttribute):Connect(refreshVisibility)
+player.CharacterAdded:Connect(function()
+	task.defer(refreshVisibility)
+end)
 
 local viewportConnection: RBXScriptConnection? = nil
 local function connectCurrentCamera()

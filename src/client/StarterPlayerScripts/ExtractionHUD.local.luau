@@ -9,6 +9,7 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local ExtractionConfig = require(shared:WaitForChild("ExtractionConfig"))
+local HUDLayoutConfig = require(shared:WaitForChild("HUDLayoutConfig"))
 local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local statusRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("ExtractionStatus") :: RemoteEvent
 
@@ -116,8 +117,8 @@ end
 local function updateSummary()
 	local isArena = player:GetAttribute(SessionConfig.SessionAttribute) == SessionConfig.ArenaState
 	local camera = Workspace.CurrentCamera
-	local narrowViewport = camera ~= nil and camera.ViewportSize.X < 1000
-	local portraitViewport = camera ~= nil and camera.ViewportSize.X < 500 and camera.ViewportSize.Y > camera.ViewportSize.X
+	local viewport = if camera ~= nil then camera.ViewportSize else Vector2.new(1280, 720)
+	local mode = HUDLayoutConfig.GetMode(viewport)
 	local profileLoaded = player:GetAttribute(ExtractionConfig.ProfileLoadedAttribute) == true
 	local bankedXP = getSafeIntegerAttribute(ExtractionConfig.BankedXPAttribute, 1_000_000_000)
 	if isArena then
@@ -125,8 +126,13 @@ local function updateSummary()
 			ExtractionConfig.RunXPAttribute,
 			ExtractionConfig.MaximumUnbankedRunXP
 		)
-		summary.Position = UDim2.fromOffset(12, if portraitViewport then 170 elseif narrowViewport then 62 else 12)
-		statusPanel.Position = UDim2.new(0.5, 0, 0, if portraitViewport then 234 elseif narrowViewport then 126 else 62)
+		summary.Position = HUDLayoutConfig.GetArenaProfilePosition(viewport)
+		statusPanel.Position = UDim2.new(
+			0.5,
+			0,
+			0,
+			if mode == "PortraitCompact" then 554 elseif mode == "LandscapeCompact" then 126 else 66
+		)
 		summaryLabel.Text = string.format(
 			"RUN XP (UNBANKED): %s\nBANKED PROFILE XP: %s",
 			tostring(runXP),

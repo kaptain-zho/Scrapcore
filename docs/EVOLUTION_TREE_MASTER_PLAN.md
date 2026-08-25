@@ -12,7 +12,15 @@ This plan treats evolution as a directed graph rather than a strict binary tree.
 
 The approved Level 20 commitment uses **three**, rather than four, broad families. This is deliberate: every Level 8 class must reach every Level 20 family, while no node should offer more than three immediate choices. Three families satisfy both constraints without a special-case four-card choice. Charging and high-mobility burst remain a major branch inside Motion Works instead of consuming an entire family slot.
 
-The existing provisional Pilebreaker, Twin Maul, Stormring, Ripsaw, Ironclad, and Liftjack concepts are retained and approved as Level 35 concepts instead of Level 20 families. The checked-in class configuration remains unchanged and disabled; applying the approved design later requires a separate reviewed migration milestone.
+The existing provisional Pilebreaker, Twin Maul, Stormring, Ripsaw, Ironclad, and Liftjack concepts are retained as Level 35 concepts instead of Level 20 families. The checked-in route configuration now records the complete approved 37-node graph. Only the three Level 8 classes are publicly selectable; Impact Foundry is an internal Studio prototype and every other Level 20-or-later node remains unavailable.
+
+## Current implementation status
+
+- `EvolutionRouteService` owns the current node, Level 20 family commitment, reached gates, Level 8 ancestry, and run serial on the server. Replicated attributes are presentation only and are rewritten if a client attempts to forge them.
+- Every Level 8 class has a legal edge to all three Level 20 families. The server validates the configured parent-to-child edge, exact gate, run serial, living Arena state, availability, request shape, and request rate.
+- Impact Foundry is the only Level 20 family with a playable prototype. It can be activated only by an authorized Studio developer action after a valid Level 8 selection and Level 20 eligibility.
+- Motion Works and Field Rig are graph data only. Ordinary players see Level 20 as under construction, and no Level 20 route is publicly selectable.
+- Death, extraction, lobby return, disconnect, respawn, and a new run clear the complete route commitment.
 
 Run rules remain unchanged:
 
@@ -204,7 +212,7 @@ This table is authoritative for the proposal and is intentionally redundant with
 
 ## Route commitment and blocking
 
-The route model should store a server-owned current node plus the selected node at each completed gate. The client may request only a node ID. At every gate the server verifies the exact level, current node, legal child edge, enabled status, alive Arena session, run serial, payload shape, and request rate. Replicated route attributes are presentation only.
+The route model stores a server-owned current node plus the selected node at each completed gate. A future public client request may contain only a node ID and the displayed run serial; neither value is authoritative. At every gate the server verifies the exact level, current node, legal child edge, enabled status, living Arena session, canonical run serial, exact payload shape, and request rate. Replicated route attributes are presentation only.
 
 Level 20 is deliberately special: eligibility is based on reaching Level 20, not on the Level 8 class. Any Level 8 class can enter any family. Once a family is accepted, every later choice is filtered by the current parent edge.
 

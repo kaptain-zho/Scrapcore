@@ -12,10 +12,13 @@ local shared = ReplicatedStorage:WaitForChild("Shared")
 local MovementConfig = require(shared:WaitForChild("MovementConfig"))
 local CombatConfig = require(shared:WaitForChild("CombatConfig"))
 local ClassConfig = require(shared:WaitForChild("ClassConfig"))
+local EvolutionConfig = require(shared:WaitForChild("EvolutionConfig"))
+local ImpactFoundryConfig = require(shared:WaitForChild("ImpactFoundryConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local RammerConfig = require(shared:WaitForChild("RammerConfig"))
 local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local RammerClientState = require(script.Parent:WaitForChild("RammerClientState"))
+local ImpactFoundryClientState = require(script.Parent:WaitForChild("ImpactFoundryClientState"))
 local telemetryRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("RobotMovementTelemetry") :: RemoteEvent
 local camera = assert(Workspace.CurrentCamera, "CurrentCamera is required for robot controls") :: Camera
 
@@ -390,6 +393,10 @@ local function updateMovement(deltaTime: number)
 	local moveDirection = getCameraRelativeMovement()
 	local currentMaxSpeed = getCurrentMaxSpeed()
 	local rammerState = RammerClientState.Get()
+	local impactFoundryState = ImpactFoundryClientState.Get()
+	local isImpactFoundry = player:GetAttribute(EvolutionConfig.CurrentNodeAttribute)
+		== ClassConfig.ImpactFoundryNodeId
+	local isImpactFoundryWindup = isImpactFoundry and impactFoundryState.phase == "Windup"
 	local isRammer = getCurrentClassId() == ClassConfig.RammerClassId
 	local isCharging = isRammer and (rammerState.phase == "Charging" or rammerState.phase == "Ready")
 	local isDashing = isRammer
@@ -422,6 +429,8 @@ local function updateMovement(deltaTime: number)
 	else
 		if isCharging then
 			currentMaxSpeed *= RammerConfig.ChargeMovementSpeedMultiplier
+		elseif isImpactFoundryWindup then
+			currentMaxSpeed *= ImpactFoundryConfig.WindupMovementSpeedMultiplier
 		end
 		targetVelocity = moveDirection * currentMaxSpeed
 		lastRammerDashSerial = 0
@@ -429,6 +438,8 @@ local function updateMovement(deltaTime: number)
 	local movementSharpness = getMovementSharpness(smoothedVelocity, targetVelocity)
 	if isCharging then
 		movementSharpness *= RammerConfig.ChargeSteeringMultiplier
+	elseif isImpactFoundryWindup then
+		movementSharpness *= ImpactFoundryConfig.WindupSteeringMultiplier
 	end
 	local movementAlpha = 1 - math.exp(-movementSharpness * deltaTime)
 	smoothedVelocity = smoothedVelocity:Lerp(targetVelocity, movementAlpha)
@@ -459,6 +470,7 @@ local function updateMovement(deltaTime: number)
 			* (if isDashing
 				then RammerConfig.DashSteeringMultiplier
 				elseif isCharging then RammerConfig.ChargeSteeringMultiplier
+				elseif isImpactFoundryWindup then ImpactFoundryConfig.WindupSteeringMultiplier
 				else 1)
 	end
 	rotateTowardAim(aimDirection)

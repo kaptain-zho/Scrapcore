@@ -8,9 +8,11 @@ local Workspace = game:GetService("Workspace")
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local ClassConfig = require(shared:WaitForChild("ClassConfig"))
 local ExtractionConfig = require(shared:WaitForChild("ExtractionConfig"))
+local EvolutionConfig = require(shared:WaitForChild("EvolutionConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local DevToolsConfig = require(script.Parent:WaitForChild("DevToolsConfig"))
 local ClassService = require(script.Parent:WaitForChild("ClassService"))
+local EvolutionRouteService = require(script.Parent:WaitForChild("EvolutionRouteService"))
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
 local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
 local AuthoritativeDamageService = require(script.Parent:WaitForChild("AuthoritativeDamageService"))
@@ -104,6 +106,7 @@ local function fireState(player: Player, authorized: boolean)
 			XPToNext = 0,
 			Points = 0,
 			Class = ClassConfig.BaseClassId,
+			Route = ClassConfig.BaseClassId,
 			Unlimited = false,
 		})
 		return
@@ -120,6 +123,7 @@ local function fireState(player: Player, authorized: boolean)
 			ProgressionConfig.MaxUnspentUpgradePoints
 		),
 		Class = ClassService.GetClassId(player),
+		Route = EvolutionRouteService.GetCurrentNodeId(player),
 		Unlimited = ProgressionService.IsUnlimitedUpgradePoints(player),
 	})
 end
@@ -229,6 +233,15 @@ local function performAction(player: Player, action: string): string?
 		return if ProfileDataService.ReloadStudioMockProfile(player) then action else nil
 	elseif action == "StudioTestProfileUnavailable" then
 		return if ProfileDataService.SetStudioMockProfileUnavailable(player) then action else nil
+	elseif action == "StudioTestActivateImpactFoundry" then
+		if not RunService:IsStudio() or not PlayerSessionService.IsArena(player) then
+			return nil
+		end
+		if ClassService.GetClassId(player) == ClassConfig.BaseClassId then
+			return nil
+		end
+		awardXPToLevel(player, ClassConfig.Level20Threshold)
+		return if EvolutionRouteService.ActivateImpactFoundryForStudio(player) then action else nil
 	elseif action == "HealToFull" then
 		return if ProgressionService.HealToFull(player) then action else nil
 	end
@@ -313,6 +326,7 @@ local function connectPlayer(player: Player)
 		"RunXP",
 		"UnspentUpgradePoints",
 		ClassConfig.ClassAttribute,
+		EvolutionConfig.CurrentNodeAttribute,
 		"DevUnlimitedUpgradePoints",
 	} do
 		table.insert(
@@ -354,6 +368,7 @@ function DevToolsService.Init()
 	PlayerSessionService.Init()
 	ProgressionService.Init()
 	ClassService.Init()
+	EvolutionRouteService.Init()
 	requestRemote = getOrCreateRemote("DevToolsRequest")
 	stateRemote = getOrCreateRemote("DevToolsState")
 	local activeRequestRemote = requestRemote :: RemoteEvent

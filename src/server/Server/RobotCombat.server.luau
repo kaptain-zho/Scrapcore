@@ -15,6 +15,7 @@ local BreakableObjectService = require(script.Parent:WaitForChild("BreakableObje
 local CollisionGroupService = require(script.Parent:WaitForChild("CollisionGroupService"))
 local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
 local AuthoritativeDamageService = require(script.Parent:WaitForChild("AuthoritativeDamageService"))
+local DisplacementResistanceService = require(script.Parent:WaitForChild("DisplacementResistanceService"))
 
 PlayerSessionService.Init()
 ProgressionService.Init()
@@ -254,7 +255,7 @@ local function applyHorizontalKnockback(
 	end
 
 	local safeKnockbackSpeed = math.clamp(
-		knockbackSpeed,
+		knockbackSpeed * DisplacementResistanceService.GetHorizontalMultiplier(target, horizontal),
 		0,
 		CombatConfig.MaxHorizontalKnockbackSpeed
 	)

@@ -17,6 +17,7 @@ local ClassService = require(script.Parent:WaitForChild("ClassService"))
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
 local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
 local AuthoritativeDamageService = require(script.Parent:WaitForChild("AuthoritativeDamageService"))
+local DisplacementResistanceService = require(script.Parent:WaitForChild("DisplacementResistanceService"))
 
 local ROBOT_CHASSIS_NAME = "RobotChassis"
 local RAMMER_HIT_ORIGIN_NAME = "RammerHitOrigin"
@@ -289,7 +290,8 @@ local function enterCooldown(player: Player, state: RammerState, now: number)
 end
 
 local function applyHorizontalKnockback(target: Model, targetRoot: BasePart, direction: Vector3, speed: number)
-	local safeSpeed = math.clamp(speed, 0, math.min(RammerConfig.MaximumServerKnockback, CombatConfig.MaxHorizontalKnockbackSpeed))
+	local resistance = DisplacementResistanceService.GetHorizontalMultiplier(target, direction)
+	local safeSpeed = math.clamp(speed * resistance, 0, math.min(RammerConfig.MaximumServerKnockback, CombatConfig.MaxHorizontalKnockbackSpeed))
 	if direction.Magnitude <= 0.01 or safeSpeed <= 0 then
 		return
 	end

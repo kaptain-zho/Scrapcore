@@ -16,6 +16,7 @@ local ClassService = require(script.Parent:WaitForChild("ClassService"))
 local ProgressionService = require(script.Parent:WaitForChild("ProgressionService"))
 local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
 local AuthoritativeDamageService = require(script.Parent:WaitForChild("AuthoritativeDamageService"))
+local DisplacementResistanceService = require(script.Parent:WaitForChild("DisplacementResistanceService"))
 
 local ROBOT_CHASSIS_NAME = "RobotChassis"
 local SPINNER_HIT_ORIGIN_NAME = "SpinnerHitOrigin"
@@ -188,7 +189,11 @@ local function applyHorizontalKnockback(
 		return
 	end
 
-	local safeSpeed = math.clamp(knockbackSpeed, 0, CombatConfig.MaxHorizontalKnockbackSpeed)
+	local safeSpeed = math.clamp(
+		knockbackSpeed * DisplacementResistanceService.GetHorizontalMultiplier(target, horizontal),
+		0,
+		CombatConfig.MaxHorizontalKnockbackSpeed
+	)
 	local knockbackVelocity = horizontal.Unit * safeSpeed
 	local startedAt = Workspace:GetServerTimeNow()
 	target:SetAttribute(KNOCKBACK_VELOCITY_ATTRIBUTE, knockbackVelocity)

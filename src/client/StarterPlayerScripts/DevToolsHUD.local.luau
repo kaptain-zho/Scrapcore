@@ -30,6 +30,7 @@ local ACTIONS = {
 	{ "Return to Lobby", "ReturnToLobby" },
 	{ "Move to Arena Portal", "StudioTestMoveToMainPortal" },
 	{ "Heal to Full", "HealToFull" },
+	{ "Activate Impact Foundry", "StudioTestActivateImpactFoundry" },
 }
 
 local oldGui = playerGui:FindFirstChild("ScrapcoreDevTools")
@@ -195,13 +196,14 @@ local function hasExactStateShape(payload: unknown): boolean
 	for _ in value do
 		count += 1
 	end
-	return count == 7
+	return count == 8
 		and typeof(value.Authorized) == "boolean"
 		and typeof(value.Level) == "number"
 		and typeof(value.XP) == "number"
 		and typeof(value.XPToNext) == "number"
 		and typeof(value.Points) == "number"
 		and typeof(value.Class) == "string"
+		and typeof(value.Route) == "string"
 		and typeof(value.Unlimited) == "boolean"
 end
 
@@ -223,12 +225,13 @@ stateRemote.OnClientEvent:Connect(function(payload: unknown)
 		ContextActionService:BindAction(ACTION_NAME, toggleAction, false, Enum.KeyCode.F2)
 	end
 	stateLabel.Text = string.format(
-		"LEVEL %d  |  XP %d / %d  |  POINTS %s\nCLASS %s  |  UNLIMITED %s",
+		"LEVEL %d  |  XP %d / %d  |  POINTS %s\nCLASS %s  |  ROUTE %s  |  UNLIMITED %s",
 		math.floor(state.Level),
 		math.floor(state.XP),
 		math.floor(state.XPToNext),
 		if state.Unlimited then "∞" else tostring(math.floor(state.Points)),
 		state.Class,
+		state.Route,
 		if state.Unlimited then "ON" else "OFF"
 	)
 end)

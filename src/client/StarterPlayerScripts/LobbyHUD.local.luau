@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local shared = ReplicatedStorage:WaitForChild("Shared")
+local HUDLayoutConfig = require(shared:WaitForChild("HUDLayoutConfig"))
 local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local feedbackRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("LobbyFeedback") :: RemoteEvent
 
@@ -25,7 +26,8 @@ screenGui.Parent = playerGui
 
 local panel = Instance.new("Frame")
 panel.Name = "ObjectivePanel"
-panel.Position = UDim2.fromOffset(12, 12)
+panel.AnchorPoint = Vector2.new(0.5, 0)
+panel.Position = UDim2.new(0.5, 0, 0, HUDLayoutConfig.UpperRailTop)
 panel.Size = UDim2.new(0.34, 0, 0, 64)
 panel.BackgroundColor3 = Color3.fromRGB(13, 19, 24)
 panel.BackgroundTransparency = 0.12
@@ -75,7 +77,8 @@ objective.Parent = panel
 
 local feedback = Instance.new("TextLabel")
 feedback.Name = "Feedback"
-feedback.Position = UDim2.fromOffset(12, 84)
+feedback.AnchorPoint = Vector2.new(0.5, 0)
+feedback.Position = UDim2.new(0.5, 0, 0, HUDLayoutConfig.UpperRailTop + 72)
 feedback.Size = UDim2.new(0.34, 0, 0, 36)
 feedback.BackgroundColor3 = Color3.fromRGB(23, 29, 36)
 feedback.BackgroundTransparency = 0.08

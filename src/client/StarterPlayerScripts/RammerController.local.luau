@@ -9,6 +9,7 @@ local Workspace = game:GetService("Workspace")
 local player = Players.LocalPlayer
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local ClassConfig = require(shared:WaitForChild("ClassConfig"))
+local EvolutionConfig = require(shared:WaitForChild("EvolutionConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local RammerConfig = require(shared:WaitForChild("RammerConfig"))
 local SessionConfig = require(shared:WaitForChild("SessionConfig"))
@@ -58,6 +59,10 @@ end
 
 local function isArenaPlayer(targetPlayer: Player): boolean
 	return targetPlayer:GetAttribute(SessionConfig.SessionAttribute) == SessionConfig.ArenaState
+end
+
+local function isImpactFoundryActive(targetPlayer: Player): boolean
+	return targetPlayer:GetAttribute(EvolutionConfig.CurrentNodeAttribute) == ClassConfig.ImpactFoundryNodeId
 end
 
 local function getUpgradeRank(attributeName: string): number
@@ -137,6 +142,7 @@ local function releasePredictedCharge(cancelOnly: boolean)
 	local character = player.Character
 	if
 		not isArenaPlayer(player)
+		or isImpactFoundryActive(player)
 		or character == nil
 		or character.Parent == nil
 		or getClassId(player) ~= ClassConfig.RammerClassId
@@ -234,7 +240,7 @@ UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessedEv
 	if gameProcessedEvent or input.UserInputType ~= Enum.UserInputType.MouseButton1 then
 		return
 	end
-	if not isArenaPlayer(player) then
+	if not isArenaPlayer(player) or isImpactFoundryActive(player) then
 		return
 	end
 	if getClassId(player) ~= ClassConfig.RammerClassId or primaryHeld then

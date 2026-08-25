@@ -786,20 +786,26 @@ local function validateEvolutionConfiguration()
 			or not definition.Enabled
 			or node == nil
 			or node.Level ~= ClassConfig.Level8Threshold
-			or node.ParentId ~= ClassConfig.BaseClassId
+			or #node.ParentIds ~= 1
+			or node.ParentIds[1] ~= ClassConfig.BaseClassId
 		then
 			error(string.format("EvolutionConfig Level 8 route %s is invalid", classId))
 		end
 		for _, childId in node.Children do
-			local childDefinition = classDefinitions[childId]
 			local childNode = EvolutionConfig.RouteNodes[childId]
+			local hasParent = false
+			if childNode ~= nil then
+				for _, parentId in childNode.ParentIds do
+					if parentId == classId then
+						hasParent = true
+						break
+					end
+				end
+			end
 			if
-				childDefinition == nil
-				or childDefinition.Enabled
-				or childDefinition.Tier ~= ClassConfig.Level20Threshold
-				or childNode == nil
+				childNode == nil
 				or childNode.Level ~= ClassConfig.Level20Threshold
-				or childNode.ParentId ~= classId
+				or not hasParent
 			then
 				error(string.format("EvolutionConfig Level 20 route %s is invalid", childId))
 			end

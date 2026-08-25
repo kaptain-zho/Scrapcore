@@ -12,6 +12,7 @@ local CombatConfig = require(shared:WaitForChild("CombatConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local CollisionGroupService = require(script.Parent:WaitForChild("CollisionGroupService"))
 local RammerCombatService = require(script.Parent:WaitForChild("RammerCombatService"))
+local ImpactFoundryCombatService = require(script.Parent:WaitForChild("ImpactFoundryCombatService"))
 local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
 
 local ROBOT_CHASSIS_NAME = "RobotChassis"
@@ -37,6 +38,7 @@ local robotTemplate = robotTemplateInstance
 PlayerSessionService.Init()
 CollisionGroupService.Init()
 RammerCombatService.Init()
+ImpactFoundryCombatService.Init()
 
 type PlayerState = {
 	character: Model?,
@@ -468,11 +470,13 @@ RunService.Heartbeat:Connect(function(deltaTime: number)
 		local maximumSampleDistance = MovementConfig.ServerMaxTeleportDistance
 		local speedTolerance = MovementConfig.ServerSpeedTolerance
 		local rammerAuthorization = RammerCombatService.GetMovementAuthorization(player, root)
-		if rammerAuthorization ~= nil then
-			legalMaxSpeed = rammerAuthorization.legalMaxSpeed
-			maximumAcceleration = rammerAuthorization.maximumAcceleration
-			maximumSampleDistance = rammerAuthorization.maximumSampleDistance
-			speedTolerance = rammerAuthorization.speedTolerance
+		local impactFoundryAuthorization = ImpactFoundryCombatService.GetMovementAuthorization(player)
+		local movementAuthorization = rammerAuthorization or impactFoundryAuthorization
+		if movementAuthorization ~= nil then
+			legalMaxSpeed = movementAuthorization.legalMaxSpeed
+			maximumAcceleration = movementAuthorization.maximumAcceleration
+			maximumSampleDistance = movementAuthorization.maximumSampleDistance
+			speedTolerance = movementAuthorization.speedTolerance
 		end
 		local speedAllowance = if underAuthorizedKnockback then CombatConfig.MaxHorizontalKnockbackSpeed else 0
 		local accelerationAllowance = if underAuthorizedKnockback then CombatConfig.KnockbackAccelerationAllowance else 0

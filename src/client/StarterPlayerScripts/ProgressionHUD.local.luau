@@ -11,6 +11,7 @@ local player = Players.LocalPlayer
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local ClassConfig = require(shared:WaitForChild("ClassConfig"))
 local EvolutionConfig = require(shared:WaitForChild("EvolutionConfig"))
+local HUDLayoutConfig = require(shared:WaitForChild("HUDLayoutConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -43,7 +44,7 @@ screenGui.Parent = playerGui
 local panel = Instance.new("Frame")
 panel.Name = "Panel"
 panel.AnchorPoint = Vector2.new(1, 0)
-panel.Position = UDim2.new(1, -12, 0, 12)
+panel.Position = UDim2.new(1, -HUDLayoutConfig.Margin, 0, HUDLayoutConfig.UpperRailTop)
 panel.Size = UDim2.new(0.24, 0, 0, 96)
 panel.BackgroundColor3 = Color3.fromRGB(13, 18, 25)
 panel.BackgroundTransparency = 0.18
@@ -243,8 +244,9 @@ local function updateResponsiveLayout()
 		healthWidth = math.clamp(viewport.X - 24, 220, 420)
 	end
 	healthPanel.Size = UDim2.fromOffset(healthWidth, 42)
-	healthPanel.Position = UDim2.new(0.5, 0, 0, 12)
-	panel.Position = UDim2.new(1, -12, 0, if viewport.X >= 900 then 12 else 66)
+	healthPanel.Position = UDim2.new(0.5, 0, 0, HUDLayoutConfig.HealthTop)
+	panel.AnchorPoint = if HUDLayoutConfig.GetMode(viewport) == "Desktop" then Vector2.zero else Vector2.new(1, 0)
+	panel.Position = HUDLayoutConfig.GetProgressionPosition(viewport)
 end
 
 local viewportConnection: RBXScriptConnection? = nil
@@ -400,9 +402,11 @@ local function updateHUD()
 	local hasSelectedLevel8Class = classId == ClassConfig.StrikerClassId
 		or classId == ClassConfig.SpinnerClassId
 		or classId == ClassConfig.RammerClassId
+	local routeValue = player:GetAttribute(EvolutionConfig.CurrentNodeAttribute)
+	local isImpactFoundry = routeValue == ClassConfig.ImpactFoundryNodeId
 	local showSpinnerControl = classId == ClassConfig.SpinnerClassId
 	local showRammerControl = classId == ClassConfig.RammerClassId
-	local showClassControl = showSpinnerControl or showRammerControl
+	local showClassControl = showSpinnerControl or showRammerControl or isImpactFoundry
 	local initiallyAvailable = lastObservedPoints == nil and points > 0
 	local gainedPoint = lastObservedPoints ~= nil and points > (lastObservedPoints :: number)
 	local gainedUnlimited = unlimitedPoints and not lastObservedUnlimited
@@ -443,7 +447,10 @@ local function updateHUD()
 	end
 
 	classControlLabel.Visible = showClassControl
-	if showRammerControl then
+	if isImpactFoundry then
+		classControlLabel.Text = "IMPACT FOUNDRY — LMB Forge Strike"
+		classControlLabel.TextColor3 = ClassConfig.ImpactFoundryAccentColor
+	elseif showRammerControl then
 		classControlLabel.Text = "RAMMER — Hold LMB, Release to Charge"
 		classControlLabel.TextColor3 = ClassConfig.RammerAccentColor
 	else
@@ -452,8 +459,21 @@ local function updateHUD()
 	end
 	local statusY = if showClassControl then 88 else 70
 	evolutionStatusLabel.Position = UDim2.fromOffset(10, statusY)
-	if hasSelectedLevel8Class and level >= ClassConfig.Level20Threshold then
-		evolutionStatusLabel.Text = "Level 20 Evolution — Coming Soon"
+	if isImpactFoundry then
+		local phaseValue = player:GetAttribute("ImpactFoundryAttackPhase")
+		local phase = if typeof(phaseValue) == "string" then phaseValue else "Idle"
+		if phase == "Windup" then
+			evolutionStatusLabel.Text = "IMPACT FOUNDRY — FORGING"
+		elseif phase == "Impact" then
+			evolutionStatusLabel.Text = "IMPACT FOUNDRY — STRIKE"
+		elseif phase == "Recovery" then
+			evolutionStatusLabel.Text = "IMPACT FOUNDRY — RECOVERY"
+		else
+			evolutionStatusLabel.Text = "IMPACT FOUNDRY — READY"
+		end
+		evolutionStatusLabel.TextColor3 = ClassConfig.ImpactFoundryAccentColor
+	elseif hasSelectedLevel8Class and level >= ClassConfig.Level20Threshold then
+		evolutionStatusLabel.Text = "LEVEL 20 ROUTES — UNDER CONSTRUCTION"
 		evolutionStatusLabel.TextColor3 = Color3.fromRGB(196, 145, 245)
 	elseif hasSelectedLevel8Class then
 		evolutionStatusLabel.Text = "Next Evolution at Level 20"
@@ -674,6 +694,8 @@ local watchedAttributes = {
 	"RunClass",
 	"ClassEvolutionEligible",
 	"ClassEvolutionSelected",
+	EvolutionConfig.CurrentNodeAttribute,
+	"ImpactFoundryAttackPhase",
 	SessionConfig.SessionAttribute,
 	DEV_UNLIMITED_ATTRIBUTE,
 }

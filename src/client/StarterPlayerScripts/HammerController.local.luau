@@ -10,6 +10,7 @@ local player = Players.LocalPlayer
 local shared = ReplicatedStorage:WaitForChild("Shared")
 local CombatConfig = require(shared:WaitForChild("CombatConfig"))
 local ClassConfig = require(shared:WaitForChild("ClassConfig"))
+local EvolutionConfig = require(shared:WaitForChild("EvolutionConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local SpinnerConfig = require(shared:WaitForChild("SpinnerConfig"))
@@ -73,6 +74,10 @@ end
 
 local function isArenaPlayer(targetPlayer: Player): boolean
 	return targetPlayer:GetAttribute(SessionConfig.SessionAttribute) == SessionConfig.ArenaState
+end
+
+local function isImpactFoundryActive(targetPlayer: Player): boolean
+	return targetPlayer:GetAttribute(EvolutionConfig.CurrentNodeAttribute) == ClassConfig.ImpactFoundryNodeId
 end
 
 local function getCurrentCooldown(): number
@@ -297,7 +302,7 @@ UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessedEv
 	if gameProcessedEvent or input.UserInputType ~= Enum.UserInputType.MouseButton1 then
 		return
 	end
-	if not isArenaPlayer(player) then
+	if not isArenaPlayer(player) or isImpactFoundryActive(player) then
 		return
 	end
 	if primaryAttackHeld then
@@ -317,7 +322,7 @@ UserInputService.InputEnded:Connect(function(input: InputObject)
 	end
 	local wasHeld = primaryAttackHeld
 	primaryAttackHeld = false
-	if wasHeld and getClassId(player) == ClassConfig.SpinnerClassId then
+	if wasHeld and not isImpactFoundryActive(player) and getClassId(player) == ClassConfig.SpinnerClassId then
 		requestSpinnerStop()
 	end
 end)
@@ -325,7 +330,7 @@ end)
 UserInputService.WindowFocusReleased:Connect(function()
 	local wasHeld = primaryAttackHeld
 	primaryAttackHeld = false
-	if wasHeld and getClassId(player) == ClassConfig.SpinnerClassId then
+	if wasHeld and not isImpactFoundryActive(player) and getClassId(player) == ClassConfig.SpinnerClassId then
 		requestSpinnerStop()
 	end
 end)
