@@ -7,7 +7,7 @@
 
 Class evolution gives a temporary run a mutually exclusive playstyle decision without turning XP into a currency. Every life begins as **Scrap Runner**. Reaching Level 8 unlocks one Level 8 choice; choosing it does not spend XP, consume upgrade points, or reset existing stat upgrades. Death clears the chosen path along with the rest of the run and the next deployment begins as Scrap Runner again.
 
-The checked-in route graph uses three unrestricted Level 20 families and places the six concepts below at Level 35. Impact Foundry is the first internal Level 20 prototype, but ordinary players cannot select any Level 20 route. Motion Works, Field Rig, and every Level 35-or-later node remain configuration and design data only.
+The checked-in route graph uses three unrestricted Level 20 families and places the six concepts below at Level 35. Impact Foundry and Motion Works are internal Level 20 prototypes, but ordinary players cannot select any Level 20 route. Field Rig and every Level 35-or-later node remain configuration and design data only.
 
 ## Current configured route foundation
 
@@ -24,8 +24,8 @@ The ordered evolution gates are Levels **8, 20, 35, 75, 150, 250, and 300**. `Ev
 
 - Level 8 is implemented and server-selectable.
 - Impact Foundry, Motion Works, and Field Rig are configured at Level 20 and are reachable from every Level 8 class.
-- Impact Foundry is Studio-testable through a server-authorized developer action. It is not publicly selectable.
-- Motion Works, Field Rig, and Levels 35, 75, 150, 250, and 300 remain unavailable route data with no enabled gameplay choice.
+- Impact Foundry and Motion Works are Studio-testable through separate server-authorized developer actions. Neither is publicly selectable.
+- Field Rig and Levels 35, 75, 150, 250, and 300 remain unavailable route data with no enabled gameplay choice.
 - Level 300 is the final gate that may grant power. Levels above 300 continue only as run score.
 
 After the Level 20 family commitment, later design work must extend the selected parent route rather than offering unrelated global choices. Level 20 deliberately leaves the family choice unrestricted across Striker, Spinner, and Rammer. Defining a legal graph edge is not authorization to enable its robot.
@@ -34,7 +34,7 @@ After the Level 20 family commitment, later design work must extend the selected
 
 `docs/EVOLUTION_TREE_MASTER_PLAN.md` contains the approved 37-node directed graph. The matching configuration keeps the current Level 8 classes intact, makes Level 20 an unrestricted three-family commitment, and places the six provisional concepts below at Level 35 so they can serve as focused or shared descendants. A Level 20 route replaces the complete Level 8 combat kit rather than stacking abilities, while restrained visual ancestry cues may remain.
 
-Initial ranged mechanics use server-authoritative raycasts with client-only cosmetic projectile visuals. Control effects cannot hard-stun, remove input, or disrupt the camera and require short bounds plus immunity or diminishing returns. Defensive mechanics remain damageable and cannot create long invulnerability, unlimited reflection, or unavoidable retaliation. The 37-node graph is the planning ceiling. Impact Foundry is the first internal prototype, but ordinary players cannot access Level 20 until all three families are implemented and validated.
+Initial ranged mechanics use server-authoritative raycasts with client-only cosmetic projectile visuals. Control effects cannot hard-stun, remove input, or disrupt the camera and require short bounds plus immunity or diminishing returns. Defensive mechanics remain damageable and cannot create long invulnerability, unlimited reflection, or unavoidable retaliation. The 37-node graph is the planning ceiling. Impact Foundry and Motion Works are internal prototypes, but ordinary players cannot access Level 20 until all three families are implemented and validated.
 
 ## Class briefs
 
@@ -97,6 +97,20 @@ Rammer applies a provisional `3.00` server-owned damage multiplier only to activ
 - **Availability:** Studio prototype only. A server-authorized developer action requires a valid Level 8 selection and Level 20 eligibility. Ordinary players cannot select it.
 
 Provisional Rank 0 to Rank 30 tuning is 0.55 to 0.42 seconds of windup, 1.50 to 1.20 seconds between accepted attacks, and 38 to 50 player damage. A strike applies 25 horizontal knockback, affects at most two targets, uses a 5.8 × 3.2 × 4.6-stud server query with range and line-of-sight checks, and applies a `1.75` multiplier only to active breakables. During windup, legal movement speed is 0.65 and steering response is 0.60 of the upgraded baseline. Only incoming knockback from the protected front arc is multiplied by 0.45. These values are provisional and do not alter any Level 8 class tuning.
+
+### Motion Works — internal Level 20 prototype
+
+- **Combat role:** Directionally committed close-range pressure that converts a server-bounded powered drive into repeated frontal contact.
+- **Main weapon concept:** A low powered carriage with two traction rollers, exposed rails, swept guards, and an energy-limited drive cycle.
+- **Strengths:** Builds initiative while moving, pressures aligned moving targets, and can damage up to two targets in its narrow lane.
+- **Weaknesses:** Vulnerable spool, falling steering at high output, finite energy, forced coastdown, recovery downtime, and zero damage without real forward movement.
+- **Intended silhouette:** Low front carriage, paired transverse rollers, exposed dark belt and rails, swept side guards, and a restrained lime identification accent. It completely replaces the Level 8 combat kit.
+- **Counterplay:** Break the frontal lane, change direction, use walls, force it to spend energy without contact, or punish coastdown and recovery.
+- **Availability:** Studio prototype only. A server-authorized developer action requires a valid Level 8 selection and Level 20 eligibility. Ordinary players cannot select it, and an Impact Foundry life cannot switch sideways into it.
+
+Hold LMB to spool and enter Driven mode; release to stop new pulses and coast down. A low-frequency keepalive renews a server lease, while energy drains from a bounded 100-point reserve and forces coastdown at zero. Damage requires the server-observed chassis to move forward at least 8 studs per second in the weapon lane. Stationary, reverse, side, wall-blocked, out-of-range, and hidden targets receive no damage.
+
+Provisional Rank 0 to Rank 30 tuning is 0.62 to 0.46 seconds of spool, 0.34 to 0.26 seconds between pulses, 1.20 to 0.92 seconds of recovery, and 9 to 13 maximum pulse damage. Output ramps over 1.10 seconds. Full energy permits about 3.57 seconds of Driven time, then recharges only outside Driven. Maximum legal Driven speed is 34.32 studs per second at Speed Rank 0 or 41.18 at Rank 30, with steering falling from 0.85 to 0.40 as output rises. Each pulse applies 5 knockback, affects at most two targets, and applies a `1.50` multiplier only to active breakables. All values remain provisional.
 
 ### Pilebreaker — proposed Level 35 future work
 

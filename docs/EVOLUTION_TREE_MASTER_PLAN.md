@@ -1,10 +1,10 @@
 # Scrapcore Master Evolution Graph
 
-**Status:** Approved master evolution graph; design-only and not gameplay configuration
+**Status:** Approved master evolution graph with internal Impact Foundry and Motion Works prototypes; public Level 20 remains disabled
 
-**Baseline:** `d11e132025ab2309ceb9094fdf168fd8ff17cafa`
+**Implementation baseline:** `d73d5a2796ef5b9f18d0447b81e78090a3b2d8db`
 
-**Scope:** Original class identities, legal route structure, counterplay, and implementation planning. No Luau configuration, Studio instances, assets, statistics, or existing Level 8 behavior are changed by this document.
+**Scope:** Original class identities, legal route structure, counterplay, and implementation planning. The graph remains capped at 37 nodes; prototype status is recorded here without enabling ordinary Level 20 access.
 
 ## Design contract
 
@@ -12,14 +12,14 @@ This plan treats evolution as a directed graph rather than a strict binary tree.
 
 The approved Level 20 commitment uses **three**, rather than four, broad families. This is deliberate: every Level 8 class must reach every Level 20 family, while no node should offer more than three immediate choices. Three families satisfy both constraints without a special-case four-card choice. Charging and high-mobility burst remain a major branch inside Motion Works instead of consuming an entire family slot.
 
-The existing provisional Pilebreaker, Twin Maul, Stormring, Ripsaw, Ironclad, and Liftjack concepts are retained as Level 35 concepts instead of Level 20 families. The checked-in route configuration now records the complete approved 37-node graph. Only the three Level 8 classes are publicly selectable; Impact Foundry is an internal Studio prototype and every other Level 20-or-later node remains unavailable.
+The existing provisional Pilebreaker, Twin Maul, Stormring, Ripsaw, Ironclad, and Liftjack concepts are retained as Level 35 concepts instead of Level 20 families. The checked-in route configuration records the complete approved 37-node graph. Only the three Level 8 classes are publicly selectable; Impact Foundry and Motion Works are internal Studio prototypes, while Field Rig and every later node remain unavailable.
 
 ## Current implementation status
 
 - `EvolutionRouteService` owns the current node, Level 20 family commitment, reached gates, Level 8 ancestry, and run serial on the server. Replicated attributes are presentation only and are rewritten if a client attempts to forge them.
 - Every Level 8 class has a legal edge to all three Level 20 families. The server validates the configured parent-to-child edge, exact gate, run serial, living Arena state, availability, request shape, and request rate.
-- Impact Foundry is the only Level 20 family with a playable prototype. It can be activated only by an authorized Studio developer action after a valid Level 8 selection and Level 20 eligibility.
-- Motion Works and Field Rig are graph data only. Ordinary players see Level 20 as under construction, and no Level 20 route is publicly selectable.
+- Impact Foundry and Motion Works have separate playable Studio prototypes. Each can be activated only by an authorized Studio developer action after a valid Level 8 selection and Level 20 eligibility.
+- Field Rig remains graph data only. Ordinary players see Level 20 as under construction, and no Level 20 route is publicly selectable.
 - Death, extraction, lobby return, disconnect, respawn, and a new run clear the complete route commitment.
 
 Run rules remain unchanged:
@@ -114,7 +114,7 @@ Every Level 8 node may select every node in this tier. Selecting one family repl
 | Internal ID / display | Level and allowed parents | Tags / range | Identity / weapon | Fight | Production |
 |---|---|---|---|---|---|
 | `ImpactFoundry` / Impact Foundry | 20; `Striker`, `Spinner`, `Rammer` | Impact, defense; close | Rebuilds the front of the chassis around a visible impulse block and interchangeable striking face. | **Strength:** Readable burst and frontal stability. **Weakness:** Telegraph and recovery. **Counterplay:** Attack off-axis or during the reset cycle. | **Farming:** Strong deliberate single-target hits, limited cluster value. **Silhouette:** Tall front impulse block, broad braces, exposed rear. **Reuse:** Hammer timing, Rammer facing/query, knockback limits. **New:** Family loadout replacement. **Complexity:** Medium. |
-| `MotionWorks` / Motion Works | 20; `Striker`, `Spinner`, `Rammer` | Rotary, mobility; close to short-mid | Converts the front mount into a powered motion carriage supporting either rotation or bounded drive bursts. | **Strength:** Maintains initiative and threatens moving targets. **Weakness:** Directional commitment and vulnerable startup. **Counterplay:** Change direction, use cover, and force energy downtime. | **Farming:** Efficient route movement or contact clearing, but not both simultaneously. **Silhouette:** Low moving carriage, exposed drive belt, swept side guards. **Reuse:** Spinner lease/rotation and Rammer dash authorization. **New:** Mutually exclusive motion modes. **Complexity:** High. |
+| `MotionWorks` / Motion Works | 20; `Striker`, `Spinner`, `Rammer` | Rotary, mobility; close | Converts the front mount into an energy-limited powered carriage with two traction rollers and repeated narrow contact pulses. | **Strength:** Maintains initiative and threatens aligned moving targets. **Weakness:** Directional commitment, vulnerable spool, reduced high-output steering, and forced energy downtime. **Counterplay:** Change direction, use cover, break the frontal lane, and punish coastdown. | **Farming:** Sustained aligned scrap contact with a two-target cap and effective-damage credit. **Silhouette:** Low moving carriage, exposed drive belt, swept side guards, lime energy indicator. **Reuse:** Spinner lease/pulses and Rammer movement authorization. **New:** Server-owned energy and movement-dependent damage. **Complexity:** High, Studio prototype. |
 | `FieldRig` / Field Rig | 20; `Striker`, `Spinner`, `Rammer` | Precision, control; mid | Mounts a crude coil caster and one bounded utility socket for shots or short-lived field devices. | **Strength:** Shapes approaches and pressures beyond melee reach. **Weakness:** Reload exposure, low shove, and vulnerable close quarters. **Counterplay:** Close through the telegraph, use walls, and attack during reload or device expiry. | **Farming:** Precise but exposure-limited; line of sight, reloads, and effective-damage accounting prevent safe farming. **Silhouette:** Offset coil barrel, utility rack, thin frontal armor. **Reuse:** Server spatial queries, LOS, breakable accounting. **New:** Server raycast authorization, cosmetic client tracer broadcast, and owned deployable framework. **Complexity:** High. |
 
 ## Level 35 nodes
@@ -273,7 +273,7 @@ Highest-risk mechanics are Lockgrid's combined raycast/deployable cells, Maw Hal
 
 1. **Preserve the approved graph contract.** Three Level 20 families form the commitment tier, and the six existing provisional concepts move to Level 35 when configuration work is separately authorized.
 2. **Prototype only the route-state framework plus Impact Foundry.** Add server-owned gate history, graph validation, reset behavior, one internal Level 20 UI, and one low-risk family loadout. This prototype must remain unavailable to ordinary players.
-3. **Implement Motion Works.** Generalize existing Spinner and Rammer foundations without combining their attacks simultaneously.
+3. **Prototype Motion Works internally.** Reuse lease, pulse, and movement-authorization patterns without combining Level 8 attacks; keep its energy drive unavailable to ordinary players until multiplayer validation is complete.
 4. **Implement Field Rig behind an isolated raycast prototype.** Prove server authority, cosmetic tracer reconciliation, mobile aiming, LOS, and farming exposure before enabling the family. Physical projectile travel remains deferred.
 5. **Run a three-family Level 20 balance and farming gate.** Level 20 remains disabled for ordinary players until Impact Foundry, Motion Works, and Field Rig are all functional and validated. Do not start Level 35 until family selection, kit replacement, death/extraction reset, and counterplay pass multiplayer testing.
 6. **Implement Level 35 one node at a time.** Start with Pilebreaker, then Ripsaw, then Field Rig's lowest-risk descendant; add shared hybrids only after both parent foundations are stable.
@@ -307,7 +307,7 @@ Approved:
 5. Control effects cannot hard-stun, remove input, or disrupt the camera; they remain short, bounded, server-authoritative, and protected against repeated chaining.
 6. Defensive mechanics cannot create long invulnerability, unlimited reflection, or unavoidable retaliation.
 7. Thirty-seven nodes are the planning ceiling for the first complete graph.
-8. Impact Foundry is prototyped first, but Level 20 remains disabled for ordinary players until all three families are functional and validated.
+8. Impact Foundry and Motion Works are internal prototypes, but Level 20 remains disabled for ordinary players until all three families are functional and validated.
 
 Also approved with the complete graph:
 
