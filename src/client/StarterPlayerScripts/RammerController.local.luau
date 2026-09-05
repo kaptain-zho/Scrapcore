@@ -61,8 +61,9 @@ local function isArenaPlayer(targetPlayer: Player): boolean
 	return targetPlayer:GetAttribute(SessionConfig.SessionAttribute) == SessionConfig.ArenaState
 end
 
-local function isImpactFoundryActive(targetPlayer: Player): boolean
-	return targetPlayer:GetAttribute(EvolutionConfig.CurrentNodeAttribute) == ClassConfig.ImpactFoundryNodeId
+local function isLevel20CombatActive(targetPlayer: Player): boolean
+	local nodeId = targetPlayer:GetAttribute(EvolutionConfig.CurrentNodeAttribute)
+	return nodeId == ClassConfig.ImpactFoundryNodeId or nodeId == ClassConfig.MotionWorksNodeId
 end
 
 local function getUpgradeRank(attributeName: string): number
@@ -142,7 +143,7 @@ local function releasePredictedCharge(cancelOnly: boolean)
 	local character = player.Character
 	if
 		not isArenaPlayer(player)
-		or isImpactFoundryActive(player)
+		or isLevel20CombatActive(player)
 		or character == nil
 		or character.Parent == nil
 		or getClassId(player) ~= ClassConfig.RammerClassId
@@ -240,7 +241,7 @@ UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessedEv
 	if gameProcessedEvent or input.UserInputType ~= Enum.UserInputType.MouseButton1 then
 		return
 	end
-	if not isArenaPlayer(player) or isImpactFoundryActive(player) then
+	if not isArenaPlayer(player) or isLevel20CombatActive(player) then
 		return
 	end
 	if getClassId(player) ~= ClassConfig.RammerClassId or primaryHeld then

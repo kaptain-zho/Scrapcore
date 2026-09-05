@@ -31,6 +31,7 @@ local ACTIONS = {
 	{ "Move to Arena Portal", "StudioTestMoveToMainPortal" },
 	{ "Heal to Full", "HealToFull" },
 	{ "Activate Impact Foundry", "StudioTestActivateImpactFoundry" },
+	{ "Activate Motion Works", "StudioTestActivateMotionWorks" },
 }
 
 local oldGui = playerGui:FindFirstChild("ScrapcoreDevTools")
@@ -130,8 +131,8 @@ buttonContainer.Size = UDim2.new(1, -24, 1, -148)
 buttonContainer.Parent = panel
 
 local grid = Instance.new("UIGridLayout")
-grid.CellPadding = UDim2.fromOffset(8, 8)
-grid.CellSize = UDim2.new(0.5, -4, 0, 44)
+grid.CellPadding = UDim2.fromOffset(8, 6)
+grid.CellSize = UDim2.new(0.5, -4, 0, 40)
 grid.FillDirectionMaxCells = 2
 grid.SortOrder = Enum.SortOrder.LayoutOrder
 grid.Parent = buttonContainer

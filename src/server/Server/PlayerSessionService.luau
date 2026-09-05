@@ -36,12 +36,16 @@ local EQUIPPED_WEAPON_NAMES = table.freeze({
 	[ClassConfig.EquippedSpinnerName] = true,
 	[ClassConfig.EquippedRammerName] = true,
 	[ClassConfig.EquippedImpactFoundryName] = true,
+	[ClassConfig.EquippedMotionWorksName] = true,
 })
 local WEAPON_MOTOR_NAMES = table.freeze({
 	WeaponMountMotor = true,
 	[ClassConfig.SpinnerWeaponMotorName] = true,
 	[ClassConfig.RammerWeaponMotorName] = true,
 	[ClassConfig.ImpactFoundryWeaponMotorName] = true,
+	[ClassConfig.MotionWorksWeaponMotorName] = true,
+	[ClassConfig.MotionWorksFrontRollerMotorName] = true,
+	[ClassConfig.MotionWorksRearRollerMotorName] = true,
 })
 
 local states: {[Player]: PlayerSessionState} = {}
@@ -131,6 +135,7 @@ local function stripLobbyLoadout(character: Model)
 	character:SetAttribute("SpinnerReady", false)
 	character:SetAttribute("RammerReady", false)
 	character:SetAttribute("ImpactFoundryReady", false)
+	character:SetAttribute("MotionWorksReady", false)
 	local chassis = character:FindFirstChild(ROBOT_CHASSIS_NAME)
 	if chassis == nil or not chassis:IsA("Model") then
 		return

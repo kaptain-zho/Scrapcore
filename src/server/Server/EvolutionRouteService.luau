@@ -46,6 +46,8 @@ local ROBOT_CHASSIS_NAME = "RobotChassis"
 local CLASS_VISUAL_MODEL_NAME = "ClassEvolutionVisuals"
 local IMPACT_ATTRIBUTE = "ScrapcoreEquippedImpactFoundry"
 local IMPACT_HIT_ORIGIN_NAME = "ImpactFoundryHitOrigin"
+local MOTION_WORKS_ATTRIBUTE = "ScrapcoreEquippedMotionWorks"
+local MOTION_WORKS_HIT_ORIGIN_NAME = "MotionWorksHitOrigin"
 
 local states: {[Player]: RouteState} = {}
 local initialized = false
@@ -119,11 +121,34 @@ local function removeImpactFoundryLoadout(character: Model)
 	end
 end
 
+local function removeMotionWorksLoadout(character: Model)
+	character:SetAttribute("MotionWorksReady", false)
+	local chassis = character:FindFirstChild(ROBOT_CHASSIS_NAME)
+	if chassis == nil or not chassis:IsA("Model") then return end
+	for _, child in chassis:GetChildren() do
+		if child.Name == ClassConfig.EquippedMotionWorksName or child:GetAttribute(MOTION_WORKS_ATTRIBUTE) == true then
+			child:Destroy()
+		end
+	end
+	local robotRoot = chassis:FindFirstChild("RobotRoot", true)
+	if robotRoot ~= nil then
+		for _, motorName in {
+			ClassConfig.MotionWorksWeaponMotorName,
+			ClassConfig.MotionWorksFrontRollerMotorName,
+			ClassConfig.MotionWorksRearRollerMotorName,
+		} do
+			local motor = robotRoot:FindFirstChild(motorName, true)
+			if motor ~= nil then motor:Destroy() end
+		end
+	end
+end
+
 local function removeAllCombatLoadouts(character: Model)
 	character:SetAttribute("HammerReady", false)
 	character:SetAttribute("SpinnerReady", false)
 	character:SetAttribute("RammerReady", false)
 	character:SetAttribute("ImpactFoundryReady", false)
+	character:SetAttribute("MotionWorksReady", false)
 	local chassis = character:FindFirstChild(ROBOT_CHASSIS_NAME)
 	if chassis == nil or not chassis:IsA("Model") then return end
 	local removableNames = {
@@ -131,6 +156,7 @@ local function removeAllCombatLoadouts(character: Model)
 		[ClassConfig.EquippedSpinnerName] = true,
 		[ClassConfig.EquippedRammerName] = true,
 		[ClassConfig.EquippedImpactFoundryName] = true,
+		[ClassConfig.EquippedMotionWorksName] = true,
 		[CLASS_VISUAL_MODEL_NAME] = true,
 	}
 	for _, child in chassis:GetChildren() do
@@ -141,10 +167,50 @@ local function removeAllCombatLoadouts(character: Model)
 		[ClassConfig.SpinnerWeaponMotorName] = true,
 		[ClassConfig.RammerWeaponMotorName] = true,
 		[ClassConfig.ImpactFoundryWeaponMotorName] = true,
+		[ClassConfig.MotionWorksWeaponMotorName] = true,
+		[ClassConfig.MotionWorksFrontRollerMotorName] = true,
+		[ClassConfig.MotionWorksRearRollerMotorName] = true,
 	}
 	for _, descendant in chassis:GetDescendants() do
 		if descendant:IsA("Motor6D") and motorNames[descendant.Name] == true then descendant:Destroy() end
 	end
+end
+
+local function createMotorPart(
+	parent: Model,
+	name: string,
+	root: BasePart,
+	localCFrame: CFrame,
+	size: Vector3,
+	color: Color3,
+	material: Enum.Material,
+	motorName: string
+): BasePart
+	local part = Instance.new("Part")
+	part.Name = name
+	part.Shape = Enum.PartType.Cylinder
+	part.Size = size
+	part.CFrame = root.CFrame * localCFrame
+	part.Color = color
+	part.Material = material
+	part.TopSurface = Enum.SurfaceType.Smooth
+	part.BottomSurface = Enum.SurfaceType.Smooth
+	part.Anchored = false
+	part.Massless = true
+	part.CanCollide = false
+	part.CanTouch = false
+	part.CanQuery = false
+	part.Parent = parent
+	CollisionGroupService.ApplyCharacterPart(part)
+	local motor = Instance.new("Motor6D")
+	motor.Name = motorName
+	motor.Part0 = root
+	motor.Part1 = part
+	motor.C0 = localCFrame
+	motor.C1 = CFrame.identity
+	motor.Transform = CFrame.identity
+	motor.Parent = root
+	return part
 end
 
 local function createVisualPart(parent: Model, name: string, root: BasePart, localCFrame: CFrame, size: Vector3, color: Color3, material: Enum.Material, transparency: number?): BasePart
@@ -232,11 +298,78 @@ local function applyImpactFoundryLoadout(character: Model): boolean
 	return true
 end
 
+local function applyMotionWorksLoadout(character: Model): boolean
+	local chassis = character:FindFirstChild(ROBOT_CHASSIS_NAME)
+	if chassis == nil or not chassis:IsA("Model") then return false end
+	local robotRoot = chassis:FindFirstChild("RobotRoot", true)
+	if robotRoot == nil or not robotRoot:IsA("BasePart") then return false end
+	local mount = robotRoot:FindFirstChild("FrontWeaponMount")
+	if mount == nil or not mount:IsA("Attachment") then return false end
+
+	removeAllCombatLoadouts(character)
+	local equipped = Instance.new("Model")
+	equipped.Name = ClassConfig.EquippedMotionWorksName
+	equipped:SetAttribute(MOTION_WORKS_ATTRIBUTE, true)
+	equipped:SetAttribute("EvolutionNodeId", ClassConfig.MotionWorksNodeId)
+	equipped:SetAttribute("OriginalScrapcoreVisual", true)
+
+	local weaponRoot = Instance.new("Part")
+	weaponRoot.Name = "MotionWorksRoot"
+	weaponRoot.Size = Vector3.new(0.2, 0.2, 0.2)
+	weaponRoot.CFrame = mount.WorldCFrame
+	weaponRoot.Transparency = 1
+	weaponRoot.Anchored = false
+	weaponRoot.Massless = true
+	weaponRoot.CanCollide = false
+	weaponRoot.CanTouch = false
+	weaponRoot.CanQuery = false
+	weaponRoot.Parent = equipped
+	CollisionGroupService.ApplyCharacterPart(weaponRoot)
+
+	local hitOrigin = Instance.new("Attachment")
+	hitOrigin.Name = MOTION_WORKS_HIT_ORIGIN_NAME
+	hitOrigin.CFrame = CFrame.new(0, -0.12, -2.20)
+	hitOrigin.Parent = weaponRoot
+
+	local darkSteel = Color3.fromRGB(42, 49, 56)
+	local mediumSteel = Color3.fromRGB(79, 89, 97)
+	local rubber = Color3.fromRGB(28, 30, 34)
+	local accent = ClassConfig.MotionWorksAccentColor
+	createVisualPart(equipped, "PoweredCarriage", weaponRoot, CFrame.new(0, -0.02, -0.92), Vector3.new(3.8, 0.68, 2.1), darkSteel, Enum.Material.Metal)
+	createVisualPart(equipped, "LeftDriveRail", weaponRoot, CFrame.new(-1.72, 0.18, -1.18), Vector3.new(0.28, 0.42, 2.8), mediumSteel, Enum.Material.Metal)
+	createVisualPart(equipped, "RightDriveRail", weaponRoot, CFrame.new(1.72, 0.18, -1.18), Vector3.new(0.28, 0.42, 2.8), mediumSteel, Enum.Material.Metal)
+	createVisualPart(equipped, "LeftSweptGuard", weaponRoot, CFrame.new(-2.00, 0.18, -1.48) * CFrame.Angles(0, math.rad(-12), 0), Vector3.new(0.36, 0.64, 2.25), darkSteel, Enum.Material.Metal)
+	createVisualPart(equipped, "RightSweptGuard", weaponRoot, CFrame.new(2.00, 0.18, -1.48) * CFrame.Angles(0, math.rad(12), 0), Vector3.new(0.36, 0.64, 2.25), darkSteel, Enum.Material.Metal)
+	createVisualPart(equipped, "ExposedDriveBelt", weaponRoot, CFrame.new(0, 0.46, -1.18), Vector3.new(2.55, 0.12, 1.55), rubber, Enum.Material.Rubber)
+	createVisualPart(equipped, "MotionWorksEnergyIndicator", weaponRoot, CFrame.new(0, 0.58, -0.38), Vector3.new(2.4, 0.12, 0.22), accent, Enum.Material.Neon, 0.35)
+	createVisualPart(equipped, "MotionWorksDriveGlow", weaponRoot, CFrame.new(0, -0.24, -2.36), Vector3.new(3.6, 0.10, 0.18), accent, Enum.Material.Neon, 1)
+	createMotorPart(equipped, "FrontTractionRoller", weaponRoot, CFrame.new(0, -0.18, -1.92), Vector3.new(3.45, 0.72, 0.72), rubber, Enum.Material.Rubber, ClassConfig.MotionWorksFrontRollerMotorName)
+	createMotorPart(equipped, "RearTractionRoller", weaponRoot, CFrame.new(0, -0.18, -0.72), Vector3.new(3.15, 0.62, 0.62), rubber, Enum.Material.Rubber, ClassConfig.MotionWorksRearRollerMotorName)
+	createVisualPart(equipped, "LeftAccentPlate", weaponRoot, CFrame.new(-1.20, 0.47, -1.32), Vector3.new(0.72, 0.12, 0.52), accent, Enum.Material.Neon, 0.18)
+	createVisualPart(equipped, "RightAccentPlate", weaponRoot, CFrame.new(1.20, 0.47, -1.32), Vector3.new(0.72, 0.12, 0.52), accent, Enum.Material.Neon, 0.18)
+
+	equipped.PrimaryPart = weaponRoot
+	equipped.Parent = chassis
+	local motor = Instance.new("Motor6D")
+	motor.Name = ClassConfig.MotionWorksWeaponMotorName
+	motor.Part0 = robotRoot
+	motor.Part1 = weaponRoot
+	motor.C0 = mount.CFrame
+	motor.C1 = CFrame.identity
+	motor.Transform = CFrame.identity
+	motor.Parent = robotRoot
+	character:SetAttribute("MotionWorksReady", true)
+	return true
+end
+
 local function resetRoute(player: Player, forceBase: boolean?)
 	local state = states[player]
 	if state == nil then return end
 	local character = player.Character
-	if character ~= nil then removeImpactFoundryLoadout(character) end
+	if character ~= nil then
+		removeImpactFoundryLoadout(character)
+		removeMotionWorksLoadout(character)
+	end
 	DisplacementResistanceService.Clear(player)
 	state.currentNodeId = ClassConfig.BaseClassId
 	state.committedLevel20Family = ""
@@ -329,11 +462,17 @@ local function trySelect(player: Player, requestedNodeId: string, allowStudioPro
 		reject(player, state)
 		return false
 	end
-	if node.Level ~= ClassConfig.Level20Threshold or requestedNodeId ~= ClassConfig.ImpactFoundryNodeId then
+	if
+		node.Level ~= ClassConfig.Level20Threshold
+		or (requestedNodeId ~= ClassConfig.ImpactFoundryNodeId and requestedNodeId ~= ClassConfig.MotionWorksNodeId)
+	then
 		reject(player, state)
 		return false
 	end
-	if not applyImpactFoundryLoadout(character) then
+	local applied = if requestedNodeId == ClassConfig.ImpactFoundryNodeId
+		then applyImpactFoundryLoadout(character)
+		else applyMotionWorksLoadout(character)
+	if not applied then
 		reject(player, state)
 		return false
 	end
@@ -415,7 +554,10 @@ local function disconnectPlayer(player: Player)
 		if connection ~= nil then connection:Disconnect() end
 	end
 	local character = player.Character
-	if character ~= nil then removeImpactFoundryLoadout(character) end
+	if character ~= nil then
+		removeImpactFoundryLoadout(character)
+		removeMotionWorksLoadout(character)
+	end
 	DisplacementResistanceService.Clear(player)
 	states[player] = nil
 end
@@ -436,7 +578,7 @@ local function validateGraph()
 			if child == nil or child.Level <= node.Level or not includes(child.ParentIds, nodeId) then error(string.format("EvolutionConfig child edge %s -> %s is invalid", nodeId, childId)) end
 		end
 	end
-	if EvolutionConfig.Level20PublicEnabled then error("Level 20 must remain disabled for ordinary players during the first prototype") end
+	if EvolutionConfig.Level20PublicEnabled then error("Level 20 must remain disabled for ordinary players during internal family prototypes") end
 end
 
 function EvolutionRouteService.GetCurrentNodeId(player: Player): string
@@ -449,8 +591,20 @@ function EvolutionRouteService.IsImpactFoundryActive(player: Player): boolean
 	return state ~= nil and state.currentNodeId == ClassConfig.ImpactFoundryNodeId and state.runSerial == ProgressionService.GetRunSerial(player) and PlayerSessionService.IsArena(player)
 end
 
+function EvolutionRouteService.IsMotionWorksActive(player: Player): boolean
+	local state = states[player]
+	return state ~= nil
+		and state.currentNodeId == ClassConfig.MotionWorksNodeId
+		and state.runSerial == ProgressionService.GetRunSerial(player)
+		and PlayerSessionService.IsArena(player)
+end
+
 function EvolutionRouteService.ActivateImpactFoundryForStudio(player: Player): boolean
 	return RunService:IsStudio() and trySelect(player, ClassConfig.ImpactFoundryNodeId, true)
+end
+
+function EvolutionRouteService.ActivateMotionWorksForStudio(player: Player): boolean
+	return RunService:IsStudio() and trySelect(player, ClassConfig.MotionWorksNodeId, true)
 end
 
 function EvolutionRouteService.Init()

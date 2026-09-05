@@ -242,6 +242,15 @@ local function performAction(player: Player, action: string): string?
 		end
 		awardXPToLevel(player, ClassConfig.Level20Threshold)
 		return if EvolutionRouteService.ActivateImpactFoundryForStudio(player) then action else nil
+	elseif action == "StudioTestActivateMotionWorks" then
+		if not RunService:IsStudio() or not PlayerSessionService.IsArena(player) then
+			return nil
+		end
+		if ClassService.GetClassId(player) == ClassConfig.BaseClassId then
+			return nil
+		end
+		awardXPToLevel(player, ClassConfig.Level20Threshold)
+		return if EvolutionRouteService.ActivateMotionWorksForStudio(player) then action else nil
 	elseif action == "HealToFull" then
 		return if ProgressionService.HealToFull(player) then action else nil
 	end

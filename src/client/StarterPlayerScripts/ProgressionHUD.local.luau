@@ -12,6 +12,7 @@ local shared = ReplicatedStorage:WaitForChild("Shared")
 local ClassConfig = require(shared:WaitForChild("ClassConfig"))
 local EvolutionConfig = require(shared:WaitForChild("EvolutionConfig"))
 local HUDLayoutConfig = require(shared:WaitForChild("HUDLayoutConfig"))
+local MotionWorksConfig = require(shared:WaitForChild("MotionWorksConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -404,9 +405,10 @@ local function updateHUD()
 		or classId == ClassConfig.RammerClassId
 	local routeValue = player:GetAttribute(EvolutionConfig.CurrentNodeAttribute)
 	local isImpactFoundry = routeValue == ClassConfig.ImpactFoundryNodeId
+	local isMotionWorks = routeValue == ClassConfig.MotionWorksNodeId
 	local showSpinnerControl = classId == ClassConfig.SpinnerClassId
 	local showRammerControl = classId == ClassConfig.RammerClassId
-	local showClassControl = showSpinnerControl or showRammerControl or isImpactFoundry
+	local showClassControl = showSpinnerControl or showRammerControl or isImpactFoundry or isMotionWorks
 	local initiallyAvailable = lastObservedPoints == nil and points > 0
 	local gainedPoint = lastObservedPoints ~= nil and points > (lastObservedPoints :: number)
 	local gainedUnlimited = unlimitedPoints and not lastObservedUnlimited
@@ -447,7 +449,12 @@ local function updateHUD()
 	end
 
 	classControlLabel.Visible = showClassControl
-	if isImpactFoundry then
+	if isMotionWorks then
+		classControlLabel.Text = if compactViewport
+			then "MOTION WORKS — Hold/Release LMB"
+			else "MOTION WORKS — Hold LMB to Drive • Release to Coast"
+		classControlLabel.TextColor3 = ClassConfig.MotionWorksAccentColor
+	elseif isImpactFoundry then
 		classControlLabel.Text = "IMPACT FOUNDRY — LMB Forge Strike"
 		classControlLabel.TextColor3 = ClassConfig.ImpactFoundryAccentColor
 	elseif showRammerControl then
@@ -459,7 +466,35 @@ local function updateHUD()
 	end
 	local statusY = if showClassControl then 88 else 70
 	evolutionStatusLabel.Position = UDim2.fromOffset(10, statusY)
-	if isImpactFoundry then
+	if isMotionWorks then
+		local phaseValue = player:GetAttribute("MotionWorksAttackPhase")
+		local phase = if typeof(phaseValue) == "string" then phaseValue else "Idle"
+		local energyValue = player:GetAttribute("MotionWorksEnergy")
+		local energy = if typeof(energyValue) == "number" and isFinite(energyValue)
+			then math.clamp(math.floor(energyValue + 0.5), 0, MotionWorksConfig.MaximumEnergy)
+			else 0
+		local outputValue = player:GetAttribute("MotionWorksOutput")
+		local output = if typeof(outputValue) == "number" and isFinite(outputValue)
+			then math.clamp(outputValue, 0, 1)
+			else 0
+		if phase == "Spooling" then
+			evolutionStatusLabel.Text = string.format("MOTION — SPOOLING • E %d", energy)
+		elseif phase == "Driven" then
+			local outputLabel = if energy <= MotionWorksConfig.MinimumStartEnergy
+				then "LOW ENERGY"
+				elseif output >= 0.75 then "HIGH OUTPUT"
+				elseif output >= 0.35 then "BUILDING"
+				else "DRIVEN"
+			evolutionStatusLabel.Text = string.format("MOTION — %s • E %d", outputLabel, energy)
+		elseif phase == "Coastdown" then
+			evolutionStatusLabel.Text = string.format("MOTION — COASTDOWN • E %d", energy)
+		elseif phase == "Recovery" then
+			evolutionStatusLabel.Text = string.format("MOTION — RECOVERY • E %d", energy)
+		else
+			evolutionStatusLabel.Text = string.format("MOTION — READY • E %d", energy)
+		end
+		evolutionStatusLabel.TextColor3 = ClassConfig.MotionWorksAccentColor
+	elseif isImpactFoundry then
 		local phaseValue = player:GetAttribute("ImpactFoundryAttackPhase")
 		local phase = if typeof(phaseValue) == "string" then phaseValue else "Idle"
 		if phase == "Windup" then
@@ -696,6 +731,9 @@ local watchedAttributes = {
 	"ClassEvolutionSelected",
 	EvolutionConfig.CurrentNodeAttribute,
 	"ImpactFoundryAttackPhase",
+	"MotionWorksAttackPhase",
+	"MotionWorksEnergy",
+	"MotionWorksOutput",
 	SessionConfig.SessionAttribute,
 	DEV_UNLIMITED_ATTRIBUTE,
 }

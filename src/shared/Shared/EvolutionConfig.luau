@@ -15,7 +15,7 @@ local EVOLUTION_GATES = table.freeze({ 8, 20, 35, 75, 150, 250, 300 })
 local LEVEL_20_PUBLIC_ENABLED = false
 local GATE_DEFINITIONS: {[number]: GateDefinition} = {
 	[8] = table.freeze({ Level = 8, Status = "Implemented", SelectionImplemented = true, Description = "Choose Striker, Spinner, or Rammer for this life." }),
-	[20] = table.freeze({ Level = 20, Status = "Internal Prototype", SelectionImplemented = false, Description = "Three families are under construction; Impact Foundry is Studio-testable only." }),
+	[20] = table.freeze({ Level = 20, Status = "Internal Prototype", SelectionImplemented = false, Description = "Three families are under construction; Impact Foundry and Motion Works are Studio-testable only." }),
 	[35] = table.freeze({ Level = 35, Status = "Approved Route Data", SelectionImplemented = false, Description = "Approved graph data only; no Level 35 robot is implemented." }),
 	[75] = table.freeze({ Level = 75, Status = "Approved Route Data", SelectionImplemented = false, Description = "Approved graph data only; no Level 75 robot is implemented." }),
 	[150] = table.freeze({ Level = 150, Status = "Approved Route Data", SelectionImplemented = false, Description = "Approved graph data only; no Level 150 robot is implemented." }),
@@ -52,7 +52,7 @@ local ROUTE_NODES: {[string]: RouteNode} = {
 	Spinner = routeNode("Spinner", 8, { "ScrapRunner" }, { "ImpactFoundry", "MotionWorks", "FieldRig" }, "Prototype", true, true),
 	Rammer = routeNode("Rammer", 8, { "ScrapRunner" }, { "ImpactFoundry", "MotionWorks", "FieldRig" }, "Prototype", true, true),
 	ImpactFoundry = routeNode("Impact Foundry", 20, { "Striker", "Spinner", "Rammer" }, { "Pilebreaker", "TwinMaul", "Ironclad" }, "Studio Prototype", true, false),
-	MotionWorks = routeNode("Motion Works", 20, { "Striker", "Spinner", "Rammer" }, { "TwinMaul", "Stormring", "Ripsaw" }, "Future Work"),
+	MotionWorks = routeNode("Motion Works", 20, { "Striker", "Spinner", "Rammer" }, { "TwinMaul", "Stormring", "Ripsaw" }, "Studio Prototype", true, false),
 	FieldRig = routeNode("Field Rig", 20, { "Striker", "Spinner", "Rammer" }, { "Stormring", "Ironclad", "Liftjack" }, "Future Work"),
 	Pilebreaker = routeNode("Pilebreaker", 35, { "ImpactFoundry" }, { "Faultpress", "Crossmaul" }, "Future Work"),
 	TwinMaul = routeNode("Twin Maul", 35, { "ImpactFoundry", "MotionWorks" }, { "Crossmaul", "ArcCrown" }, "Future Work"),

@@ -76,8 +76,9 @@ local function isArenaPlayer(targetPlayer: Player): boolean
 	return targetPlayer:GetAttribute(SessionConfig.SessionAttribute) == SessionConfig.ArenaState
 end
 
-local function isImpactFoundryActive(targetPlayer: Player): boolean
-	return targetPlayer:GetAttribute(EvolutionConfig.CurrentNodeAttribute) == ClassConfig.ImpactFoundryNodeId
+local function isLevel20CombatActive(targetPlayer: Player): boolean
+	local nodeId = targetPlayer:GetAttribute(EvolutionConfig.CurrentNodeAttribute)
+	return nodeId == ClassConfig.ImpactFoundryNodeId or nodeId == ClassConfig.MotionWorksNodeId
 end
 
 local function getCurrentCooldown(): number
@@ -302,7 +303,7 @@ UserInputService.InputBegan:Connect(function(input: InputObject, gameProcessedEv
 	if gameProcessedEvent or input.UserInputType ~= Enum.UserInputType.MouseButton1 then
 		return
 	end
-	if not isArenaPlayer(player) or isImpactFoundryActive(player) then
+	if not isArenaPlayer(player) or isLevel20CombatActive(player) then
 		return
 	end
 	if primaryAttackHeld then
@@ -322,7 +323,7 @@ UserInputService.InputEnded:Connect(function(input: InputObject)
 	end
 	local wasHeld = primaryAttackHeld
 	primaryAttackHeld = false
-	if wasHeld and not isImpactFoundryActive(player) and getClassId(player) == ClassConfig.SpinnerClassId then
+	if wasHeld and not isLevel20CombatActive(player) and getClassId(player) == ClassConfig.SpinnerClassId then
 		requestSpinnerStop()
 	end
 end)
@@ -330,7 +331,7 @@ end)
 UserInputService.WindowFocusReleased:Connect(function()
 	local wasHeld = primaryAttackHeld
 	primaryAttackHeld = false
-	if wasHeld and not isImpactFoundryActive(player) and getClassId(player) == ClassConfig.SpinnerClassId then
+	if wasHeld and not isLevel20CombatActive(player) and getClassId(player) == ClassConfig.SpinnerClassId then
 		requestSpinnerStop()
 	end
 end)

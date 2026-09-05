@@ -13,6 +13,7 @@ local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local CollisionGroupService = require(script.Parent:WaitForChild("CollisionGroupService"))
 local RammerCombatService = require(script.Parent:WaitForChild("RammerCombatService"))
 local ImpactFoundryCombatService = require(script.Parent:WaitForChild("ImpactFoundryCombatService"))
+local MotionWorksCombatService = require(script.Parent:WaitForChild("MotionWorksCombatService"))
 local PlayerSessionService = require(script.Parent:WaitForChild("PlayerSessionService"))
 
 local ROBOT_CHASSIS_NAME = "RobotChassis"
@@ -39,6 +40,7 @@ PlayerSessionService.Init()
 CollisionGroupService.Init()
 RammerCombatService.Init()
 ImpactFoundryCombatService.Init()
+MotionWorksCombatService.Init()
 
 type PlayerState = {
 	character: Model?,
@@ -471,7 +473,10 @@ RunService.Heartbeat:Connect(function(deltaTime: number)
 		local speedTolerance = MovementConfig.ServerSpeedTolerance
 		local rammerAuthorization = RammerCombatService.GetMovementAuthorization(player, root)
 		local impactFoundryAuthorization = ImpactFoundryCombatService.GetMovementAuthorization(player)
-		local movementAuthorization = rammerAuthorization or impactFoundryAuthorization
+		local motionWorksAuthorization = MotionWorksCombatService.GetMovementAuthorization(
+			player, root, (planarPosition - previousPlanarPosition) / elapsed, elapsed
+		)
+		local movementAuthorization = rammerAuthorization or impactFoundryAuthorization or motionWorksAuthorization
 		if movementAuthorization ~= nil then
 			legalMaxSpeed = movementAuthorization.legalMaxSpeed
 			maximumAcceleration = movementAuthorization.maximumAcceleration
@@ -484,7 +489,12 @@ RunService.Heartbeat:Connect(function(deltaTime: number)
 		local exceededSpeed = math.max(measuredSpeed, physicalSpeed) > legalMaxSpeed + speedTolerance + speedAllowance
 		local exceededAcceleration = measuredAcceleration > maximumAcceleration + accelerationAllowance
 		local clearRammerViolation = rammerAuthorization ~= nil and rammerAuthorization.clearViolation
-		local violatedMovementLimit = teleported or exceededSpeed or exceededAcceleration or clearRammerViolation
+		local clearMotionWorksViolation = motionWorksAuthorization ~= nil and motionWorksAuthorization.clearViolation
+		local violatedMovementLimit = teleported
+			or exceededSpeed
+			or exceededAcceleration
+			or clearRammerViolation
+			or clearMotionWorksViolation
 
 		if violatedMovementLimit then
 			state.consecutiveViolations += 1
@@ -495,10 +505,16 @@ RunService.Heartbeat:Connect(function(deltaTime: number)
 
 		local shouldCorrect = teleported
 			or clearRammerViolation
+			or clearMotionWorksViolation
 			or state.consecutiveViolations >= MovementConfig.ServerViolationSamples
 		if shouldCorrect then
 			if clearRammerViolation then
 				RammerCombatService.CancelMovementViolation(player)
+			end
+			-- Any correction during a Motion Works authorization revokes the drive,
+			-- including displacement/acceleration violations from the shared monitor.
+			if motionWorksAuthorization ~= nil then
+				MotionWorksCombatService.CancelMovementViolation(player)
 			end
 			character:PivotTo(state.lastSafeCFrame)
 			root.AssemblyLinearVelocity = Vector3.zero

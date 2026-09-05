@@ -14,11 +14,13 @@ local CombatConfig = require(shared:WaitForChild("CombatConfig"))
 local ClassConfig = require(shared:WaitForChild("ClassConfig"))
 local EvolutionConfig = require(shared:WaitForChild("EvolutionConfig"))
 local ImpactFoundryConfig = require(shared:WaitForChild("ImpactFoundryConfig"))
+local MotionWorksConfig = require(shared:WaitForChild("MotionWorksConfig"))
 local ProgressionConfig = require(shared:WaitForChild("ProgressionConfig"))
 local RammerConfig = require(shared:WaitForChild("RammerConfig"))
 local SessionConfig = require(shared:WaitForChild("SessionConfig"))
 local RammerClientState = require(script.Parent:WaitForChild("RammerClientState"))
 local ImpactFoundryClientState = require(script.Parent:WaitForChild("ImpactFoundryClientState"))
+local MotionWorksClientState = require(script.Parent:WaitForChild("MotionWorksClientState"))
 local telemetryRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("RobotMovementTelemetry") :: RemoteEvent
 local camera = assert(Workspace.CurrentCamera, "CurrentCamera is required for robot controls") :: Camera
 
@@ -308,12 +310,15 @@ local function isFinite(value: number): boolean
 	return value == value and value > -math.huge and value < math.huge
 end
 
-local function getCurrentMaxSpeed(): number
+local function getCurrentSpeedRank(): number
 	local rankValue = player:GetAttribute("SpeedUpgradeLevel")
-	local rank = if typeof(rankValue) == "number" and isFinite(rankValue)
+	return if typeof(rankValue) == "number" and isFinite(rankValue)
 		then math.clamp(math.floor(rankValue), 0, ProgressionConfig.MaxUpgradeRank)
 		else 0
-	return MovementConfig.MaxSpeed * ProgressionConfig.GetSpeedMultiplier(rank)
+end
+
+local function getCurrentMaxSpeed(): number
+	return MovementConfig.MaxSpeed * ProgressionConfig.GetSpeedMultiplier(getCurrentSpeedRank())
 end
 
 local function getCurrentClassId(): string
@@ -321,7 +326,7 @@ local function getCurrentClassId(): string
 	return if typeof(classValue) == "string" then classValue else ClassConfig.BaseClassId
 end
 
-local function isDashPathBlocked(root: BasePart, direction: Vector3): boolean
+local function isDashPathBlocked(root: BasePart, direction: Vector3, probeDistance: number?): boolean
 	local character = root.Parent
 	if character == nil then
 		return false
@@ -332,7 +337,7 @@ local function isDashPathBlocked(root: BasePart, direction: Vector3): boolean
 	raycastParams.IgnoreWater = true
 	local result = Workspace:Raycast(
 		root.Position + Vector3.new(0, 0.2, 0),
-		direction * RammerConfig.DashObstacleProbeDistance,
+		direction * (probeDistance or RammerConfig.DashObstacleProbeDistance),
 		raycastParams
 	)
 	if result == nil or not result.Instance:IsA("BasePart") or not result.Instance.CanCollide then
@@ -394,9 +399,15 @@ local function updateMovement(deltaTime: number)
 	local currentMaxSpeed = getCurrentMaxSpeed()
 	local rammerState = RammerClientState.Get()
 	local impactFoundryState = ImpactFoundryClientState.Get()
+	local motionWorksState = MotionWorksClientState.Get()
 	local isImpactFoundry = player:GetAttribute(EvolutionConfig.CurrentNodeAttribute)
 		== ClassConfig.ImpactFoundryNodeId
 	local isImpactFoundryWindup = isImpactFoundry and impactFoundryState.phase == "Windup"
+	local isMotionWorks = player:GetAttribute(EvolutionConfig.CurrentNodeAttribute)
+		== ClassConfig.MotionWorksNodeId
+	local isMotionWorksSpooling = isMotionWorks and motionWorksState.phase == "Spooling"
+	local isMotionWorksDriven = isMotionWorks and motionWorksState.phase == "Driven"
+	local isMotionWorksCoastdown = isMotionWorks and motionWorksState.phase == "Coastdown"
 	local isRammer = getCurrentClassId() == ClassConfig.RammerClassId
 	local isCharging = isRammer and (rammerState.phase == "Charging" or rammerState.phase == "Ready")
 	local isDashing = isRammer
@@ -426,11 +437,35 @@ local function updateMovement(deltaTime: number)
 			smoothedVelocity = targetVelocity
 			lastRammerDashSerial = rammerState.attackSerial
 		end
+	elseif isMotionWorksDriven then
+		local look = root.CFrame.LookVector
+		local forward = Vector3.new(look.X, 0, look.Z)
+		forward = if forward.Magnitude > 0.01 then forward.Unit else Vector3.new(0, 0, -1)
+		local output = math.clamp(motionWorksState.output, 0, 1)
+		local steering = MotionWorksConfig.GetDrivenSteeringMultiplier(output)
+		local lateralInput = moveDirection - forward * moveDirection:Dot(forward)
+		local forwardInput = moveDirection:Dot(forward)
+		local nonForwardInput = moveDirection.Magnitude > 0.01 and forwardInput <= MotionWorksConfig.ForwardInputDeadzone
+		local drivenDirection = if nonForwardInput then moveDirection else forward + lateralInput * steering
+		if drivenDirection.Magnitude > 0.01 then drivenDirection = drivenDirection.Unit end
+		currentMaxSpeed = MotionWorksConfig.GetDirectionalSpeedLimit(
+			getCurrentSpeedRank(),
+			output,
+			drivenDirection:Dot(forward)
+		)
+		if nonForwardInput then currentMaxSpeed = math.min(currentMaxSpeed, getCurrentMaxSpeed()) end
+		local blocked = isDashPathBlocked(root, forward, MotionWorksConfig.ObstacleProbeDistance)
+		targetVelocity = if blocked then Vector3.zero else drivenDirection * currentMaxSpeed
+		if blocked then smoothedVelocity = Vector3.zero end
 	else
 		if isCharging then
 			currentMaxSpeed *= RammerConfig.ChargeMovementSpeedMultiplier
 		elseif isImpactFoundryWindup then
 			currentMaxSpeed *= ImpactFoundryConfig.WindupMovementSpeedMultiplier
+		elseif isMotionWorksSpooling then
+			currentMaxSpeed *= MotionWorksConfig.SpoolMovementSpeedMultiplier
+		elseif isMotionWorksCoastdown then
+			currentMaxSpeed *= MotionWorksConfig.CoastMovementSpeedMultiplier
 		end
 		targetVelocity = moveDirection * currentMaxSpeed
 		lastRammerDashSerial = 0
@@ -440,6 +475,10 @@ local function updateMovement(deltaTime: number)
 		movementSharpness *= RammerConfig.ChargeSteeringMultiplier
 	elseif isImpactFoundryWindup then
 		movementSharpness *= ImpactFoundryConfig.WindupSteeringMultiplier
+	elseif isMotionWorksSpooling then
+		movementSharpness *= MotionWorksConfig.SpoolSteeringMultiplier
+	elseif isMotionWorksDriven then
+		movementSharpness *= MotionWorksConfig.GetDrivenSteeringMultiplier(motionWorksState.output)
 	end
 	local movementAlpha = 1 - math.exp(-movementSharpness * deltaTime)
 	smoothedVelocity = smoothedVelocity:Lerp(targetVelocity, movementAlpha)
@@ -466,11 +505,19 @@ local function updateMovement(deltaTime: number)
 	local aimDirection = getMouseAimDirection(root)
 	local aimOrientation = currentAimOrientation
 	if aimOrientation ~= nil then
+		-- Responsiveness changes settling, not the maximum angular velocity.
+		-- Match the server's Driven turn envelope and restore the normal cap afterward.
+		aimOrientation.MaxAngularVelocity = if isMotionWorksDriven
+			then MotionWorksConfig.MaximumDrivenTurnRate
+				* MotionWorksConfig.GetDrivenSteeringMultiplier(motionWorksState.output)
+			else MovementConfig.AimMaxAngularSpeed
 		aimOrientation.Responsiveness = MovementConfig.AimTurnSharpness
 			* (if isDashing
 				then RammerConfig.DashSteeringMultiplier
 				elseif isCharging then RammerConfig.ChargeSteeringMultiplier
 				elseif isImpactFoundryWindup then ImpactFoundryConfig.WindupSteeringMultiplier
+				elseif isMotionWorksSpooling then MotionWorksConfig.SpoolSteeringMultiplier
+				elseif isMotionWorksDriven then MotionWorksConfig.GetDrivenSteeringMultiplier(motionWorksState.output)
 				else 1)
 	end
 	rotateTowardAim(aimDirection)

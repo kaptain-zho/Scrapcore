@@ -72,9 +72,9 @@ local definitions: {[string]: ClassDefinition} = {
 		DisplayName = "Motion Works",
 		Tier = 20,
 		Enabled = false,
-		Status = "Future Work",
-		Role = "Rotary and bounded-mobility family",
-		Tradeoff = "Under construction and unavailable.",
+		Status = "Studio Prototype",
+		Role = "Powered frontal pressure while moving",
+		Tradeoff = "Directional commitment, vulnerable spool, and energy downtime.",
 	}),
 	FieldRig = table.freeze({
 		DisplayName = "Field Rig",
@@ -140,6 +140,7 @@ local ClassConfig = table.freeze({
 	SpinnerClassId = "Spinner",
 	RammerClassId = "Rammer",
 	ImpactFoundryNodeId = "ImpactFoundry",
+	MotionWorksNodeId = "MotionWorks",
 	Level8Threshold = EvolutionConfig.Gates[1],
 	Level20Threshold = EvolutionConfig.Gates[2],
 	EvolutionGates = EvolutionConfig.Gates,
@@ -165,6 +166,11 @@ local ClassConfig = table.freeze({
 	EquippedImpactFoundryName = "EquippedImpactFoundry",
 	ImpactFoundryWeaponMotorName = "ImpactFoundryWeaponMotor",
 	ImpactFoundryAccentColor = Color3.fromRGB(66, 205, 178),
+	EquippedMotionWorksName = "EquippedMotionWorks",
+	MotionWorksWeaponMotorName = "MotionWorksWeaponMotor",
+	MotionWorksFrontRollerMotorName = "MotionWorksFrontRollerMotor",
+	MotionWorksRearRollerMotorName = "MotionWorksRearRollerMotor",
+	MotionWorksAccentColor = Color3.fromRGB(136, 220, 92),
 })
 
 return ClassConfig
