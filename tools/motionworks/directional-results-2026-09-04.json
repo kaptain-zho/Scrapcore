@@ -1,0 +1,2633 @@
+{
+  "status": "partial; final coastdown revision unverified after Assistant plugin update",
+  "samples": [
+    {
+      "lag": 0,
+      "affected": 0,
+      "phases": {
+        "Idle": {
+          "yMax": 2.026381731033325,
+          "speedMax": 25.997066497802734,
+          "closingMax": 0,
+          "yMin": 1.9806307554244995,
+          "closingMin": -25.997066497802734,
+          "samples": 67,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        }
+      },
+      "pulses": 0,
+      "beforeCorrections": 1,
+      "duration": 3.35498650000045,
+      "beforeRejects": 0,
+      "name": "11 Idle reverse",
+      "corrections": 0,
+      "beforeAffected": 7,
+      "rejected": 0,
+      "beforePulses": 20,
+      "damage": 0
+    },
+    {
+      "lag": 0,
+      "affected": 0,
+      "phases": {
+        "Spooling": {
+          "yMax": 1.992323875427246,
+          "speedMax": 17.18082618713379,
+          "closingMax": -0.933052659034729,
+          "yMin": 1.9863059520721436,
+          "closingMin": -17.18082618713379,
+          "samples": 15,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Driven": {
+          "yMax": 2.0030384063720703,
+          "speedMax": 25.783245086669922,
+          "closingMax": -17.23577880859375,
+          "yMin": 1.9921207427978516,
+          "closingMin": -25.783245086669922,
+          "samples": 57,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Recovery": {
+          "yMax": 1.9937443733215332,
+          "speedMax": 9.925250053405762,
+          "closingMax": -3.851935625076294,
+          "yMin": 1.9921395778656006,
+          "closingMin": -9.925250053405762,
+          "samples": 4,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Coastdown": {
+          "yMax": 2.0019595623016357,
+          "speedMax": 25.841217041015625,
+          "closingMax": -10.243452072143555,
+          "yMin": 1.9938313961029053,
+          "closingMin": -25.841217041015625,
+          "samples": 6,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Idle": {
+          "yMax": 1.9888579845428467,
+          "speedMax": 0.5088137984275818,
+          "closingMax": 0,
+          "yMin": 1.9882729053497314,
+          "closingMin": -0.5088137984275818,
+          "samples": 10,
+          "dotMin": -1,
+          "dotMax": -1
+        }
+      },
+      "pulses": 8,
+      "beforeCorrections": 1,
+      "duration": 4.88526180000008,
+      "beforeRejects": 0,
+      "name": "12/13 Spooling and Driven reverse",
+      "corrections": 0,
+      "beforeAffected": 7,
+      "rejected": 0,
+      "beforePulses": 20,
+      "damage": 0
+    },
+    {
+      "lag": 0,
+      "affected": 0,
+      "phases": {
+        "Spooling": {
+          "yMax": 1.9870637655258179,
+          "speedMax": 14.918235778808594,
+          "closingMax": 0,
+          "yMin": 1.98435378074646,
+          "closingMin": 0,
+          "samples": 13,
+          "dotMin": 0,
+          "dotMax": 0
+        },
+        "Driven": {
+          "yMax": 2.001466751098633,
+          "speedMax": 25.8009033203125,
+          "closingMax": 0.00023586140014231205,
+          "yMin": 1.9875246286392212,
+          "closingMin": -0.00027081917505711317,
+          "samples": 55,
+          "dotMin": -0.000010580022717476822,
+          "dotMax": 0.000009436991604161449
+        },
+        "Recovery": {
+          "yMax": 1.9980788230895996,
+          "speedMax": 11.114975929260254,
+          "closingMax": 0,
+          "yMin": 1.9961670637130737,
+          "closingMin": -5.417876650787301e-12,
+          "samples": 4,
+          "dotMin": -4.874393532035282e-13,
+          "dotMax": 0
+        },
+        "Coastdown": {
+          "yMax": 2.0012619495391846,
+          "speedMax": 25.90492057800293,
+          "closingMax": -1.5510618567304846e-8,
+          "yMin": 1.9938024282455444,
+          "closingMin": -0.000008270564649137668,
+          "samples": 10,
+          "dotMin": -3.1987525517251925e-7,
+          "dotMax": -1.3439992452290994e-9
+        },
+        "Idle": {
+          "yMax": 1.988311767578125,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.986358404159546,
+          "closingMin": 0,
+          "samples": 11,
+          "dotMin": 1,
+          "dotMax": -1
+        }
+      },
+      "pulses": 8,
+      "beforeCorrections": 1,
+      "duration": 4.961510900000576,
+      "beforeRejects": 0,
+      "name": "14 Driven strafe",
+      "corrections": 0,
+      "beforeAffected": 7,
+      "rejected": 0,
+      "beforePulses": 28,
+      "damage": 0
+    },
+    {
+      "lag": 0,
+      "affected": 0,
+      "phases": {
+        "Spooling": {
+          "yMax": 1.9907513856887817,
+          "speedMax": 16.676910400390625,
+          "closingMax": 16.676910400390625,
+          "yMin": 1.9851783514022827,
+          "closingMin": 0,
+          "samples": 12,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Driven": {
+          "yMax": 2.0031721591949463,
+          "speedMax": 25.809961318969727,
+          "closingMax": 25.809961318969727,
+          "yMin": 1.9879175424575806,
+          "closingMin": 16.738981246948242,
+          "samples": 56,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Recovery": {
+          "yMax": 1.9987590312957764,
+          "speedMax": 22.653127670288086,
+          "closingMax": 22.653127670288086,
+          "yMin": 1.9941701889038086,
+          "closingMin": 6.769861221313477,
+          "samples": 5,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Coastdown": {
+          "yMax": 2.0001838207244873,
+          "speedMax": 25.87183952331543,
+          "closingMax": 25.87183952331543,
+          "yMin": 1.9880762100219727,
+          "closingMin": 23.601980209350586,
+          "samples": 10,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Idle": {
+          "yMax": 1.987370491027832,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.9855453968048096,
+          "closingMin": 0,
+          "samples": 10,
+          "dotMin": 1,
+          "dotMax": -1
+        }
+      },
+      "pulses": 8,
+      "beforeCorrections": 1,
+      "duration": 4.842574599999352,
+      "beforeRejects": 0,
+      "name": "15 Reverse humanoid rear",
+      "corrections": 0,
+      "beforeAffected": 7,
+      "rejected": 0,
+      "beforePulses": 36,
+      "damage": 0
+    },
+    {
+      "lag": 0,
+      "affected": 0,
+      "phases": {
+        "Spooling": {
+          "yMax": 1.9923083782196045,
+          "speedMax": 17.410221099853516,
+          "closingMax": 17.410221099853516,
+          "yMin": 1.9844181537628174,
+          "closingMin": 1.334847092628479,
+          "samples": 18,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Driven": {
+          "yMax": 2.0030901432037354,
+          "speedMax": 25.779329299926758,
+          "closingMax": 25.779329299926758,
+          "yMin": 1.994072437286377,
+          "closingMin": 17.832496643066406,
+          "samples": 50,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Recovery": {
+          "yMax": 2.0011937618255615,
+          "speedMax": 22.349567413330078,
+          "closingMax": 22.349567413330078,
+          "yMin": 1.998039722442627,
+          "closingMin": 6.579730987548828,
+          "samples": 9,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Coastdown": {
+          "yMax": 1.9997445344924927,
+          "speedMax": 25.844165802001953,
+          "closingMax": 25.844165802001953,
+          "yMin": 1.9946240186691284,
+          "closingMin": 25.317960739135742,
+          "samples": 10,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Idle": {
+          "yMax": 1.9870786666870117,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.985592007637024,
+          "closingMin": 0,
+          "samples": 12,
+          "dotMin": 1,
+          "dotMax": -1
+        }
+      },
+      "pulses": 7,
+      "beforeCorrections": 1,
+      "duration": 4.832874699999593,
+      "beforeRejects": 0,
+      "name": "15 Reverse ScrapPileCommon",
+      "corrections": 0,
+      "beforeAffected": 7,
+      "rejected": 0,
+      "beforePulses": 44,
+      "damage": 0
+    },
+    {
+      "lag": 0,
+      "affected": 0,
+      "phases": {
+        "Spooling": {
+          "yMax": 1.9906195402145386,
+          "speedMax": 16.70391273498535,
+          "closingMax": 16.70391273498535,
+          "yMin": 1.9845824241638184,
+          "closingMin": 0,
+          "samples": 13,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Driven": {
+          "yMax": 2.0021378993988037,
+          "speedMax": 25.813508987426758,
+          "closingMax": 25.813508987426758,
+          "yMin": 1.9910087585449219,
+          "closingMin": 16.788410186767578,
+          "samples": 55,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Recovery": {
+          "yMax": 1.9967553615570068,
+          "speedMax": 21.739212036132812,
+          "closingMax": 21.739212036132812,
+          "yMin": 1.9955922365188599,
+          "closingMin": 6.694677829742432,
+          "samples": 5,
+          "dotMin": -1,
+          "dotMax": -1
+        },
+        "Coastdown": {
+          "yMax": 1.999679446220398,
+          "speedMax": 25.877613067626953,
+          "closingMax": 25.877613067626953,
+          "yMin": 1.99339759349823,
+          "closingMin": 22.64881706237793,
+          "samples": 11,
+          "dotMin": -1,
+          "dotMax": -1
+        },
+        "Idle": {
+          "yMax": 1.988311767578125,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.9860427379608154,
+          "closingMin": 0,
+          "samples": 10,
+          "dotMin": 1,
+          "dotMax": -1
+        }
+      },
+      "pulses": 8,
+      "beforeCorrections": 1,
+      "duration": 5.013099100000545,
+      "beforeRejects": 0,
+      "name": "15 Reverse ScrapPileRare",
+      "corrections": 0,
+      "beforeAffected": 7,
+      "rejected": 0,
+      "beforePulses": 51,
+      "damage": 0
+    },
+    {
+      "lag": 0,
+      "affected": 0,
+      "phases": {
+        "Spooling": {
+          "yMax": 1.9922624826431274,
+          "speedMax": 17.074941635131836,
+          "closingMax": 17.074941635131836,
+          "yMin": 1.984454870223999,
+          "closingMin": 0.9568355083465576,
+          "samples": 13,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Driven": {
+          "yMax": 2.0051000118255615,
+          "speedMax": 25.796567916870117,
+          "closingMax": 25.796567916870117,
+          "yMin": 1.9877967834472656,
+          "closingMin": 17.133586883544922,
+          "samples": 55,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Recovery": {
+          "yMax": 2.002676248550415,
+          "speedMax": 22.83850860595703,
+          "closingMax": 22.83850860595703,
+          "yMin": 1.9937665462493896,
+          "closingMin": 7.332956314086914,
+          "samples": 6,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Coastdown": {
+          "yMax": 2.0007529258728027,
+          "speedMax": 25.887483596801758,
+          "closingMax": 25.887483596801758,
+          "yMin": 1.9905261993408203,
+          "closingMin": 25.44594955444336,
+          "samples": 11,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Idle": {
+          "yMax": 1.9891711473464966,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.9853357076644897,
+          "closingMin": 0,
+          "samples": 12,
+          "dotMin": 1,
+          "dotMax": -1
+        }
+      },
+      "pulses": 8,
+      "beforeCorrections": 1,
+      "duration": 5.091072500001246,
+      "beforeRejects": 0,
+      "name": "15 Reverse ScrapPileEpic",
+      "corrections": 0,
+      "beforeAffected": 7,
+      "rejected": 0,
+      "beforePulses": 59,
+      "damage": 0
+    },
+    {
+      "lag": 0,
+      "affected": 0,
+      "phases": {
+        "Spooling": {
+          "yMax": 1.9846044778823853,
+          "speedMax": 12.013641357421875,
+          "closingMax": 12.013641357421875,
+          "yMin": 1.9835022687911987,
+          "closingMin": 0,
+          "samples": 12,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Driven": {
+          "yMax": 2.0006699562072754,
+          "speedMax": 25.743438720703125,
+          "closingMax": 25.743438720703125,
+          "yMin": 1.983931541442871,
+          "closingMin": 12.375736236572266,
+          "samples": 56,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Recovery": {
+          "yMax": 1.9992132186889648,
+          "speedMax": 22.75250244140625,
+          "closingMax": 22.75250244140625,
+          "yMin": 1.9979643821716309,
+          "closingMin": 9.630388259887695,
+          "samples": 5,
+          "dotMin": -1,
+          "dotMax": -1
+        },
+        "Coastdown": {
+          "yMax": 2.001680850982666,
+          "speedMax": 25.85430908203125,
+          "closingMax": 25.85430908203125,
+          "yMin": 1.9993139505386353,
+          "closingMin": 23.06651496887207,
+          "samples": 9,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Idle": {
+          "yMax": 1.988311767578125,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.9856812953948975,
+          "closingMin": 0,
+          "samples": 9,
+          "dotMin": 1,
+          "dotMax": -1
+        }
+      },
+      "pulses": 8,
+      "beforeCorrections": 1,
+      "duration": 4.842874500000107,
+      "beforeRejects": 0,
+      "name": "15 Reverse ReinforcedCrate",
+      "corrections": 0,
+      "beforeAffected": 7,
+      "rejected": 0,
+      "beforePulses": 67,
+      "damage": 0
+    },
+    {
+      "lag": 0,
+      "affected": 0,
+      "phases": {
+        "Spooling": {
+          "yMax": 1.992634654045105,
+          "speedMax": 17.41107749938965,
+          "closingMax": 17.41107749938965,
+          "yMin": 1.9854981899261475,
+          "closingMin": 3.6219615936279297,
+          "samples": 15,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Driven": {
+          "yMax": 2.0040154457092285,
+          "speedMax": 25.763280868530273,
+          "closingMax": 25.763280868530273,
+          "yMin": 1.9900703430175781,
+          "closingMin": 17.47243881225586,
+          "samples": 53,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Recovery": {
+          "yMax": 1.9982826709747314,
+          "speedMax": 25.646629333496094,
+          "closingMax": 25.646629333496094,
+          "yMin": 1.9928505420684814,
+          "closingMin": 7.598201751708984,
+          "samples": 8,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Coastdown": {
+          "yMax": 2.000443458557129,
+          "speedMax": 25.832183837890625,
+          "closingMax": 25.832183837890625,
+          "yMin": 1.991318941116333,
+          "closingMin": 25.69373321533203,
+          "samples": 7,
+          "dotMin": -1,
+          "dotMax": -1
+        },
+        "Idle": {
+          "yMax": 1.988311767578125,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.986358404159546,
+          "closingMin": 0,
+          "samples": 9,
+          "dotMin": 1,
+          "dotMax": -1
+        }
+      },
+      "pulses": 8,
+      "beforeCorrections": 1,
+      "duration": 4.833048899999994,
+      "beforeRejects": 0,
+      "name": "15 Reverse PowerCore",
+      "corrections": 0,
+      "beforeAffected": 7,
+      "rejected": 0,
+      "beforePulses": 75,
+      "damage": 0
+    },
+    {
+      "lag": 0,
+      "affected": 0,
+      "phases": {
+        "Spooling": {
+          "yMax": 1.9923228025436401,
+          "speedMax": 17.382654190063477,
+          "closingMax": 0,
+          "yMin": 1.984451413154602,
+          "closingMin": 0,
+          "samples": 13,
+          "dotMin": 0,
+          "dotMax": 0
+        },
+        "Driven": {
+          "yMax": 2.002584218978882,
+          "speedMax": 25.82347869873047,
+          "closingMax": 0.0003563242207746953,
+          "yMin": 1.9891771078109741,
+          "closingMin": -0.00022382981842383742,
+          "samples": 55,
+          "dotMin": -0.00000885715962795075,
+          "dotMax": 0.000013982307791593485
+        },
+        "Recovery": {
+          "yMax": 1.9980729818344116,
+          "speedMax": 22.4857120513916,
+          "closingMax": 0,
+          "yMin": 1.9911378622055054,
+          "closingMin": 0,
+          "samples": 7,
+          "dotMin": 0,
+          "dotMax": 0
+        },
+        "Coastdown": {
+          "yMax": 2.0022637844085693,
+          "speedMax": 25.856271743774414,
+          "closingMax": 0.00014073267811909318,
+          "yMin": 1.993977665901184,
+          "closingMin": -0.00019704687292687595,
+          "samples": 10,
+          "dotMin": -0.000008019965207495261,
+          "dotMax": 0.000005295779828884406
+        },
+        "Idle": {
+          "yMax": 1.9872878789901733,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.985058069229126,
+          "closingMin": 0,
+          "samples": 10,
+          "dotMin": 1,
+          "dotMax": -1
+        }
+      },
+      "pulses": 8,
+      "beforeCorrections": 1,
+      "duration": 4.777484000000186,
+      "beforeRejects": 0,
+      "name": "16 Strafe humanoid",
+      "corrections": 0,
+      "beforeAffected": 7,
+      "rejected": 0,
+      "beforePulses": 83,
+      "damage": 0
+    },
+    {
+      "lag": 0,
+      "affected": 0,
+      "phases": {
+        "Spooling": {
+          "yMax": 1.9916040897369385,
+          "speedMax": 16.536046981811523,
+          "closingMax": 0,
+          "yMin": 1.9825632572174072,
+          "closingMin": 0,
+          "samples": 11,
+          "dotMin": 0,
+          "dotMax": 0
+        },
+        "Driven": {
+          "yMax": 2.0043420791625977,
+          "speedMax": 25.772226333618164,
+          "closingMax": 0.0002159163122996688,
+          "yMin": 1.990241527557373,
+          "closingMin": -0.0002709425752982497,
+          "samples": 49,
+          "dotMin": -0.000011344182894390542,
+          "dotMax": 0.00000966468815022381
+        },
+        "Recovery": {
+          "yMax": 1.99799382686615,
+          "speedMax": 9.783778190612793,
+          "closingMax": 1.4877099990844727,
+          "yMin": 1.9960200786590576,
+          "closingMin": 0.46152985095977783,
+          "samples": 4,
+          "dotMin": 0.15205883979797363,
+          "dotMax": 0.15224917232990265
+        },
+        "Coastdown": {
+          "yMax": 1.9969249963760376,
+          "speedMax": 25.834896087646484,
+          "closingMax": 0.20169608294963837,
+          "yMin": 1.993485450744629,
+          "closingMin": -0.0002815786865539849,
+          "samples": 9,
+          "dotMin": -0.000011272313713561743,
+          "dotMax": 0.008494901470839977
+        },
+        "Idle": {
+          "yMax": 1.986299753189087,
+          "speedMax": 3.5014455318450928,
+          "closingMax": 0,
+          "yMin": 1.9834630489349365,
+          "closingMin": 0,
+          "samples": 10,
+          "dotMin": 0,
+          "dotMax": 0
+        }
+      },
+      "pulses": 8,
+      "beforeCorrections": 1,
+      "duration": 4.806948499999635,
+      "beforeRejects": 0,
+      "name": "16 Strafe PowerCore",
+      "corrections": 0,
+      "beforeAffected": 7,
+      "rejected": 0,
+      "beforePulses": 91,
+      "damage": 0
+    },
+    {
+      "lag": 0,
+      "affected": 3,
+      "phases": {
+        "Recovery": {
+          "yMax": 1.9959300756454468,
+          "speedMax": 1.6345527172088623,
+          "closingMax": 1.6345527172088623,
+          "yMin": 1.992217779159546,
+          "closingMin": 0,
+          "samples": 18,
+          "dotMin": 0.9999999403953552,
+          "dotMax": 1
+        },
+        "Coastdown": {
+          "yMax": 2.000030517578125,
+          "speedMax": 79.97654724121094,
+          "closingMax": 0,
+          "yMin": 1.9959300756454468,
+          "closingMin": -79.97654724121094,
+          "samples": 6,
+          "dotMin": -1,
+          "dotMax": -1
+        },
+        "Driven": {
+          "yMax": 2.0006489753723145,
+          "speedMax": 79.97654724121094,
+          "closingMax": 30.96956443786621,
+          "yMin": 1.9959300756454468,
+          "closingMin": -79.97654724121094,
+          "samples": 13,
+          "dotMin": -1,
+          "dotMax": 1
+        }
+      },
+      "pulses": 3,
+      "beforeCorrections": 1,
+      "duration": 2.583406300000206,
+      "beforeRejects": 0,
+      "name": "17 Forged reverse",
+      "corrections": 1,
+      "beforeAffected": 10,
+      "rejected": 0,
+      "beforePulses": 103,
+      "damage": 22.7735595703125
+    },
+    {
+      "lag": 0,
+      "affected": 2,
+      "phases": {
+        "Recovery": {
+          "yMax": 2.0047836303710938,
+          "speedMax": 0.6715056300163269,
+          "closingMax": 0.6715056300163269,
+          "yMin": 1.9941710233688354,
+          "closingMin": 0,
+          "samples": 11,
+          "dotMin": 1,
+          "dotMax": 1
+        },
+        "Coastdown": {
+          "yMax": 2.0047836303710938,
+          "speedMax": 79.37741088867188,
+          "closingMax": 4.141829967498779,
+          "yMin": 1.998077392578125,
+          "closingMin": 0,
+          "samples": 26,
+          "dotMin": 0.0007768076029606164,
+          "dotMax": 0.10368651896715164
+        },
+        "Driven": {
+          "yMax": 2.0112693309783936,
+          "speedMax": 77.2950210571289,
+          "closingMax": 29.373668670654297,
+          "yMin": 1.977386474609375,
+          "closingMin": 0.9873522520065308,
+          "samples": 15,
+          "dotMin": 0.012773658148944378,
+          "dotMax": 1
+        }
+      },
+      "pulses": 2,
+      "beforeCorrections": 2,
+      "duration": 1.4164904000008391,
+      "beforeRejects": 0,
+      "name": "17 Forged sideways",
+      "corrections": 1,
+      "beforeAffected": 15,
+      "rejected": 0,
+      "beforePulses": 109,
+      "damage": 15.14459228515625
+    },
+    {
+      "lag": 0,
+      "affected": 0,
+      "phases": {
+        "Recovery": {
+          "yMax": 2.00099778175354,
+          "speedMax": 33.98534393310547,
+          "closingMax": 0.15411856770515442,
+          "yMin": 1.9902465343475342,
+          "closingMin": -33.98534393310547,
+          "samples": 31,
+          "dotMin": -1,
+          "dotMax": -1
+        },
+        "Coastdown": {
+          "yMax": 2.0074355602264404,
+          "speedMax": 33.98534393310547,
+          "closingMax": 0,
+          "yMin": 2.000079393386841,
+          "closingMin": -33.98534393310547,
+          "samples": 26,
+          "dotMin": -1,
+          "dotMax": -1
+        },
+        "Driven": {
+          "yMax": 2.005540132522583,
+          "speedMax": 33.98534393310547,
+          "closingMax": 32.48276138305664,
+          "yMin": 1.9926574230194092,
+          "closingMin": -33.98534393310547,
+          "samples": 21,
+          "dotMin": -1,
+          "dotMax": 1
+        }
+      },
+      "pulses": 1,
+      "beforeCorrections": 3,
+      "duration": 1.299428499998612,
+      "beforeRejects": 0,
+      "name": "17 Reverse boost-window abuse",
+      "corrections": 1,
+      "beforeAffected": 21,
+      "rejected": 0,
+      "beforePulses": 115,
+      "damage": 0
+    },
+    {
+      "lag": 0,
+      "affected": 0,
+      "phases": {
+        "Driven": {
+          "yMax": 2.006221294403076,
+          "speedMax": 32.514671325683594,
+          "closingMax": 32.514671325683594,
+          "yMin": 1.991552710533142,
+          "closingMin": -23.82958984375,
+          "samples": 82,
+          "dotMin": -1,
+          "dotMax": 1
+        },
+        "Coastdown": {
+          "yMax": 2.0023880004882812,
+          "speedMax": 24.16096305847168,
+          "closingMax": -1.244218111038208,
+          "yMin": 1.9940989017486572,
+          "closingMin": -24.16096305847168,
+          "samples": 23,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        }
+      },
+      "pulses": 4,
+      "beforeCorrections": 4,
+      "duration": 1.749757600000521,
+      "beforeRejects": 0,
+      "name": "18 Forward to reverse",
+      "corrections": 0,
+      "beforeAffected": 21,
+      "rejected": 0,
+      "beforePulses": 120,
+      "damage": 0
+    },
+    {
+      "lag": 0,
+      "affected": 0,
+      "phases": {
+        "Driven": {
+          "yMax": 2.006164073944092,
+          "speedMax": 34.01039505004883,
+          "closingMax": 33.82112121582031,
+          "yMin": 1.9876383543014526,
+          "closingMin": 30.869140625,
+          "samples": 90,
+          "dotMin": 0.964476466178894,
+          "dotMax": 1
+        },
+        "Coastdown": {
+          "yMax": 2.003507614135742,
+          "speedMax": 33.52803039550781,
+          "closingMax": 32.381690979003906,
+          "yMin": 1.9867533445358276,
+          "closingMin": 2.6453237533569336,
+          "samples": 24,
+          "dotMin": 0.7977546453475952,
+          "dotMax": 0.9658095240592957
+        }
+      },
+      "pulses": 4,
+      "beforeCorrections": 4,
+      "duration": 1.9013021000009758,
+      "beforeRejects": 0,
+      "name": "19 Forward curve 90 degrees",
+      "corrections": 0,
+      "beforeAffected": 21,
+      "rejected": 0,
+      "beforePulses": 128,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 0,
+      "damageEvents": [],
+      "phases": {
+        "Idle": {
+          "yMax": 2.0093934535980225,
+          "speedMax": 25.9970703125,
+          "closingMax": 0,
+          "yMin": 1.982372522354126,
+          "closingMin": -25.9970703125,
+          "samples": 136,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 2.7704830000002403,
+      "beforeRejects": 0,
+      "name": "11 Idle reverse",
+      "corrections": 0,
+      "beforeAffected": 0,
+      "rejected": 0,
+      "beforePulses": 0,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 0,
+      "damageEvents": [],
+      "phases": {
+        "Spooling": {
+          "yMax": 2.0053787231445312,
+          "speedMax": 23.37482261657715,
+          "closingMax": -15.812164306640625,
+          "yMin": 1.9893462657928467,
+          "closingMin": -23.37482261657715,
+          "samples": 39,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Driven": {
+          "yMax": 1.9981961250305176,
+          "speedMax": 18.929201126098633,
+          "closingMax": -18.743431091308594,
+          "yMin": 1.9960120916366577,
+          "closingMin": -18.929201126098633,
+          "samples": 18,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Recovery": {
+          "yMax": 2.004229784011841,
+          "speedMax": 25.944137573242188,
+          "closingMax": 0,
+          "yMin": 1.9961862564086914,
+          "closingMin": -25.944137573242188,
+          "samples": 69,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Coastdown": {
+          "yMax": 1.9961862564086914,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.9961862564086914,
+          "closingMin": 0,
+          "samples": 26,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Idle": {
+          "yMax": 2.0041329860687256,
+          "speedMax": 25.9970703125,
+          "closingMax": 0,
+          "yMin": 1.984392523765564,
+          "closingMin": -25.9970703125,
+          "samples": 103,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 4.484335900000588,
+      "beforeRejects": 0,
+      "name": "12/13 Spooling and Driven reverse",
+      "corrections": 1,
+      "beforeAffected": 0,
+      "rejected": 0,
+      "beforePulses": 0,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 0,
+      "damageEvents": [],
+      "phases": {
+        "Recovery": {
+          "yMax": 2.000030517578125,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 2.000030517578125,
+          "closingMin": 0,
+          "samples": 1,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Spooling": {
+          "yMax": 1.998077392578125,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.998077392578125,
+          "closingMin": 0,
+          "samples": 2,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Idle": {
+          "yMax": 2.001983642578125,
+          "speedMax": 24.41817283630371,
+          "closingMax": 0,
+          "yMin": 1.9863591194152832,
+          "closingMin": -24.41817283630371,
+          "samples": 37,
+          "dotMin": -0.9999999403953552,
+          "dotMax": -0.9999380111694336
+        },
+        "Coastdown": {
+          "yMax": 1.9980779886245728,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.9980779886245728,
+          "closingMin": 0,
+          "samples": 1,
+          "dotMin": 1,
+          "dotMax": -1
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 65.0111463000012,
+      "beforeRejects": 0,
+      "name": "diag150reverse",
+      "corrections": 0,
+      "beforeAffected": 0,
+      "rejected": 1,
+      "beforePulses": 0,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 0,
+      "damageEvents": [],
+      "phases": {
+        "Spooling": {
+          "yMax": 1.9942413568496704,
+          "speedMax": 18.089447021484375,
+          "closingMax": 0,
+          "yMin": 1.9824546575546265,
+          "closingMin": -18.089447021484375,
+          "samples": 39,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Driven": {
+          "yMax": 1.9962457418441772,
+          "speedMax": 18.69662857055664,
+          "closingMax": -18.158037185668945,
+          "yMin": 1.994132161140442,
+          "closingMin": -18.69662857055664,
+          "samples": 15,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Recovery": {
+          "yMax": 2.0063998699188232,
+          "speedMax": 25.948163986206055,
+          "closingMax": 0,
+          "yMin": 1.990981936454773,
+          "closingMin": -25.948163986206055,
+          "samples": 72,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Coastdown": {
+          "yMax": 1.9960533380508423,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.9960533380508423,
+          "closingMin": 0,
+          "samples": 23,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Idle": {
+          "yMax": 1.9975481033325195,
+          "speedMax": 15.461775779724121,
+          "closingMax": 0,
+          "yMin": 1.9843993186950684,
+          "closingMin": -15.461775779724121,
+          "samples": 21,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 4.484281399998508,
+      "beforeRejects": 1,
+      "name": "diag150reverse retry",
+      "corrections": 1,
+      "beforeAffected": 0,
+      "rejected": 1,
+      "beforePulses": 0,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 5,
+      "damageEvents": [],
+      "phases": {
+        "Spooling": {
+          "yMax": 1.996124267578125,
+          "speedMax": 18.602832794189453,
+          "closingMax": 0,
+          "yMin": 1.980682134628296,
+          "closingMin": -18.602832794189453,
+          "samples": 36,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Driven": {
+          "yMax": 2.0043811798095703,
+          "speedMax": 25.090373992919922,
+          "closingMax": 0,
+          "yMin": 1.9929429292678833,
+          "closingMin": -25.090373992919922,
+          "samples": 70,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Recovery": {
+          "yMax": 2.003098249435425,
+          "speedMax": 23.596981048583984,
+          "closingMax": 0,
+          "yMin": 1.994606614112854,
+          "closingMin": -23.596981048583984,
+          "samples": 29,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Coastdown": {
+          "yMax": 2.003098249435425,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 2.003098249435425,
+          "closingMin": 0,
+          "samples": 26,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Idle": {
+          "yMax": 1.986358404159546,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.982452154159546,
+          "closingMin": 0,
+          "samples": 28,
+          "dotMin": 1,
+          "dotMax": -1
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 4.849779000000126,
+      "beforeRejects": 0,
+      "name": "diag150generic",
+      "corrections": 1,
+      "beforeAffected": 0,
+      "rejected": 0,
+      "beforePulses": 0,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 7,
+      "damageEvents": [],
+      "phases": {
+        "Spooling": {
+          "yMax": 2.0022599697113037,
+          "speedMax": 23.521623611450195,
+          "closingMax": -5.624141693115234,
+          "yMin": 1.9804999828338623,
+          "closingMin": -23.521623611450195,
+          "samples": 20,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Driven": {
+          "yMax": 2.0057661533355713,
+          "speedMax": 25.606075286865234,
+          "closingMax": -18.7279052734375,
+          "yMin": 1.9847317934036255,
+          "closingMin": -25.606075286865234,
+          "samples": 82,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Recovery": {
+          "yMax": 1.9941710233688354,
+          "speedMax": 4.990717887878418,
+          "closingMax": 4.990717887878418,
+          "yMin": 1.9941710233688354,
+          "closingMin": 4.990717887878418,
+          "samples": 3,
+          "dotMin": 1,
+          "dotMax": 1
+        },
+        "Coastdown": {
+          "yMax": 2.0007619857788086,
+          "speedMax": 25.842653274536133,
+          "closingMax": 4.990717887878418,
+          "yMin": 1.9941710233688354,
+          "closingMin": -25.842653274536133,
+          "samples": 11,
+          "dotMin": -1,
+          "dotMax": 1
+        },
+        "Idle": {
+          "yMax": 1.987675428390503,
+          "speedMax": 1.3044852018356323,
+          "closingMax": 0,
+          "yMin": 1.982253074645996,
+          "closingMin": -1.3044852018356323,
+          "samples": 34,
+          "dotMin": -1,
+          "dotMax": -1
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 4.750390500001231,
+      "beforeRejects": 0,
+      "name": "12/13 Spooling and Driven reverse",
+      "corrections": 0,
+      "beforeAffected": 0,
+      "rejected": 1,
+      "beforePulses": 0,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 3,
+      "damageEvents": [],
+      "phases": {
+        "Spooling": {
+          "yMax": 1.9915869235992432,
+          "speedMax": 16.796255111694336,
+          "closingMax": 0,
+          "yMin": 1.9804606437683105,
+          "closingMin": 0,
+          "samples": 33,
+          "dotMin": 0,
+          "dotMax": 0
+        },
+        "Driven": {
+          "yMax": 2.0032689571380615,
+          "speedMax": 25.184171676635742,
+          "closingMax": 0.0019540847279131413,
+          "yMin": 1.992626667022705,
+          "closingMin": -0.0025653711054474115,
+          "samples": 65,
+          "dotMin": -0.00012265675468370318,
+          "dotMax": 0.00009582644270267338
+        },
+        "Recovery": {
+          "yMax": 2.0047662258148193,
+          "speedMax": 25.74474334716797,
+          "closingMax": 0.0012624349910765886,
+          "yMin": 1.9916476011276245,
+          "closingMin": -0.001201536157168448,
+          "samples": 62,
+          "dotMin": -0.00005571812289417721,
+          "dotMax": 0.00005383175448514521
+        },
+        "Coastdown": {
+          "yMax": 2.0005698204040527,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 2.0005698204040527,
+          "closingMin": 0,
+          "samples": 21,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Idle": {
+          "yMax": 1.9880732297897339,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.9842807054519653,
+          "closingMin": 0,
+          "samples": 20,
+          "dotMin": 1,
+          "dotMax": -1
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 3.9340030000003026,
+      "beforeRejects": 1,
+      "name": "14 Driven strafe",
+      "corrections": 1,
+      "beforeAffected": 0,
+      "rejected": 1,
+      "beforePulses": 7,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 0,
+      "damageEvents": [],
+      "phases": {
+        "Spooling": {
+          "yMax": 2.001581907272339,
+          "speedMax": 22.396726608276367,
+          "closingMax": 0,
+          "yMin": 1.998077392578125,
+          "closingMin": 0,
+          "samples": 2,
+          "dotMin": 0,
+          "dotMax": 0
+        },
+        "Driven": {
+          "yMax": 1.998077392578125,
+          "speedMax": 21.38544273376465,
+          "closingMax": 0,
+          "yMin": 1.998077392578125,
+          "closingMin": 0,
+          "samples": 4,
+          "dotMin": 0,
+          "dotMax": 0
+        },
+        "Recovery": {
+          "yMax": 2.0091190338134766,
+          "speedMax": 25.95943832397461,
+          "closingMax": 0.00025542735238559544,
+          "yMin": 1.9890258312225342,
+          "closingMin": -0.0003497289726510644,
+          "samples": 72,
+          "dotMin": -0.000015280895240721293,
+          "dotMax": 0.000009956123903975822
+        },
+        "Coastdown": {
+          "yMax": 2.000025987625122,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.9980788230895996,
+          "closingMin": 0,
+          "samples": 18,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Idle": {
+          "yMax": 7.177727222442627,
+          "speedMax": 26.02767562866211,
+          "closingMax": 0.06543903052806854,
+          "yMin": 1.982452630996704,
+          "closingMin": -0.504684567451477,
+          "samples": 145,
+          "dotMin": -0.01948876865208149,
+          "dotMax": 0.0025204753037542105
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 5.433975199999622,
+      "beforeRejects": 0,
+      "name": "14 Driven strafe",
+      "corrections": 0,
+      "beforeAffected": 0,
+      "rejected": 1,
+      "beforePulses": 0,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 7,
+      "damageEvents": [],
+      "phases": {
+        "Idle": {
+          "yMax": 1.9883116483688354,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.9849610328674316,
+          "closingMin": 0,
+          "samples": 20,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Spooling": {
+          "yMax": 1.994194507598877,
+          "speedMax": 17.71906280517578,
+          "closingMax": 17.71906280517578,
+          "yMin": 1.9824025630950928,
+          "closingMin": 0,
+          "samples": 39,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Driven": {
+          "yMax": 2.0093019008636475,
+          "speedMax": 25.840742111206055,
+          "closingMax": 25.840742111206055,
+          "yMin": 1.9901700019836426,
+          "closingMin": 0,
+          "samples": 105,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Coastdown": {
+          "yMax": 2.0051629543304443,
+          "speedMax": 25.904741287231445,
+          "closingMax": 25.904741287231445,
+          "yMin": 1.9938981533050537,
+          "closingMin": 0,
+          "samples": 12,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 3.9158896999997523,
+      "beforeRejects": 1,
+      "name": "15 Reverse humanoid rear",
+      "corrections": 0,
+      "beforeAffected": 0,
+      "rejected": 0,
+      "beforePulses": 0,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 7,
+      "damageEvents": [],
+      "phases": {
+        "Idle": {
+          "yMax": 1.9921799898147583,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.9920713901519775,
+          "closingMin": 0,
+          "samples": 23,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Spooling": {
+          "yMax": 1.9976742267608643,
+          "speedMax": 17.740886688232422,
+          "closingMax": 0,
+          "yMin": 1.9901617765426636,
+          "closingMin": 0,
+          "samples": 39,
+          "dotMin": 0,
+          "dotMax": 0
+        },
+        "Driven": {
+          "yMax": 2.007051944732666,
+          "speedMax": 25.98143768310547,
+          "closingMax": 0.00028844006010331213,
+          "yMin": 1.9890758991241455,
+          "closingMin": -0.0003076220746152103,
+          "samples": 161,
+          "dotMin": -0.000011990615348622669,
+          "dotMax": 0.000011219424777664244
+        },
+        "Coastdown": {
+          "yMax": 2.003244400024414,
+          "speedMax": 25.98143768310547,
+          "closingMax": 8.501546859741211,
+          "yMin": 1.9902927875518799,
+          "closingMin": 0,
+          "samples": 17,
+          "dotMin": 0,
+          "dotMax": 0.4069293439388275
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 3.9842464000012114,
+      "beforeRejects": 1,
+      "name": "14 Driven strafe",
+      "corrections": 0,
+      "beforeAffected": 0,
+      "rejected": 0,
+      "beforePulses": 7,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 7,
+      "damageEvents": [],
+      "phases": {
+        "Idle": {
+          "yMax": 1.9941349029541016,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.9921798706054688,
+          "closingMin": 0,
+          "samples": 18,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Spooling": {
+          "yMax": 1.9921798706054688,
+          "speedMax": 15.947504043579102,
+          "closingMax": 15.947504043579102,
+          "yMin": 1.986907958984375,
+          "closingMin": 0,
+          "samples": 39,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Driven": {
+          "yMax": 2.00697660446167,
+          "speedMax": 25.981435775756836,
+          "closingMax": 25.981435775756836,
+          "yMin": 1.9836617708206177,
+          "closingMin": 16.14459991455078,
+          "samples": 157,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Coastdown": {
+          "yMax": 2.005028009414673,
+          "speedMax": 25.981435775756836,
+          "closingMax": 25.981435775756836,
+          "yMin": 1.9934495687484741,
+          "closingMin": 8.27824592590332,
+          "samples": 20,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 3.950179899999057,
+      "beforeRejects": 1,
+      "name": "15 Reverse ScrapPileCommon",
+      "corrections": 0,
+      "beforeAffected": 0,
+      "rejected": 0,
+      "beforePulses": 14,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 7,
+      "damageEvents": [],
+      "phases": {
+        "Idle": {
+          "yMax": 1.9921798706054688,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.990224838256836,
+          "closingMin": 0,
+          "samples": 21,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Spooling": {
+          "yMax": 1.9941349029541016,
+          "speedMax": 17.651548385620117,
+          "closingMax": 17.651548385620117,
+          "yMin": 1.9901669025421143,
+          "closingMin": 0,
+          "samples": 39,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Driven": {
+          "yMax": 2.006861448287964,
+          "speedMax": 25.98143768310547,
+          "closingMax": 25.98143768310547,
+          "yMin": 1.987748384475708,
+          "closingMin": 17.737943649291992,
+          "samples": 162,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Coastdown": {
+          "yMax": 2.002401113510132,
+          "speedMax": 25.995220184326172,
+          "closingMax": 25.995220184326172,
+          "yMin": 1.9903334379196167,
+          "closingMin": 13.976893424987793,
+          "samples": 16,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 3.9660930000009103,
+      "beforeRejects": 1,
+      "name": "15 Reverse ScrapPileRare",
+      "corrections": 0,
+      "beforeAffected": 0,
+      "rejected": 0,
+      "beforePulses": 21,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 7,
+      "damageEvents": [],
+      "phases": {
+        "Idle": {
+          "yMax": 1.9921798706054688,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.990224838256836,
+          "closingMin": 0,
+          "samples": 23,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Spooling": {
+          "yMax": 1.994179129600525,
+          "speedMax": 17.822526931762695,
+          "closingMax": 17.822526931762695,
+          "yMin": 1.9882620573043823,
+          "closingMin": 0,
+          "samples": 39,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Driven": {
+          "yMax": 2.007420539855957,
+          "speedMax": 25.98143768310547,
+          "closingMax": 25.98143768310547,
+          "yMin": 1.9901013374328613,
+          "closingMin": 17.87194061279297,
+          "samples": 160,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Coastdown": {
+          "yMax": 2.0031001567840576,
+          "speedMax": 25.98143768310547,
+          "closingMax": 25.98143768310547,
+          "yMin": 1.9921715259552002,
+          "closingMin": 13.408891677856445,
+          "samples": 17,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 3.9833172999988165,
+      "beforeRejects": 1,
+      "name": "15 Reverse ScrapPileEpic",
+      "corrections": 0,
+      "beforeAffected": 0,
+      "rejected": 0,
+      "beforePulses": 28,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 8,
+      "damageEvents": [],
+      "phases": {
+        "Idle": {
+          "yMax": 1.9921798706054688,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.9920833110809326,
+          "closingMin": 0,
+          "samples": 18,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Spooling": {
+          "yMax": 1.9920008182525635,
+          "speedMax": 16.50558090209961,
+          "closingMax": 16.50558090209961,
+          "yMin": 1.986329197883606,
+          "closingMin": 0,
+          "samples": 39,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Driven": {
+          "yMax": 2.008500576019287,
+          "speedMax": 25.98143768310547,
+          "closingMax": 25.98143768310547,
+          "yMin": 1.98666250705719,
+          "closingMin": 16.735763549804688,
+          "samples": 150,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Coastdown": {
+          "yMax": 2.002485513687134,
+          "speedMax": 25.981435775756836,
+          "closingMax": 25.981435775756836,
+          "yMin": 1.9968228340148926,
+          "closingMin": 10.8094482421875,
+          "samples": 14,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 3.916815399999905,
+      "beforeRejects": 1,
+      "name": "15 Reverse ReinforcedCrate",
+      "corrections": 0,
+      "beforeAffected": 0,
+      "rejected": 0,
+      "beforePulses": 35,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 7,
+      "damageEvents": [],
+      "phases": {
+        "Idle": {
+          "yMax": 1.9921798706054688,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.9915412664413452,
+          "closingMin": 0,
+          "samples": 20,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Spooling": {
+          "yMax": 1.9941349029541016,
+          "speedMax": 17.61747169494629,
+          "closingMax": 17.61747169494629,
+          "yMin": 1.9901612997055054,
+          "closingMin": 0,
+          "samples": 39,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Driven": {
+          "yMax": 2.005038022994995,
+          "speedMax": 25.981435775756836,
+          "closingMax": 25.981435775756836,
+          "yMin": 1.9898360967636108,
+          "closingMin": 17.653528213500977,
+          "samples": 161,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        },
+        "Coastdown": {
+          "yMax": 2.002166509628296,
+          "speedMax": 25.98143768310547,
+          "closingMax": 25.98143768310547,
+          "yMin": 1.9959214925765991,
+          "closingMin": 7.260397911071777,
+          "samples": 16,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 3.950679100000343,
+      "beforeRejects": 1,
+      "name": "15 Reverse PowerCore",
+      "corrections": 0,
+      "beforeAffected": 0,
+      "rejected": 0,
+      "beforePulses": 43,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 7,
+      "damageEvents": [],
+      "phases": {
+        "Idle": {
+          "yMax": 1.9941349029541016,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.9921798706054688,
+          "closingMin": 0,
+          "samples": 21,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Spooling": {
+          "yMax": 2.0015790462493896,
+          "speedMax": 18.098405838012695,
+          "closingMax": 0,
+          "yMin": 1.9901686906814575,
+          "closingMin": 0,
+          "samples": 27,
+          "dotMin": 0,
+          "dotMax": 0
+        },
+        "Driven": {
+          "yMax": 2.0057456493377686,
+          "speedMax": 25.981435775756836,
+          "closingMax": 0.0002956339158117771,
+          "yMin": 1.9895620346069336,
+          "closingMin": -0.00032493448816239834,
+          "samples": 158,
+          "dotMin": -0.00001273139969271142,
+          "dotMax": 0.000011359620657458436
+        },
+        "Coastdown": {
+          "yMax": 2.002440929412842,
+          "speedMax": 25.98143768310547,
+          "closingMax": 2.4151933193206787,
+          "yMin": 1.9912811517715454,
+          "closingMin": -0.00022636266658082604,
+          "samples": 14,
+          "dotMin": -0.000009962098374671768,
+          "dotMax": 0.17620830237865448
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 3.9671865999989677,
+      "beforeRejects": 1,
+      "name": "16 Strafe humanoid",
+      "corrections": 0,
+      "beforeAffected": 0,
+      "rejected": 0,
+      "beforePulses": 50,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 7,
+      "damageEvents": [],
+      "phases": {
+        "Idle": {
+          "yMax": 1.9921798706054688,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.9920045137405396,
+          "closingMin": 0,
+          "samples": 20,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Spooling": {
+          "yMax": 1.995344877243042,
+          "speedMax": 17.864974975585938,
+          "closingMax": 0,
+          "yMin": 1.9901690483093262,
+          "closingMin": 0,
+          "samples": 39,
+          "dotMin": 0,
+          "dotMax": 0
+        },
+        "Driven": {
+          "yMax": 2.0056169033050537,
+          "speedMax": 25.888572692871094,
+          "closingMax": 0.0004510119615588337,
+          "yMin": 1.9890722036361694,
+          "closingMin": -0.00047827648813836277,
+          "samples": 114,
+          "dotMin": -0.000018773991541820578,
+          "dotMax": 0.000017457599824410863
+        },
+        "Coastdown": {
+          "yMax": 2.00384783744812,
+          "speedMax": 25.918609619140625,
+          "closingMax": 10.499100685119629,
+          "yMin": 1.9896094799041748,
+          "closingMin": -0.00022488211106974632,
+          "samples": 21,
+          "dotMin": -0.000008883464033715427,
+          "dotMax": 0.5128026008605957
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 4.068342599999596,
+      "beforeRejects": 1,
+      "name": "16 Strafe PowerCore",
+      "corrections": 0,
+      "beforeAffected": 0,
+      "rejected": 0,
+      "beforePulses": 57,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 1,
+      "pulses": 2,
+      "damageEvents": {
+        "1": {
+          "dot": 0.9999999403953552,
+          "closing": 26.640806198120117,
+          "phase": "Driven",
+          "speed": 26.64080810546875,
+          "damage": 7.6937255859375
+        }
+      },
+      "phases": {
+        "Recovery": {
+          "yMax": 2.001955032348633,
+          "speedMax": 79.97654724121094,
+          "closingMax": 7.4918928146362305,
+          "yMin": 1.9995421171188354,
+          "closingMin": -79.97654724121094,
+          "samples": 19,
+          "dotMin": -1,
+          "dotMax": 1
+        },
+        "Coastdown": {
+          "yMax": 2.001483917236328,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 2.001483917236328,
+          "closingMin": 0,
+          "samples": 26,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Driven": {
+          "yMax": 2.0090835094451904,
+          "speedMax": 79.97654724121094,
+          "closingMax": 30.181365966796875,
+          "yMin": 1.989577054977417,
+          "closingMin": -79.97654724121094,
+          "samples": 34,
+          "dotMin": -1,
+          "dotMax": 1
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 1.3166971999999078,
+      "beforeRejects": 1,
+      "name": "17 Forged reverse",
+      "corrections": 1,
+      "beforeAffected": 2,
+      "rejected": 1,
+      "beforePulses": 67,
+      "damage": 7.6937255859375
+    },
+    {
+      "lag": 150,
+      "affected": 2,
+      "pulses": 2,
+      "damageEvents": {
+        "1": {
+          "dot": 0.9999999403953552,
+          "closing": 20.28678321838379,
+          "phase": "Driven",
+          "speed": 20.28678321838379,
+          "damage": 6.1448974609375
+        },
+        "2": {
+          "dot": 0.9421629309654236,
+          "closing": 25.119752883911133,
+          "phase": "Driven",
+          "speed": 26.661792755126953,
+          "damage": 7.32293701171875
+        }
+      },
+      "phases": {
+        "Recovery": {
+          "yMax": 2.002561330795288,
+          "speedMax": 79.97087860107422,
+          "closingMax": 12.310281753540039,
+          "yMin": 2.001955032348633,
+          "closingMin": 0,
+          "samples": 18,
+          "dotMin": 0.000010912287507380825,
+          "dotMax": 1
+        },
+        "Coastdown": {
+          "yMax": 2.002561330795288,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 2.002561330795288,
+          "closingMin": 0,
+          "samples": 24,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Driven": {
+          "yMax": 2.0090439319610596,
+          "speedMax": 79.97655487060547,
+          "closingMax": 28.279315948486328,
+          "yMin": 1.9863638877868652,
+          "closingMin": 0.0004685256280936301,
+          "samples": 32,
+          "dotMin": 0.0000058494410950515885,
+          "dotMax": 1
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 1,
+      "duration": 1.3324929999998858,
+      "beforeRejects": 3,
+      "name": "17 Forged sideways",
+      "corrections": 1,
+      "beforeAffected": 3,
+      "rejected": 0,
+      "beforePulses": 72,
+      "damage": 13.46783447265625
+    },
+    {
+      "lag": 150,
+      "affected": 1,
+      "pulses": 2,
+      "damageEvents": {
+        "1": {
+          "dot": 1,
+          "closing": 25.869462966918945,
+          "phase": "Driven",
+          "speed": 25.869462966918945,
+          "damage": 7.50567626953125
+        }
+      },
+      "phases": {
+        "Recovery": {
+          "yMax": 2.0026638507843018,
+          "speedMax": 2.8501694202423096,
+          "closingMax": 2.850097417831421,
+          "yMin": 1.9946476221084595,
+          "closingMin": 0,
+          "samples": 11,
+          "dotMin": 0.9993897676467896,
+          "dotMax": 0.9999749064445496
+        },
+        "Coastdown": {
+          "yMax": 2.0026638507843018,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 2.0026638507843018,
+          "closingMin": 0,
+          "samples": 10,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Driven": {
+          "yMax": 2.012378454208374,
+          "speedMax": 33.98534393310547,
+          "closingMax": 28.676191329956055,
+          "yMin": 1.991581916809082,
+          "closingMin": -33.98534393310547,
+          "samples": 35,
+          "dotMin": -1,
+          "dotMax": 1
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 2,
+      "duration": 1.6481426000009378,
+      "beforeRejects": 3,
+      "name": "17 Reverse boost-window abuse",
+      "corrections": 1,
+      "beforeAffected": 6,
+      "rejected": 1,
+      "beforePulses": 77,
+      "damage": 7.50567626953125
+    },
+    {
+      "lag": 150,
+      "affected": 2,
+      "pulses": 5,
+      "damageEvents": {
+        "1": {
+          "dot": 1,
+          "closing": 22.38593101501465,
+          "phase": "Driven",
+          "speed": 22.38593101501465,
+          "damage": 6.65655517578125
+        },
+        "2": {
+          "dot": 1,
+          "closing": 24.686477661132812,
+          "phase": "Driven",
+          "speed": 24.686477661132812,
+          "damage": 7.21734619140625
+        }
+      },
+      "phases": {
+        "Driven": {
+          "yMax": 2.0311288833618164,
+          "speedMax": 24.747461318969727,
+          "closingMax": 24.747461318969727,
+          "yMin": 1.9941349029541016,
+          "closingMin": -9.410844802856445,
+          "samples": 18,
+          "dotMin": -0.9880276918411255,
+          "dotMax": 1
+        },
+        "Coastdown": {
+          "yMax": 2.001955032348633,
+          "speedMax": 11.780498504638672,
+          "closingMax": 11.780498504638672,
+          "yMin": 1.9963347911834717,
+          "closingMin": 0,
+          "samples": 5,
+          "dotMin": 1,
+          "dotMax": 1
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 3,
+      "duration": 3.9527487000013934,
+      "beforeRejects": 6,
+      "name": "17 Sideways boost-window abuse",
+      "corrections": 0,
+      "beforeAffected": 18,
+      "rejected": 0,
+      "beforePulses": 93,
+      "damage": 13.8739013671875
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 4,
+      "damageEvents": [],
+      "phases": {
+        "Driven": {
+          "yMax": 2.0303380489349365,
+          "speedMax": 28.709352493286133,
+          "closingMax": 28.709352493286133,
+          "yMin": 1.9915690422058105,
+          "closingMin": -23.655231475830078,
+          "samples": 91,
+          "dotMin": -1,
+          "dotMax": 1
+        },
+        "Coastdown": {
+          "yMax": 2.0021286010742188,
+          "speedMax": 24.28224754333496,
+          "closingMax": -12.413795471191406,
+          "yMin": 1.998321533203125,
+          "closingMin": -24.28224754333496,
+          "samples": 14,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 3,
+      "duration": 1.7625836999995954,
+      "beforeRejects": 6,
+      "name": "18 Forward to reverse",
+      "corrections": 0,
+      "beforeAffected": 20,
+      "rejected": 0,
+      "beforePulses": 102,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 5,
+      "damageEvents": [],
+      "phases": {
+        "Driven": {
+          "yMax": 2.016155481338501,
+          "speedMax": 33.94818878173828,
+          "closingMax": 33.73090362548828,
+          "yMin": 1.9866808652877808,
+          "closingMin": 26.614303588867188,
+          "samples": 73,
+          "dotMin": 0.9666549563407898,
+          "dotMax": 1
+        },
+        "Coastdown": {
+          "yMax": 2.004814863204956,
+          "speedMax": 33.6045036315918,
+          "closingMax": 32.482276916503906,
+          "yMin": 1.988252878189087,
+          "closingMin": 30.053855895996094,
+          "samples": 12,
+          "dotMin": 0.9523516893386841,
+          "dotMax": 0.9666049480438232
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 3,
+      "duration": 1.965888000000632,
+      "beforeRejects": 6,
+      "name": "19 Forward curve 90 degrees",
+      "corrections": 0,
+      "beforeAffected": 20,
+      "rejected": 0,
+      "beforePulses": 110,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 2,
+      "damageEvents": [],
+      "phases": {
+        "Driven": {
+          "yMax": 2.0075948238372803,
+          "speedMax": 29.948143005371094,
+          "closingMax": 29.946033477783203,
+          "yMin": 1.994010090827942,
+          "closingMin": -16.47922706604004,
+          "samples": 30,
+          "dotMin": -0.9998540878295898,
+          "dotMax": 0.9999294877052307
+        },
+        "Coastdown": {
+          "yMax": 2.001732349395752,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 2.001732349395752,
+          "closingMin": 0,
+          "samples": 23,
+          "dotMin": 1,
+          "dotMax": -1
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 3,
+      "duration": 0.8830024999988382,
+      "beforeRejects": 6,
+      "name": "18 Forged rapid heading reversal",
+      "corrections": 1,
+      "beforeAffected": 20,
+      "rejected": 1,
+      "beforePulses": 118,
+      "damage": 0
+    },
+    {
+      "lag": 150,
+      "affected": 0,
+      "pulses": 3,
+      "damageEvents": [],
+      "phases": {
+        "Recovery": {
+          "yMax": 2.001955032348633,
+          "speedMax": 7.2338032722473145,
+          "closingMax": 6.807558059692383,
+          "yMin": 1.9987397193908691,
+          "closingMin": 0,
+          "samples": 10,
+          "dotMin": 0.94107586145401,
+          "dotMax": 1
+        },
+        "Coastdown": {
+          "yMax": 1.9987397193908691,
+          "speedMax": 0,
+          "closingMax": 0,
+          "yMin": 1.9987397193908691,
+          "closingMin": 0,
+          "samples": 3,
+          "dotMin": 1,
+          "dotMax": -1
+        },
+        "Driven": {
+          "yMax": 2.0090296268463135,
+          "speedMax": 33.89117431640625,
+          "closingMax": 24.42958641052246,
+          "yMin": 1.986323356628418,
+          "closingMin": 0,
+          "samples": 23,
+          "dotMin": 0.002125020604580641,
+          "dotMax": 1
+        },
+        "Idle": {
+          "yMax": 2.001955032348633,
+          "speedMax": 1.124572515487671,
+          "closingMax": 1.124572515487671,
+          "yMin": 2.001955032348633,
+          "closingMin": 0,
+          "samples": 4,
+          "dotMin": 1,
+          "dotMax": 1
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 4,
+      "duration": 3.3648231999995915,
+      "beforeRejects": 7,
+      "name": "17 Sideways boost-window abuse",
+      "corrections": 1,
+      "beforeAffected": 20,
+      "rejected": 1,
+      "beforePulses": 125,
+      "damage": 0
+    },
+    {
+      "lag": 0,
+      "affected": 3,
+      "pulses": 3,
+      "damageEvents": {
+        "1": {
+          "dot": 1,
+          "closing": 30.10845184326172,
+          "phase": "Driven",
+          "speed": 30.10845184326172,
+          "damage": 8.5389404296875
+        },
+        "2": {
+          "dot": 1,
+          "closing": 31.260257720947266,
+          "phase": "Driven",
+          "speed": 31.260257720947266,
+          "damage": 8.8197021484375
+        },
+        "3": {
+          "dot": 1,
+          "closing": 32.12358856201172,
+          "phase": "Driven",
+          "speed": 32.12358856201172,
+          "damage": 9
+        }
+      },
+      "phases": {
+        "Recovery": {
+          "yMax": 1.9976654052734375,
+          "speedMax": 1.0119493007659912,
+          "closingMax": 1.0119493007659912,
+          "yMin": 1.9941147565841675,
+          "closingMin": 0,
+          "samples": 25,
+          "dotMin": 1,
+          "dotMax": 1
+        },
+        "Coastdown": {
+          "yMax": 1.9990339279174805,
+          "speedMax": 79.97655487060547,
+          "closingMax": 0,
+          "yMin": 1.9976654052734375,
+          "closingMin": -79.97655487060547,
+          "samples": 26,
+          "dotMin": -1,
+          "dotMax": -1
+        },
+        "Driven": {
+          "yMax": 2.003946542739868,
+          "speedMax": 79.97654724121094,
+          "closingMax": 32.390464782714844,
+          "yMin": 1.9956785440444946,
+          "closingMin": -79.97654724121094,
+          "samples": 31,
+          "dotMin": -1,
+          "dotMax": 1
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 5,
+      "duration": 1.8154948000010336,
+      "beforeRejects": 8,
+      "name": "17 Forged reverse",
+      "corrections": 1,
+      "beforeAffected": 24,
+      "rejected": 0,
+      "beforePulses": 132,
+      "damage": 26.358642578125
+    },
+    {
+      "lag": 0,
+      "affected": 1,
+      "pulses": 1,
+      "damageEvents": {
+        "1": {
+          "dot": 1,
+          "closing": 26.72612953186035,
+          "phase": "Driven",
+          "speed": 26.72612953186035,
+          "damage": 7.7144775390625
+        }
+      },
+      "phases": {
+        "Recovery": {
+          "yMax": 1.999537467956543,
+          "speedMax": 3.675967216491699,
+          "closingMax": 3.675967216491699,
+          "yMin": 1.995886206626892,
+          "closingMin": 0,
+          "samples": 31,
+          "dotMin": 0.9999999403953552,
+          "dotMax": 1
+        },
+        "Coastdown": {
+          "yMax": 1.999542236328125,
+          "speedMax": 79.97654724121094,
+          "closingMax": 0,
+          "yMin": 1.9882396459579468,
+          "closingMin": 0,
+          "samples": 6,
+          "dotMin": 0,
+          "dotMax": 0
+        },
+        "Driven": {
+          "yMax": 2.018710136413574,
+          "speedMax": 79.97654724121094,
+          "closingMax": 27.664888381958008,
+          "yMin": 1.9882396459579468,
+          "closingMin": -0.0009915325790643692,
+          "samples": 29,
+          "dotMin": -0.00001236657135450514,
+          "dotMax": 1
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 6,
+      "duration": 1.8341333999997005,
+      "beforeRejects": 8,
+      "name": "17 Forged sideways",
+      "corrections": 1,
+      "beforeAffected": 29,
+      "rejected": 0,
+      "beforePulses": 139,
+      "damage": 7.7144775390625
+    },
+    {
+      "lag": 0,
+      "affected": 0,
+      "pulses": 1,
+      "damageEvents": [],
+      "phases": {
+        "Recovery": {
+          "yMax": 2.007194757461548,
+          "speedMax": 33.98534393310547,
+          "closingMax": 0.1785549819469452,
+          "yMin": 1.9905768632888794,
+          "closingMin": -0.0007752088131383061,
+          "samples": 29,
+          "dotMin": -0.000022810092559666373,
+          "dotMax": -0.0000016271321783278836
+        },
+        "Coastdown": {
+          "yMax": 2.007194757461548,
+          "speedMax": 33.98534393310547,
+          "closingMax": 0,
+          "yMin": 1.9935661554336548,
+          "closingMin": -0.0008097222889773548,
+          "samples": 26,
+          "dotMin": -0.00002382563252467662,
+          "dotMax": 0
+        },
+        "Driven": {
+          "yMax": 2.008214235305786,
+          "speedMax": 33.98534393310547,
+          "closingMax": 27.82163429260254,
+          "yMin": 1.9910213947296143,
+          "closingMin": 0.00001063233139575459,
+          "samples": 23,
+          "dotMin": 3.1285048862628173e-7,
+          "dotMax": 1
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 7,
+      "duration": 1.2999456000015925,
+      "beforeRejects": 9,
+      "name": "17 Sideways boost-window abuse",
+      "corrections": 1,
+      "beforeAffected": 30,
+      "rejected": 0,
+      "beforePulses": 142,
+      "damage": 0
+    },
+    {
+      "lag": 0,
+      "affected": 0,
+      "pulses": 1,
+      "damageEvents": [],
+      "phases": {
+        "Recovery": {
+          "yMax": 2.0016138553619385,
+          "speedMax": 2.5871922969818115,
+          "closingMax": -0.3610714375972748,
+          "yMin": 1.9863147735595703,
+          "closingMin": -2.5868098735809326,
+          "samples": 12,
+          "dotMin": -0.999852180480957,
+          "dotMax": -0.99984210729599
+        },
+        "Coastdown": {
+          "yMax": 2.001955032348633,
+          "speedMax": 5.669639587402344,
+          "closingMax": 0,
+          "yMin": 1.9989982843399048,
+          "closingMin": -5.668760776519775,
+          "samples": 18,
+          "dotMin": -0.9998511672019958,
+          "dotMax": -0.999845027923584
+        },
+        "Driven": {
+          "yMax": 2.0095434188842773,
+          "speedMax": 27.117494583129883,
+          "closingMax": 27.117494583129883,
+          "yMin": 1.9970766305923462,
+          "closingMin": -10.367899894714355,
+          "samples": 19,
+          "dotMin": -0.9992733597755432,
+          "dotMax": 1
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 8,
+      "duration": 1.0358816999996634,
+      "beforeRejects": 9,
+      "name": "18 Forged rapid heading reversal",
+      "corrections": 1,
+      "beforeAffected": 30,
+      "rejected": 0,
+      "beforePulses": 145,
+      "damage": 0
+    },
+    {
+      "lag": 0,
+      "affected": 0,
+      "pulses": 5,
+      "damageEvents": [],
+      "phases": {
+        "Driven": {
+          "yMax": 2.015014886856079,
+          "speedMax": 33.5783576965332,
+          "closingMax": 32.91062545776367,
+          "yMin": 1.9892460107803345,
+          "closingMin": 22.523696899414062,
+          "samples": 51,
+          "dotMin": 0.9754839539527893,
+          "dotMax": 1
+        },
+        "Coastdown": {
+          "yMax": 2.000704288482666,
+          "speedMax": 33.60797882080078,
+          "closingMax": 32.75298309326172,
+          "yMin": 1.9967740774154663,
+          "closingMin": 0,
+          "samples": 24,
+          "dotMin": 0.9489163160324097,
+          "dotMax": 0.9752702116966248
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 9,
+      "duration": 2.0168680000006134,
+      "beforeRejects": 9,
+      "name": "19 Forward curve 90 degrees",
+      "corrections": 0,
+      "beforeAffected": 30,
+      "rejected": 0,
+      "beforePulses": 148,
+      "damage": 0
+    },
+    {
+      "lag": 0,
+      "affected": 0,
+      "pulses": 0,
+      "damageEvents": [],
+      "phases": {
+        "Idle": {
+          "yMax": 2.0128769874572754,
+          "speedMax": 25.9970703125,
+          "closingMax": 0,
+          "yMin": 1.987379550933838,
+          "closingMin": -25.9970703125,
+          "samples": 261,
+          "dotMin": -1,
+          "dotMax": -0.9999999403953552
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 4.33289429999968,
+      "beforeRejects": 0,
+      "name": "12/13 Spooling and Driven reverse",
+      "corrections": 0,
+      "beforeAffected": 0,
+      "rejected": 0,
+      "beforePulses": 0,
+      "damage": 0
+    },
+    {
+      "lag": 0,
+      "affected": 0,
+      "pulses": 0,
+      "damageEvents": [],
+      "phases": {
+        "Idle": {
+          "yMax": 2.005769729614258,
+          "speedMax": 25.9970703125,
+          "closingMax": 0.0003242543898522854,
+          "yMin": 1.986097812652588,
+          "closingMin": -0.0002998716663569212,
+          "samples": 237,
+          "dotMin": -0.000011534826626302674,
+          "dotMax": 0.000012472728485590778
+        }
+      },
+      "invalidDirectionDamage": 0,
+      "beforeCorrections": 0,
+      "duration": 3.933583899999576,
+      "beforeRejects": 0,
+      "name": "14 Driven strafe",
+      "corrections": 0,
+      "beforeAffected": 0,
+      "rejected": 0,
+      "beforePulses": 0,
+      "damage": 0
+    }
+  ]
+}
